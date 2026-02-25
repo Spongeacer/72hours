@@ -270,6 +270,10 @@
                 <!-- 选择按钮将在这里生成 -->
             </div>
             
+            <div id="nextTurnContainer" style="text-align: center; margin-top: 20px; display: none;">
+                <button class="btn" onclick="nextTurn()">进入下一回合</button>
+            </div>
+            
             <div class="loading" id="loading" style="display: none;">
                 正在生成叙事...
             </div>
@@ -356,10 +360,19 @@
                 // 生成选择按钮
                 generateChoices(data.choices || [], data.context);
                 
+                // 显示"下一回合"按钮（如果没有选择）
+                const nextTurnContainer = document.getElementById('nextTurnContainer');
+                if ((!data.choices || data.choices.length === 0) && !data.gameOver) {
+                    nextTurnContainer.style.display = 'block';
+                } else {
+                    nextTurnContainer.style.display = 'none';
+                }
+                
                 currentContext = data.context;
 
             } catch (error) {
                 document.getElementById('narrative').textContent = '错误: ' + error.message;
+                console.error('nextTurn 错误:', error);
             } finally {
                 document.getElementById('loading').style.display = 'none';
                 isProcessing = false;
@@ -413,6 +426,7 @@
                     document.getElementById('choices').innerHTML = `
                         <button class="btn" onclick="location.reload()">重新开始</button>
                     `;
+                    document.getElementById('nextTurnContainer').style.display = 'none';
                     return;
                 }
 
@@ -424,6 +438,7 @@
 
             } catch (error) {
                 document.getElementById('narrative').textContent = '错误: ' + error.message;
+                console.error('makeChoice 错误:', error);
                 isProcessing = false;
                 document.getElementById('loading').style.display = 'none';
             }
