@@ -354,7 +354,7 @@
                 document.getElementById('narrative').textContent = data.narrative;
                 
                 // 生成选择按钮
-                generateChoices(data.choices, data.context);
+                generateChoices(data.choices || [], data.context);
                 
                 currentContext = data.context;
 
@@ -370,7 +370,16 @@
             if (isProcessing) return;
             isProcessing = true;
 
-            const choice = currentContext.choices.find(c => c.id === choiceId);
+            // 从 currentContext.choices 或直接使用 choiceId 查找选择
+            let choice = null;
+            if (currentContext && currentContext.choices) {
+                choice = currentContext.choices.find(c => c.id === choiceId);
+            }
+            
+            // 如果找不到，创建一个基本的选择对象
+            if (!choice) {
+                choice = { id: choiceId };
+            }
             
             // 禁用所有选择按钮
             document.querySelectorAll('.choice-btn').forEach(btn => {
@@ -434,10 +443,21 @@
             const container = document.getElementById('choices');
             container.innerHTML = '';
 
+            if (!choices || choices.length === 0) {
+                container.innerHTML = '<p style="color: #8a7a5a;">暂无选择</p>';
+                return;
+            }
+
             choices.forEach((choice, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'choice-btn';
-                btn.textContent = `${index + 1}. ${choice.text}`;
+                
+                // 确保 choice 有 id
+                if (!choice.id) {
+                    choice.id = `choice_${index}`;
+                }
+                
+                btn.textContent = `${index + 1}. ${choice.text || choice}`;
                 
                 // 标记隐藏选择
                 if (choice.type === 'hidden' || choice.isHidden) {
