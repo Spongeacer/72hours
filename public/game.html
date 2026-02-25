@@ -3,252 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>72Hours - 金田起义</title>
+    <title>72Hours - 金田起义前夜</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap');
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         
         body {
             font-family: 'Noto Serif SC', 'SimSun', serif;
-            background: #0a0a0a;
-            color: #d4d4d4;
-            height: 100vh;
-            overflow: hidden;
-        }
-        
-        .game-container {
-            display: flex;
-            height: 100vh;
-            padding: 15px;
-            gap: 15px;
-        }
-        
-        /* 左侧面板 */
-        .left-panel {
-            flex: 3;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        /* 状态栏 */
-        .status-bar {
             background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 4px;
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            color: #d4c4a8;
+            min-height: 100vh;
+            line-height: 1.8;
         }
         
-        .player-info {
-            display: flex;
-            align-items: center;
-            gap: 20px;
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
         }
         
-        .player-identity {
-            font-size: 14px;
-            color: #8b4513;
-            font-weight: 600;
-            letter-spacing: 2px;
+        header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 1px solid #3a3a3a;
+            margin-bottom: 30px;
         }
         
-        .player-obsession {
-            font-size: 12px;
-            color: #666;
-            font-style: italic;
+        h1 {
+            font-size: 2.5em;
+            font-weight: 400;
+            letter-spacing: 0.2em;
+            margin-bottom: 10px;
+            color: #c9b896;
         }
         
-        .stats-row {
-            display: flex;
-            gap: 25px;
+        .subtitle {
+            font-size: 1em;
+            color: #8a7a5a;
         }
         
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .setup-panel {
+            background: #252525;
+            padding: 30px;
+            border: 1px solid #3a3a3a;
+            margin-bottom: 30px;
         }
         
-        .stat-label {
-            font-size: 11px;
-            color: #555;
-            text-transform: uppercase;
-        }
-        
-        .stat-bar {
-            width: 60px;
-            height: 6px;
-            background: #2a2a2a;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        
-        .stat-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.5s ease;
-        }
-        
-        .stat-fill.fear { background: #c0392b; }
-        .stat-fill.aggression { background: #e67e22; }
-        .stat-fill.hunger { background: #f39c12; }
-        
-        .stat-value {
-            font-size: 12px;
-            color: #888;
-            min-width: 25px;
-        }
-        
-        /* 故事区域 */
-        .story-module {
-            flex: 1;
-            background: #141414;
-            border: 1px solid #2a2a2a;
-            border-radius: 4px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .story-header {
-            background: #1a1a1a;
-            padding: 15px 20px;
-            border-bottom: 1px solid #2a2a2a;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .turn-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .turn-badge {
-            background: #8b4513;
-            color: #000;
-            padding: 5px 12px;
-            border-radius: 3px;
-            font-size: 13px;
-            font-weight: 600;
-        }
-        
-        .turn-title {
-            font-size: 14px;
-            color: #aaa;
-        }
-        
-        .world-state {
-            display: flex;
-            gap: 20px;
-            font-size: 11px;
-            color: #555;
-        }
-        
-        .world-state span {
-            color: #777;
-        }
-        
-        .story-content {
-            flex: 1;
-            padding: 25px 30px;
-            overflow-y: auto;
-            line-height: 2;
-        }
-        
-        .story-text {
-            font-size: 15px;
-            color: #bbb;
+        .form-group {
             margin-bottom: 20px;
-            white-space: pre-wrap;
         }
         
-        .typing-cursor {
-            display: inline-block;
-            width: 8px;
-            height: 18px;
-            background: #8b4513;
-            animation: blink 1s infinite;
-            vertical-align: middle;
-            margin-left: 3px;
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #c9b896;
         }
         
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
-        }
-        
-        .result-text {
-            border-left: 3px solid #8b4513;
-            padding-left: 20px;
-            margin: 20px 0;
-            color: #999;
-            font-style: italic;
-        }
-        
-        .followup-text {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #2a2a2a;
-            color: #aaa;
-        }
-        
-        /* 选择区域 */
-        .choices-area {
+        input, select {
+            width: 100%;
+            padding: 12px;
             background: #1a1a1a;
-            border-top: 1px solid #2a2a2a;
-            padding: 20px 30px;
+            border: 1px solid #3a3a3a;
+            color: #d4c4a8;
+            font-family: inherit;
+            font-size: 1em;
         }
         
-        .choices-header {
+        input:focus, select:focus {
+            outline: none;
+            border-color: #8a7a5a;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #8a7a5a;
+            border: none;
+            color: #1a1a1a;
+            font-family: inherit;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #c9b896;
+        }
+        
+        .btn:disabled {
+            background: #3a3a3a;
+            color: #6a6a6a;
+            cursor: not-allowed;
+        }
+        
+        .game-panel {
+            display: none;
+        }
+        
+        .status-bar {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .choices-title {
-            font-size: 12px;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        
-        .stream-status {
-            font-size: 11px;
-            color: #8b4513;
-            font-style: italic;
-        }
-        
-        .choices-list {
-            display: flex;
-            flex-direction: column;
+            background: #252525;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border: 1px solid #3a3a3a;
+            flex-wrap: wrap;
             gap: 10px;
         }
         
-        .choice-btn {
-            padding: 15px 20px;
-            background: #1f1f1f;
-            border: 1px solid #333;
-            border-radius: 4px;
-            color: #aaa;
-            text-align: left;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-            font-size: 14px;
-            line-height: 1.6;
+        .status-item {
+            font-size: 0.9em;
         }
         
-        .choice-btn:hover:not(:disabled) {
+        .status-label {
+            color: #8a7a5a;
+        }
+        
+        .status-value {
+            color: #c9b896;
+        }
+        
+        .narrative {
+            background: #252525;
+            padding: 30px;
+            border: 1px solid #3a3a3a;
+            margin-bottom: 20px;
+            white-space: pre-line;
+            line-height: 2;
+        }
+        
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .choice-btn {
+            padding: 20px;
+            background: transparent;
+            border: 1px solid #3a3a3a;
+            color: #d4c4a8;
+            text-align: left;
+            font-family: inherit;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .choice-btn:hover {
+            border-color: #8a7a5a;
             background: #2a2a2a;
-            border-color: #8b4513;
-            color: #ccc;
         }
         
         .choice-btn:disabled {
@@ -256,591 +163,291 @@
             cursor: not-allowed;
         }
         
-        .choice-btn.selected {
-            background: #2a2015;
-            border-color: #8b4513;
-            color: #c9a86c;
-        }
-        
-        .next-turn-btn {
-            padding: 15px 30px;
-            background: #8b4513;
-            border: none;
-            border-radius: 4px;
-            color: #000;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-        
-        .next-turn-btn:hover {
-            background: #a0522d;
-        }
-        
-        /* 右侧面板 */
-        .right-panel {
-            flex: 1;
-            min-width: 280px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        .panel {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 4px;
-            padding: 20px;
-        }
-        
-        .panel-title {
-            font-size: 12px;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #2a2a2a;
-        }
-        
-        .world-info .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 13px;
-        }
-        
-        .info-label {
-            color: #555;
-        }
-        
-        .info-value {
-            color: #888;
-        }
-        
-        .info-value.highlight {
-            color: #c9a86c;
-        }
-        
-        .turn-counter {
-            background: #8b4513;
-            color: #000;
-            padding: 15px;
-            border-radius: 4px;
+        .loading {
             text-align: center;
-            margin-top: 15px;
-        }
-        
-        .turn-number {
-            font-size: 36px;
-            font-weight: 700;
-        }
-        
-        .turn-label {
-            font-size: 11px;
-            opacity: 0.8;
-            margin-top: 5px;
-        }
-        
-        .npc-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .npc-item {
-            padding: 12px;
-            background: #1f1f1f;
-            border: 1px solid #2a2a2a;
-            border-radius: 4px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .npc-item:hover {
-            border-color: #8b4513;
-        }
-        
-        .npc-name {
-            font-size: 13px;
-            color: #aaa;
-            margin-bottom: 5px;
-        }
-        
-        .npc-relation {
-            font-size: 11px;
-            color: #666;
-        }
-        
-        .npc-relation .knot-value {
-            color: #8b4513;
-        }
-        
-        /* 开场动画 */
-        .opening-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 3000;
-            transition: opacity 1s ease-out;
-        }
-        
-        .opening-overlay.fade-out {
-            opacity: 0;
-            pointer-events: none;
-        }
-        
-        .opening-text {
-            max-width: 600px;
             padding: 40px;
-            font-size: 16px;
-            line-height: 2.2;
-            color: #999;
-            white-space: pre-wrap;
+            color: #8a7a5a;
         }
         
-        .opening-text .highlight {
-            color: #c9a86c;
+        .error {
+            background: #3a2525;
+            border: 1px solid #5a3a3a;
+            color: #c9a0a0;
+            padding: 20px;
+            margin-bottom: 20px;
         }
         
-        .skip-btn {
-            position: absolute;
-            bottom: 40px;
-            padding: 10px 30px;
-            background: transparent;
-            border: 1px solid #333;
-            color: #555;
-            font-size: 12px;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: all 0.2s;
+        .result-panel {
+            background: #252525;
+            padding: 20px;
+            border: 1px solid #3a3a3a;
+            margin-bottom: 20px;
+            display: none;
         }
         
-        .skip-btn:hover {
-            border-color: #8b4513;
-            color: #8b4513;
+        .hidden-choice {
+            border-color: #8a7a5a !important;
+            background: #2a2520 !important;
+        }
+        
+        .hidden-badge {
+            display: inline-block;
+            background: #8a7a5a;
+            color: #1a1a1a;
+            padding: 2px 8px;
+            font-size: 0.8em;
+            margin-right: 10px;
         }
     </style>
 </head>
 <body>
-    <!-- 开场动画 -->
-    <div class="opening-overlay" id="openingOverlay">
-        <div class="opening-text" id="openingText"></div>
-        <button class="skip-btn" onclick="skipOpening()">跳过 ></button>
-    </div>
-    
-    <!-- 游戏主界面 -->
-    <div class="game-container" id="gameContainer" style="display: none;">
-        <div class="left-panel">
-            <!-- 状态栏 -->
+    <div class="container">
+        <header>
+            <h1>72Hours</h1>
+            <p class="subtitle">金田起义前夜 · 一个读书人的72小时</p>
+        </header>
+        
+        <div class="setup-panel" id="setupPanel">
+            <h3 style="color: #c9b896; margin-bottom: 20px; font-weight: 400;">开始游戏</h3>
+            
+            <div class="form-group">
+                <label>SiliconFlow API Key</label>
+                <input type="password" id="apiKey" placeholder="sk-...">
+                <small style="color: #6a5a4a; display: block; margin-top: 5px;">你的API密钥仅保存在本地，不会发送到我们的服务器</small>
+            </div>
+            
+            <div class="form-group">
+                <label>选择身份</label>
+                <select id="identity">
+                    <option value="scholar">村中的读书人（推荐）</option>
+                    <option value="landlord">金田村的地主</option>
+                    <option value="soldier">官府的士兵</option>
+                    <option value="cultist">教会的受众</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>选择模型</label>
+                <select id="model">
+                    <option value="Pro/MiniMaxAI/MiniMax-M2.1">MiniMax-M2.1（推荐，速度快）</option>
+                    <option value="deepseek-ai/DeepSeek-V3.2">DeepSeek-V3.2（质量好，较慢）</option>
+                </select>
+            </div>
+            
+            <button class="btn" id="startBtn" onclick="startGame()">开始游戏</button>
+        </div>
+        
+        <div class="game-panel" id="gamePanel">
             <div class="status-bar">
-                <div class="player-info">
-                    <div class="player-identity" id="playerIdentity">--</div>
-                    <div class="player-obsession" id="playerObsession">--</div>
+                <div class="status-item">
+                    <span class="status-label">回合: </span>
+                    <span class="status-value" id="turnDisplay">1/72</span>
                 </div>
-                
-                <div class="stats-row">
-                    <div class="stat-item">
-                        <span class="stat-label">恐惧</span>
-                        <div class="stat-bar"><div class="stat-fill fear" id="fearBar" style="width: 0%"></div></div>
-                        <span class="stat-value" id="fearValue">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">攻击性</span>
-                        <div class="stat-bar"><div class="stat-fill aggression" id="aggressionBar" style="width: 0%"></div></div>
-                        <span class="stat-value" id="aggressionValue">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">饥饿</span>
-                        <div class="stat-bar"><div class="stat-fill hunger" id="hungerBar" style="width: 0%"></div></div>
-                        <span class="stat-value" id="hungerValue">0</span>
-                    </div>
+                <div class="status-item">
+                    <span class="status-label">时间: </span>
+                    <span class="status-value" id="timeDisplay">1851年1月8日 01:00</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">压强: </span>
+                    <span class="status-value" id="pressureDisplay">10/100</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Ω: </span>
+                    <span class="status-value" id="omegaDisplay">1.00</span>
                 </div>
             </div>
             
-            <!-- 故事模块 -->
-            <div class="story-module">
-                <div class="story-header">
-                    <div class="turn-info">
-                        <div class="turn-badge" id="turnBadge">第 1 回合</div>
-                        <div class="turn-title" id="turnTitle">暗流涌动</div>
-                    </div>
-                    
-                    <div class="world-state">
-                        <div>时间: <span id="gameTime">--</span></div>
-                        <div>压强: <span id="pressureValue">--</span></div>
-                        <div>Ω: <span id="omegaValue">--</span></div>
-                    </div>
-                </div>
-                
-                <div class="story-content" id="storyContent">
-                    <div class="story-text">正在初始化游戏世界...</div>
-                </div>
-                
-                <div class="choices-area">
-                    <div class="choices-header">
-                        <div class="choices-title">你的选择</div>
-                        <div class="stream-status" id="streamStatus"></div>
-                    </div>
-                    <div class="choices-list" id="choicesList">
-                        <div style="color: #555; font-size: 13px;">等待游戏开始...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="right-panel">
-            <!-- 世界信息 -->
-            <div class="panel world-info">
-                <div class="panel-title">世界状态</div>
-                
-                <div class="info-row">
-                    <span class="info-label">剧本</span>
-                    <span class="info-value highlight">金田起义</span>
-                </div>
-                
-                <div class="info-row">
-                    <span class="info-label">日期</span>
-                    <span class="info-value" id="gameDate">1851年1月8日</span>
-                </div>
-                
-                <div class="info-row">
-                    <span class="info-label">天气</span>
-                    <span class="info-value" id="weatherValue">--</span>
-                </div>
-                
-                <div class="turn-counter">
-                    <div class="turn-number" id="turnCounter">1</div>
-                    <div class="turn-label">第 1 / 72 回合</div>
-                </div>
+            <div class="narrative" id="narrative">
+                等待游戏开始...
             </div>
             
-            <!-- NPC关系 -->
-            <div class="panel">
-                <div class="panel-title">人物关系</div>
-                
-                <div class="npc-list" id="npcList">
-                    <div style="color: #555; font-size: 13px;">加载中...</div>
-                </div>
+            <div class="result-panel" id="resultPanel">
+                <strong style="color: #c9b896;">选择结果:</strong>
+                <p id="resultText"></p>
+            </div>
+            
+            <div class="choices" id="choices">
+                <!-- 选择按钮将在这里生成 -->
+            </div>
+            
+            <div class="loading" id="loading" style="display: none;">
+                正在生成叙事...
             </div>
         </div>
     </div>
-    
+
     <script>
-        // 获取会话数据
-        const sessionId = sessionStorage.getItem('72hours_sessionId');
-        const identity = sessionStorage.getItem('72hours_identity');
-        const traits = JSON.parse(sessionStorage.getItem('72hours_traits') || '[]');
-        const gameData = JSON.parse(sessionStorage.getItem('72hours_gameData') || '{}');
-        
-        const API_BASE = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000/api/game'
-            : `${window.location.origin}/api/game`;
-        
-        let currentTurn = 1;
+        let gameId = null;
+        let currentContext = null;
         let isProcessing = false;
-        
-        // 开场动画
-        async function playOpening() {
-            const openingTexts = {
-                scholar: `> 你被一阵奇怪的声音惊醒。
-> 不是鸡鸣，是人在低语，很多声音叠在一起，像潮水。
-> 你走到窗边，看到远处有火光，不是灯笼的颜色。
-> <span class="highlight">这是金田村，1851年1月8日，凌晨。</span>
-> 你不知道，但历史已经开始了。`,
-                
-                landlord: `> 玉扳指在指节上转了三圈，这是你紧张时的习惯。
-> 窗外有火光，不是灯笼，是火把。
-> <span class="highlight">这是金田村，1851年1月8日。</span>
-> 你想起韦昌辉——那个被你排挤过的小地主，现在据说在会众里很有地位。`,
-                
-                soldier: `> 刀鞘上的血还没擦干净，是上一个村子的。
-> 上峰说金田有会匪，格杀勿论。
-> <span class="highlight">这是1851年1月8日，你的任务是清剿。</span>
-> 你舔了舔嘴唇，有点干。`,
-                
-                cultist: `> 十字架贴在胸口，已经温热了。
-> 密信上的字你背得出来："十一日，万寿起义。"
-> <span class="highlight">还有三天。金田村，1851年1月8日。</span>
-> 上帝会保护他的子民，但你也握紧了刀。`
-            };
-            
-            const text = openingTexts[identity] || openingTexts.scholar;
-            const container = document.getElementById('openingText');
-            
-            // 打字机效果显示开场
-            await typeWriter(container, text, 40);
-            
-            // 等待2秒后淡出
-            await new Promise(r => setTimeout(r, 2000));
-            
-            document.getElementById('openingOverlay').classList.add('fade-out');
-            setTimeout(() => {
-                document.getElementById('openingOverlay').style.display = 'none';
-                document.getElementById('gameContainer').style.display = 'flex';
-                initGame();
-            }, 1000);
-        }
-        
-        // 跳过开场
-        function skipOpening() {
-            document.getElementById('openingOverlay').classList.add('fade-out');
-            setTimeout(() => {
-                document.getElementById('openingOverlay').style.display = 'none';
-                document.getElementById('gameContainer').style.display = 'flex';
-                initGame();
-            }, 500);
-        }
-        
-        // 打字机效果
-        async function typeWriter(element, html, speed = 30) {
-            element.innerHTML = html;
-            const text = element.textContent;
-            element.innerHTML = '';
-            
-            let i = 0;
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = html;
-            const chars = [];
-            
-            // 解析HTML结构
-            function extractChars(node) {
-                if (node.nodeType === Node.TEXT_NODE) {
-                    for (const char of node.textContent) {
-                        chars.push({ char, class: null });
-                    }
-                } else if (node.nodeType === Node.ELEMENT_NODE) {
-                    for (const child of node.childNodes) {
-                        if (child.nodeType === Node.TEXT_NODE) {
-                            for (const char of child.textContent) {
-                                chars.push({ char, class: node.className });
-                            }
-                        } else {
-                            extractChars(child);
-                        }
-                    }
-                }
-            }
-            
-            extractChars(tempDiv);
-            
-            let currentSpan = null;
-            for (const { char, class: className } of chars) {
-                if (className && (!currentSpan || currentSpan.className !== className)) {
-                    currentSpan = document.createElement('span');
-                    currentSpan.className = className;
-                    element.appendChild(currentSpan);
-                } else if (!className) {
-                    currentSpan = null;
-                }
-                
-                const target = currentSpan || element;
-                target.appendChild(document.createTextNode(char));
-                
-                await new Promise(r => setTimeout(r, speed));
-            }
-        }
-        
-        // 初始化游戏
-        function initGame() {
-            // 显示玩家信息
-            const charInfo = gameData.characterInfo;
-            if (charInfo) {
-                document.getElementById('playerIdentity').textContent = `${charInfo.name}，${charInfo.age}岁`;
-            } else {
-                document.getElementById('playerIdentity').textContent = gameData.identity?.name || '未知身份';
-            }
-            
-            // 显示特质
-            const traitsText = traits.map(t => t.name).join(' · ');
-            const obsessionText = gameData.obsession?.description || '在乱世中活下去';
-            document.getElementById('playerObsession').textContent = `${traitsText} | ${obsessionText}`;
-            
-            // 更新NPC列表
-            updateNPCList(gameData.bondedNPCs || []);
-            
-            // 开始第一回合
-            startFirstTurn();
-        }
-        
-        // 更新NPC列表
-        function updateNPCList(npcs) {
-            const container = document.getElementById('npcList');
-            if (npcs.length === 0) {
-                container.innerHTML = '<div style="color: #555; font-size: 13px;">暂无关联人物</div>';
+
+        async function startGame() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const identity = document.getElementById('identity').value;
+            const model = document.getElementById('model').value;
+
+            if (!apiKey) {
+                alert('请输入 SiliconFlow API Key');
                 return;
             }
-            
-            container.innerHTML = npcs.map(npc => `
-                <div class="npc-item">
-                    <div class="npc-name">${npc.name}</div>
-                    <div class="npc-relation">
-                        关系: <span class="knot-value">${npc.knot}/10</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-        // 开始第一回合
-        async function startFirstTurn() {
-            document.getElementById('streamStatus').textContent = '正在生成叙事...';
-            
+
+            const btn = document.getElementById('startBtn');
+            btn.disabled = true;
+            btn.textContent = '正在启动...';
+
             try {
-                const response = await fetch(`${API_BASE}/turn`, {
+                const response = await fetch('/api/game/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sessionId })
+                    body: JSON.stringify({ apiKey, identity, model })
                 });
-                
+
                 const data = await response.json();
-                
-                if (data.success) {
-                    updateTurn(data.data);
-                } else {
-                    document.getElementById('storyContent').innerHTML = `<div class="story-text">错误: ${data.error}</div>`;
+
+                if (data.error) {
+                    throw new Error(data.error);
                 }
+
+                gameId = data.gameId;
+                
+                // 显示游戏面板
+                document.getElementById('setupPanel').style.display = 'none';
+                document.getElementById('gamePanel').style.display = 'block';
+                
+                // 显示开场
+                document.getElementById('narrative').textContent = data.opening;
+                
+                // 开始第一回合
+                await nextTurn();
+
             } catch (error) {
-                console.error('获取回合失败:', error);
-                document.getElementById('storyContent').innerHTML = `<div class="story-text">连接失败，请刷新重试</div>`;
+                alert('启动游戏失败: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = '开始游戏';
             }
         }
-        
-        // 更新回合显示
-        function updateTurn(data) {
-            currentTurn = data.turn;
-            
-            // 更新回合信息
-            document.getElementById('turnBadge').textContent = `第 ${data.turn} 回合`;
-            document.getElementById('turnCounter').textContent = data.turn;
-            document.querySelector('.turn-label').textContent = `第 ${data.turn} / 72 回合`;
-            
-            // 更新世界状态
-            document.getElementById('gameTime').textContent = data.scene?.time || '--';
-            document.getElementById('pressureValue').textContent = `${data.scene?.pressure || 0}/100`;
-            document.getElementById('omegaValue').textContent = data.scene?.omega || '--';
-            document.getElementById('weatherValue').textContent = data.scene?.weather || '--';
-            
-            // 更新玩家状态
-            if (data.player) {
-                updatePlayerStats(data.player.states);
-            }
-            
-            // 显示叙事
-            const storyContent = document.getElementById('storyContent');
-            storyContent.innerHTML = `<div class="story-text">${data.narrative}</div>`;
-            
-            // 显示选择
-            const choicesList = document.getElementById('choicesList');
-            choicesList.innerHTML = data.choices.map((c, i) => `
-                <button class="choice-btn" onclick="submitChoice(${c.id})">
-                    ${i + 1}. ${c.text}
-                </button>
-            `).join('');
-            
-            document.getElementById('streamStatus').textContent = '';
-        }
-        
-        // 更新玩家状态
-        function updatePlayerStats(states) {
-            if (!states) return;
-            
-            document.getElementById('fearValue').textContent = states.fear;
-            document.getElementById('fearBar').style.width = `${states.fear}%`;
-            
-            document.getElementById('aggressionValue').textContent = states.aggression;
-            document.getElementById('aggressionBar').style.width = `${states.aggression}%`;
-            
-            document.getElementById('hungerValue').textContent = states.hunger;
-            document.getElementById('hungerBar').style.width = `${states.hunger}%`;
-        }
-        
-        // 提交选择
-        async function submitChoice(choiceId) {
+
+        async function nextTurn() {
             if (isProcessing) return;
             isProcessing = true;
-            
-            // 禁用所有按钮
-            document.querySelectorAll('.choice-btn').forEach(btn => {
-                btn.disabled = true;
-            });
-            
-            document.getElementById('streamStatus').textContent = '正在生成结果...';
-            
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('choices').innerHTML = '';
+
             try {
-                const response = await fetch(`${API_BASE}/choice`, {
+                const response = await fetch(`/api/game/${gameId}/turn`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sessionId, choiceId })
+                    body: JSON.stringify({})
                 });
-                
+
                 const data = await response.json();
-                
-                if (data.success) {
-                    showChoiceResult(data.data);
-                } else {
-                    alert('提交失败: ' + data.error);
-                    isProcessing = false;
+
+                if (data.error) {
+                    throw new Error(data.error);
                 }
+
+                // 更新状态
+                updateStatus(data.state);
+                
+                // 显示叙事
+                document.getElementById('narrative').textContent = data.narrative;
+                
+                // 生成选择按钮
+                generateChoices(data.choices, data.context);
+                
+                currentContext = data.context;
+
             } catch (error) {
-                console.error('提交选择失败:', error);
-                alert('连接失败');
+                document.getElementById('narrative').textContent = '错误: ' + error.message;
+            } finally {
+                document.getElementById('loading').style.display = 'none';
                 isProcessing = false;
             }
         }
-        
-        // 显示选择结果
-        function showChoiceResult(data) {
-            const storyContent = document.getElementById('storyContent');
+
+        async function makeChoice(choiceId) {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            const choice = currentContext.choices.find(c => c.id === choiceId);
             
-            // 添加结果
-            storyContent.innerHTML += `
-                <div class="result-text">
-                    <strong>结果：</strong>${data.result.text}
-                </div>
-            `;
-            
-            // 添加后续叙事
-            if (data.followUpNarrative) {
-                storyContent.innerHTML += `
-                    <div class="followup-text">${data.followUpNarrative}</div>
-                `;
+            // 禁用所有选择按钮
+            document.querySelectorAll('.choice-btn').forEach(btn => {
+                btn.disabled = true;
+            });
+
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const response = await fetch(`/api/game/${gameId}/turn`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ choice })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // 显示结果
+                if (data.result && data.result.text) {
+                    document.getElementById('resultPanel').style.display = 'block';
+                    document.getElementById('resultText').textContent = data.result.text;
+                }
+
+                // 检查游戏结束
+                if (data.gameOver) {
+                    document.getElementById('narrative').textContent = '游戏结束';
+                    document.getElementById('choices').innerHTML = `
+                        <button class="btn" onclick="location.reload()">重新开始</button>
+                    `;
+                    return;
+                }
+
+                // 继续下一回合
+                setTimeout(() => {
+                    document.getElementById('resultPanel').style.display = 'none';
+                    nextTurn();
+                }, 2000);
+
+            } catch (error) {
+                document.getElementById('narrative').textContent = '错误: ' + error.message;
+                isProcessing = false;
+                document.getElementById('loading').style.display = 'none';
             }
-            
-            // 更新状态
-            if (data.player) {
-                updatePlayerStats(data.player.states);
-            }
-            
-            // 显示下一回合按钮
-            document.getElementById('choicesList').innerHTML = `
-                <button class="next-turn-btn" onclick="nextTurn()">→ 进入下一回合</button>
-            `;
-            
-            document.getElementById('streamStatus').textContent = '';
-            isProcessing = false;
         }
-        
-        // 下一回合
-        async function nextTurn() {
-            document.getElementById('choicesList').innerHTML = '<div style="color: #555;">加载中...</div>';
-            await startFirstTurn();
+
+        function updateStatus(state) {
+            document.getElementById('turnDisplay').textContent = `${state.turn}/72`;
+            document.getElementById('timeDisplay').textContent = 
+                new Date(state.datetime).toLocaleString('zh-CN', {
+                    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit'
+                });
+            document.getElementById('pressureDisplay').textContent = `${Math.round(state.pressure)}/100`;
+            document.getElementById('omegaDisplay').textContent = state.omega.toFixed(2);
         }
-        
-        // 检查会话
-        if (!sessionId) {
-            alert('会话已过期，请重新选择角色');
-            window.location.href = '/';
-        } else {
-            playOpening();
+
+        function generateChoices(choices, context) {
+            const container = document.getElementById('choices');
+            container.innerHTML = '';
+
+            choices.forEach((choice, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.textContent = `${index + 1}. ${choice.text}`;
+                
+                // 标记隐藏选择
+                if (choice.type === 'hidden' || choice.isHidden) {
+                    btn.classList.add('hidden-choice');
+                    btn.innerHTML = `<span class="hidden-badge">隐藏</span>${btn.textContent}`;
+                }
+                
+                btn.onclick = () => makeChoice(choice.id);
+                container.appendChild(btn);
+            });
         }
     </script>
 </body>
