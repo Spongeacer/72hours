@@ -1,0 +1,14 @@
+{
+  "name": "72hours",
+  "version": "1.0.0",
+  "description": "72Hours - 叙事引擎游戏",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["game", "narrative", "72hours"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {}
+}
