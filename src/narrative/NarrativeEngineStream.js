@@ -30,22 +30,18 @@ class NarrativeEngineStream {
 
     // 先流式生成叙事
     let narrative = '';
-    await this.ai.generateNarrativeStream(context, (chunk, fullText) => {
+    const { narrative: generatedNarrative, choices } = await this.ai.generateNarrativeStream(context, (chunk, fullText) => {
       narrative = fullText;
       if (onChunk) onChunk(chunk, fullText, false);
     });
 
     // 叙事完成后，生成选择
-    if (onChunk) onChunk('', narrative, 'choices_start');
+    if (onChunk) onChunk('', narrative || generatedNarrative, 'choices_start');
     
-    const choices = await this.ai.generateChoicesStream(context, (chunk, fullText) => {
-      if (onChunk) onChunk(chunk, fullText, 'choices_generating');
-    });
-
-    if (onChunk) onChunk('', narrative, true);
+    if (onChunk) onChunk('', narrative || generatedNarrative, true);
 
     return {
-      narrative,
+      narrative: narrative || generatedNarrative,
       choices
     };
   }
@@ -65,27 +61,21 @@ class NarrativeEngineStream {
     }
 
     // 流式生成结果描述
-    let resultText = '';
-    await this.ai.generateResultStream(context, choice, (chunk, fullText) => {
-      resultText = fullText;
+    const { result } = await this.ai.generateResultStream(context, choice, (chunk, fullText) => {
       if (onChunk) onChunk(chunk, fullText, false);
     });
 
-    const result = this.ai.parseResultResponse(resultText);
-
     // 结果完成后，生成后续叙事
-    if (onChunk) onChunk('', result.text, 'followup_start');
+    if (onChunk) onChunk('', result?.text || '', 'followup_start');
 
     const followUpContext = {
       ...context,
-      previousResult: { narrative: result.text }
+      previousResult: { narrative: result?.text || '' }
     };
 
     let followUpNarrative = '';
-    await this.ai.generateFollowUpStream(followUpContext, (chunk, fullText) => {
-      followUpNarrative = fullText;
-      if (onChunk) onChunk(chunk, fullText, 'followup_generating');
-    });
+    // 使用 generateFollowUp 获取后续叙事
+    followUpNarrative = await this.ai.generateFollowUp(followUpContext);
 
     if (onChunk) onChunk('', followUpNarrative, true);
 
@@ -95,7 +85,66 @@ class NarrativeEngineStream {
     };
   }
 
-  // ========== 占位生成器（无AI时） ==========
+  /**
+   * 生成场景叙事（非流式，兼容旧接口）
+   * @param {Object} context - 游戏上下文
+   * @returns {Promise<string>} 叙事文本
+   */
+  async generateScene(context) {
+    if (!this.ai) {
+      return this.generatePlaceholderScene(context).narrative;
+    }
+    const result = await this.generateSceneStream(context);
+    return result.narrative;
+  }
+
+  /**
+   * 生成选择（非流式，兼容旧接口）
+   * @param {Object} context - 游戏上下文
+   * @returns {Promise<Array>} 选择数组
+   */
+  async generateChoices(context) {
+    if (!this.ai) {
+      return this.generatePlaceholderScene(context).choices;
+    }
+    const result = await this.generateSceneStream(context);
+    return result.choices;
+  }
+
+  /**
+   * 生成结果（非流式，兼容旧接口）
+   * @param {Object} context - 游戏上下文
+   * @param {Object} choice - 玩家选择
+   * @returns {Promise<Object>} 结果对象
+   */
+  async generateResult(context, choice) {
+    if (!this.ai) {
+      return this.generatePlaceholderResult(context, choice);
+    }
+    const result = await this.generateResultStream(context, choice);
+    return result.result;
+  }
+
+  /**
+   * 生成后续叙事（非流式，兼容旧接口）
+   * @param {Object} context - 游戏上下文
+   * @returns {Promise<string>} 后续叙事
+   */
+  async generateFollowUp(context) {
+    if (!this.ai) {
+      return this.generatePlaceholderFollowUp(context);
+    }
+    // 使用流式方法但不传递回调
+    let followUpNarrative = '';
+    await this.generateResultStream(context, {}, (chunk, fullText, stage) => {
+      if (stage === 'followup_generating' || stage === true) {
+        followUpNarrative = fullText;
+      }
+    });
+    return followUpNarrative;
+  }
+
+  // ========== 流式方法 ==========
 
   generatePlaceholderScene(context) {
     const { spotlight, scene } = context;

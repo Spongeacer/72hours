@@ -1,11 +1,14 @@
 /**
  * AI接口实现 - 硅基流动 (SiliconFlow)
+ * 实现 IAIProvider 接口
  */
 
+const { IAIProvider } = require('./IAIProvider');
 const { GAME_CONFIG } = require('../utils/Constants');
 
-class SiliconFlowAI {
+class SiliconFlowAI extends IAIProvider {
   constructor(apiKey, model = 'deepseek-ai/DeepSeek-V3.2') {
+    super();
     this.apiKey = apiKey;
     this.model = model;
     this.baseURL = 'https://api.siliconflow.cn/v1';

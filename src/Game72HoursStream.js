@@ -1,26 +1,49 @@
 /**
- * Game72HoursStream - 支持流式输出的游戏主类
+ * Game72HoursStream - 重构版
+ * 低耦合、高内聚架构
  */
 
 const { Player } = require('./agents/Player');
 const { NPC } = require('./agents/NPC');
 const { TurnManagerStream } = require('./core/TurnManagerStream');
 const { NarrativeEngineStream } = require('./narrative/NarrativeEngineStream');
-const { CharacterGenerator } = require('./utils/CharacterGenerator');
-const { GAME_CONFIG } = require('./utils/Constants');
+const { AIProviderFactory } = require('./narrative/AIProviderFactory');
+const { CharacterService } = require('./services/CharacterService');
+const { EventBus } = require('./core/EventBus');
+const { config, getConfig } = require('./config');
 const { Utils } = require('./utils/Utils');
 
 class Game72HoursStream {
   constructor(options = {}) {
-    this.config = { ...GAME_CONFIG, ...options.config };
-    this.aiInterface = options.aiInterface || null;
-    this.model = options.model || 'deepseek-ai/DeepSeek-V3.2';
+    // 配置
+    this.config = { ...config.game, ...options.config };
     
+    // AI 提供商
+    this.aiProvider = options.aiProvider || AIProviderFactory.createFromEnv(options);
+    
+    // 服务层
+    this.characterService = new CharacterService(this.aiProvider);
+    
+    // 叙事引擎
+    this.narrativeEngine = new NarrativeEngineStream(this.aiProvider);
+    
+    // 事件总线
+    this.eventBus = new EventBus();
+    
+    // 游戏状态
+    this._initState();
+  }
+
+  /**
+   * 初始化游戏状态
+   * @private
+   */
+  _initState() {
     this.gameState = {
       turn: 0,
-      datetime: new Date('1851-01-08T00:00:00'),
-      pressure: 10,
-      omega: 1.0,
+      datetime: new Date(getConfig('game.startDate')),
+      pressure: getConfig('game.initialPressure'),
+      omega: getConfig('game.initialOmega'),
       weather: 'night',
       player: null,
       npcs: [],
@@ -28,57 +51,77 @@ class Game72HoursStream {
       config: this.config
     };
     
-    this.narrativeEngine = new NarrativeEngineStream(this.aiInterface, this.model);
-    this.characterGenerator = new CharacterGenerator(this.narrativeEngine.ai);
     this.turnManager = null;
-    
     this.isRunning = false;
     this.isGameOver = false;
   }
 
   /**
-   * 初始化游戏（异步，支持AI生成角色）
+   * 初始化游戏
+   * @param {string} identityType - 身份类型
+   * @param {Array} traits - 特质数组
+   * @returns {Promise<Object>} 初始化结果
    */
   async init(identityType = 'scholar', traits = []) {
-    // 使用AI生成角色信息
-    const characterInfo = await this.characterGenerator.generateCharacter(identityType, traits);
+    // 生成角色
+    const characterInfo = await this.characterService.generate(identityType, traits);
     
+    // 创建玩家
     this.gameState.player = new Player(identityType);
+    this._applyCharacterInfo(characterInfo);
     
-    // 设置AI生成的角色信息
-    this.gameState.player.name = characterInfo.name;
-    this.gameState.player.age = characterInfo.age;
-    this.gameState.player.backstory = characterInfo.backstory;
-    this.gameState.player.secret = characterInfo.secret;
-    this.gameState.player.startingLocation = characterInfo.startingLocation;
-    this.gameState.player.items = characterInfo.items;
-    this.gameState.player.relations = characterInfo.relations;
-    
-    this.generatePlayerTraits(traits);
+    // 生成玩家特质和执念
+    this._generatePlayerTraits(traits);
     this.gameState.player.generateObsession();
-    this.createBondedNPCs();
-    this.createEliteNPCs();
     
+    // 创建 NPC
+    this._createBondedNPCs();
+    this._createEliteNPCs();
+    
+    // 初始化回合管理器
     this.turnManager = new TurnManagerStream(this.gameState, this.narrativeEngine);
     this.turnManager.currentContext = null;
     
     this.isRunning = true;
     
+    // 触发初始化完成事件
+    this.eventBus.emit('game:initialized', {
+      player: this.gameState.player,
+      characterInfo
+    });
+    
     return {
       player: this.gameState.player,
-      characterInfo: characterInfo,
+      characterInfo,
       bondedNPCs: this.gameState.player.bondedNPCs,
-      opening: this.generateOpening()
+      opening: this._generateOpening()
     };
   }
 
   /**
-   * 生成玩家特质
+   * 应用角色信息到玩家
+   * @private
    */
-  generatePlayerTraits(traits = []) {
+  _applyCharacterInfo(info) {
+    const { player } = this.gameState;
+    player.name = info.name;
+    player.age = info.age;
+    player.backstory = info.backstory;
+    player.secret = info.secret;
+    player.startingLocation = info.startingLocation;
+    player.items = info.items || [];
+    player.relations = info.relations || [];
+  }
+
+  /**
+   * 生成玩家特质
+   * @private
+   */
+  _generatePlayerTraits(traits = []) {
     const { player } = this.gameState;
     const identity = player.identity;
     
+    // 身份特质
     if (identity.trait) {
       player.traits.push({ id: identity.trait, type: 'identity' });
     }
@@ -88,16 +131,17 @@ class Game72HoursStream {
       });
     }
     
-    // 添加前端传入的特质
+    // 随机特质
     traits.forEach(t => {
       player.traits.push({ id: t.id, name: t.name, type: t.type || 'personality' });
     });
   }
 
   /**
-   * 创建关联NPC
+   * 创建关联 NPC
+   * @private
    */
-  createBondedNPCs() {
+  _createBondedNPCs() {
     const { player } = this.gameState;
     const identityType = player.identityType;
     
@@ -138,9 +182,10 @@ class Game72HoursStream {
   }
 
   /**
-   * 创建精英NPC
+   * 创建精英 NPC
+   * @private
    */
-  createEliteNPCs() {
+  _createEliteNPCs() {
     const eliteNPCs = [
       {
         id: 'hong_xiuquan',
@@ -200,8 +245,9 @@ class Game72HoursStream {
 
   /**
    * 生成开场叙事
+   * @private
    */
-  generateOpening() {
+  _generateOpening() {
     const { player } = this.gameState;
     
     const openings = {
@@ -236,13 +282,18 @@ class Game72HoursStream {
       return { error: '游戏未运行或已结束' };
     }
     
+    this.eventBus.emit('turn:started', { turn: this.gameState.turn + 1 });
+    
     const turnResult = await this.turnManager.executeTurnStream(onChunk);
     this.turnManager.currentContext = turnResult.context;
+    
+    this.eventBus.emit('turn:completed', { turn: turnResult.turn });
+    
     return turnResult;
   }
 
   /**
-   * 非流式执行回合（兼容旧接口）
+   * 非流式执行回合
    */
   async executeTurn() {
     if (!this.isRunning || this.isGameOver) {
@@ -251,6 +302,7 @@ class Game72HoursStream {
     
     const turnResult = await this.turnManager.executeTurn();
     this.turnManager.currentContext = turnResult.context;
+    
     return turnResult;
   }
 
@@ -274,7 +326,11 @@ class Game72HoursStream {
       return { error: '无效的选择ID' };
     }
     
+    this.eventBus.emit('choice:selected', { choiceId, choice });
+    
     const result = await this.turnManager.processChoiceStream(choice, currentContext, onChunk);
+    
+    this.eventBus.emit('choice:executed', { result });
     
     return {
       success: true,
@@ -288,7 +344,8 @@ class Game72HoursStream {
   }
 
   /**
-   * 非流式执行选择（兼容旧接口）
+   * 非流式执行选择
+   * @param {number} choiceId - 选择ID
    */
   async executeChoice(choiceId) {
     if (!this.isRunning || this.isGameOver) {
@@ -308,7 +365,7 @@ class Game72HoursStream {
     const result = await this.turnManager.processChoice(choice, currentContext);
     
     let followUpNarrative = null;
-    if (this.aiInterface && result.success) {
+    if (this.aiProvider && result.success) {
       try {
         const followUpContext = {
           ...currentContext,
@@ -340,6 +397,23 @@ class Game72HoursStream {
       isRunning: this.isRunning,
       isGameOver: this.isGameOver
     };
+  }
+
+  /**
+   * 订阅事件
+   * @param {string} event - 事件名称
+   * @param {Function} handler - 处理函数
+   */
+  on(event, handler) {
+    return this.eventBus.on(event, handler);
+  }
+
+  /**
+   * 重置游戏
+   */
+  reset() {
+    this._initState();
+    this.eventBus.emit('game:reset');
   }
 }
 

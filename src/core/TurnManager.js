@@ -112,7 +112,8 @@ class TurnManager {
    * 计算全局因子Ω
    */
   calculateOmega(turn) {
-    const { OMEGA } = this.gameState.config || { INITIAL: 1.0, GROWTH_RATE: 0.02 };
+    const config = this.gameState.config || {};
+    const OMEGA = config.OMEGA || { INITIAL: 1.0, GROWTH_RATE: 0.02 };
     
     if (turn < 60) {
       // 前期线性增长
