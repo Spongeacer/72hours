@@ -10,22 +10,27 @@
 - **执念驱动**：每个角色都有独特的执念目标
 - **羁绊系统**：与NPC建立复杂的关系网络
 
-## 在线体验
+## ⚠️ 重要说明
 
-🎮 **点击即玩**: https://spongeacer.github.io/72hours
+这个游戏需要 **后端服务器** 支持。GitHub Pages 只能托管静态页面，无法运行游戏逻辑。
 
-## 本地运行
+### 方案一：本地运行（推荐）
 
 ```bash
+# 克隆项目
+git clone https://github.com/Spongeacer/72hours.git
+cd 72hours
+
+# 安装依赖并启动
 npm install
 npm start
+
+# 访问 http://localhost:3000
 ```
 
-然后访问 http://localhost:3000
+### 方案二：部署到 Vercel/Railway
 
-## 游戏截图
-
-![游戏界面](docs/screenshot.png)
+项目支持一键部署到支持 Node.js 的平台。
 
 ## 技术栈
 

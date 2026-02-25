@@ -515,8 +515,10 @@
     </div>
     
     <script>
-        // API配置
-        const API_BASE = 'http://localhost:3000/api';
+        // API配置 - 根据环境自动切换
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000/api'
+            : `${window.location.origin}/api`;
         let sessionId = null;
         let currentChoices = [];
         
