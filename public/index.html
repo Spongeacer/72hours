@@ -453,7 +453,12 @@
                 hideLoading();
                 
                 if (data.success) {
-                    updateChoiceResultUI(data.data);
+                    // 确保 data.data 存在
+                    if (data.data) {
+                        updateChoiceResultUI(data.data);
+                    } else {
+                        throw new Error('返回数据格式错误');
+                    }
                 } else {
                     // 失败时恢复按钮状态
                     isProcessing = false;

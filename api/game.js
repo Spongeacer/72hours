@@ -131,16 +131,21 @@ module.exports = async (req, res) => {
       // 执行选择（会调用AI生成结果）
       const result = await game.executeChoice(body.choiceId);
       
+      // 检查是否返回错误
+      if (result.error) {
+        return res.status(400).json({ success: false, error: result.error });
+      }
+      
       return res.json({
         success: true,
         data: {
           result: result.result,
           followUpNarrative: result.followUpNarrative || '故事继续发展...',
           stateChanges: result.stateChanges,
-          player: {
+          player: result.player ? {
             states: result.player.states,
-            inventory: result.player.inventory.map(i => i.name)
-          }
+            inventory: result.player.inventory ? result.player.inventory.map(i => i.name) : []
+          } : null
         }
       });
     } catch (error) {
