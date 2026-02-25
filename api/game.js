@@ -89,15 +89,18 @@ module.exports = (req, res) => {
     }
     
     const results = {
-      1: '你走上前去，对方抬起头，露出意味深长的笑容...',
-      2: '你隐藏在阴影中，看到对方手中拿着一本古老的书...',
-      3: '你悄悄绕到侧门，发现门没有锁...'
+      1: { text: '你走上前去，对方抬起头，露出意味深长的笑容...', followUp: '他缓缓开口："你也来找那本书？"他的声音沙哑，带着某种你听不懂的方言。你注意到他手中确实拿着一本泛黄的古籍。' },
+      2: { text: '你隐藏在阴影中，看到对方手中拿着一本古老的书...', followUp: '你屏住呼吸，观察着他的一举一动。他似乎在寻找什么，目光扫过每一个角落。突然，他停下了脚步，朝你的方向望来...' },
+      3: { text: '你悄悄绕到侧门，发现门没有锁...', followUp: '门轴发出轻微的吱呀声，你闪身进入。里面是一条狭窄的走廊，尽头有微弱的光亮。你听到身后传来脚步声...' }
     };
+    
+    const result = results[body.choiceId] || { text: '你做出了选择...', followUp: '故事继续发展...' };
     
     return res.json({
       success: true,
       data: {
-        result: { text: results[body.choiceId] || '你做出了选择...' },
+        result: { text: result.text },
+        followUpNarrative: result.followUp,
         player: game.player
       }
     });

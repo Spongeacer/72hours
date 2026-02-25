@@ -435,12 +435,7 @@
                 isProcessing = false;
                 
                 if (data.success) {
-                    updateResultUI(data.data);
-                    // 3秒后执行下一回合
-                    setTimeout(() => {
-                        selectedChoiceId = null;
-                        executeTurn();
-                    }, 3000);
+                    updateChoiceResultUI(data.data);
                 }
             } catch (error) {
                 hideLoading();
@@ -493,6 +488,36 @@
             if (data.player) {
                 updatePlayerStatus(data.player);
             }
+        }
+        
+        // 显示选择结果和后续剧情，等待用户点击下一回合
+        function updateChoiceResultUI(data) {
+            // 添加结果叙事
+            const resultHtml = `<div class="result-text"><strong>结果：</strong>${data.result.text}</div>`;
+            storyContent.innerHTML += resultHtml;
+            
+            // 如果有后续剧情，追加到故事内容
+            if (data.followUpNarrative) {
+                const followUpHtml = `<div class="story-text" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #444;">${data.followUpNarrative}</div>`;
+                storyContent.innerHTML += followUpHtml;
+            }
+            
+            // 更新玩家状态
+            if (data.player) {
+                updatePlayerStatus(data.player);
+            }
+            
+            // 显示"下一回合"按钮
+            choicesList.innerHTML = `
+                <div class="choices-title">剧情推进完成</div>
+                <button class="choice-btn" onclick="nextTurn()" style="background: #8b4513; border-color: #a0522d;">→ 进入下一回合</button>
+            `;
+        }
+        
+        // 进入下一回合
+        async function nextTurn() {
+            selectedChoiceId = null;
+            await executeTurn();
         }
         
         function updatePlayerStatus(player) {
