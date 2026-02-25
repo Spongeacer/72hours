@@ -6,6 +6,7 @@ const { GravityEngine } = require('../core/GravityEngine');
 const { PressureSystem } = require('../core/PressureSystem');
 const { MassSystem } = require('../core/MassSystem');
 const { CoordinateSystem } = require('../core/CoordinateSystem');
+const { SceneLocationSystem } = require('../core/SceneLocationSystem');
 const { Utils } = require('../utils/Utils');
 
 class TurnManager {
@@ -18,6 +19,7 @@ class TurnManager {
     this.pressureSystem = new PressureSystem();
     this.massSystem = new MassSystem();
     this.coordinateSystem = new CoordinateSystem();
+    this.sceneLocationSystem = new SceneLocationSystem(); // 场景位置系统
     
     this.turn = 0;
     
@@ -25,6 +27,10 @@ class TurnManager {
     this.spotlightHistory = []; // 记录最近几回合的聚光灯NPC
     this.maxConsecutiveRounds = 3; // 同一NPC最多连续3回合
     this.rotationCooldown = new Map(); // NPC轮换冷却
+    
+    // 场景转换追踪
+    this.lastPlayerPosition = null; // 上回合玩家位置
+    this.currentLocation = null; // 当前位置
   }
 
   /**
@@ -36,29 +42,33 @@ class TurnManager {
     // 1. 更新世界状态
     this.updateWorldState();
     
-    // 2. 检查事件触发
+    // 2. 生成场景转换描述（如果位置变化）
+    const transition = this.generateSceneTransition();
+    
+    // 3. 检查事件触发
     const triggeredEvent = this.checkEventTrigger();
     
-    // 3. NPC移动
+    // 4. NPC移动
     this.moveAllNPCs();
     
-    // 4. 计算引力，选择聚光灯
+    // 5. 计算引力，选择聚光灯
     const { npc: spotlightNPC, gravity } = this.selectSpotlight();
     
-    // 5. 生成叙事
-    const narrativeContext = this.assembleContext(spotlightNPC, triggeredEvent);
+    // 6. 生成叙事
+    const narrativeContext = this.assembleContext(spotlightNPC, triggeredEvent, transition);
     const narrative = await this.narrativeEngine.generateScene(narrativeContext);
     const choices = await this.narrativeEngine.generateChoices(narrativeContext);
     
     // 将 choices 添加到 context，供后续使用
     narrativeContext.choices = choices;
     
-    // 6. 返回叙事和选择给玩家
+    // 7. 返回叙事和选择给玩家
     return {
       turn: this.turn,
       narrative,
       choices,
-      context: narrativeContext
+      context: narrativeContext,
+      transition: transition // 返回转换信息
     };
   }
 
@@ -300,11 +310,15 @@ class TurnManager {
   /**
    * 组装叙事上下文
    */
-  assembleContext(spotlightNPC, event) {
+  assembleContext(spotlightNPC, event, transition = null) {
     const { player, pressure, omega, weather, turn } = this.gameState;
     
     // 获取轮换信息
     const rotationInfo = this.getRotationInfo(spotlightNPC);
+    
+    // 获取当前位置信息
+    const currentLocation = this.currentLocation || 
+      this.sceneLocationSystem.getLocationByCoordinates(player.position.x, player.position.y);
     
     return {
       turn,
@@ -312,7 +326,13 @@ class TurnManager {
         time: Utils.formatDate(Utils.calculateGameTime(turn)),
         weather,
         pressure,
-        omega: omega.toFixed(2)
+        omega: omega.toFixed(2),
+        location: currentLocation ? {
+          id: currentLocation.id,
+          name: currentLocation.name,
+          description: currentLocation.description,
+          tags: currentLocation.tags
+        } : null
       },
       spotlight: spotlightNPC ? {
         name: spotlightNPC.name,
@@ -320,7 +340,6 @@ class TurnManager {
         obsession: spotlightNPC.obsession,
         states: spotlightNPC.states,
         knotWithPlayer: spotlightNPC.getKnotWith(player.id),
-        // 添加轮换相关信息
         rotationInfo: rotationInfo
       } : null,
       spotlightNPC: spotlightNPC,
@@ -329,16 +348,17 @@ class TurnManager {
         traits: player.traits,
         states: player.states,
         inventory: player.inventory.map(i => i.name),
-        aura: player.getAura()
+        aura: player.getAura(),
+        position: player.position
       },
       playerRef: player,
       event: event ? { id: event.id, early: event.early } : null,
       memories: this.getRelevantMemories(player, spotlightNPC),
-      // 添加全局轮换状态
       rotation: {
-        history: this.spotlightHistory.slice(-5), // 最近5回合
+        history: this.spotlightHistory.slice(-5),
         consecutiveCount: this.getConsecutiveCount(spotlightNPC)
-      }
+      },
+      transition: transition // 场景转换信息
     };
   }
 
@@ -442,8 +462,67 @@ class TurnManager {
   }
 
   /**
-   * 获取当前回合
+   * 生成场景转换描述
+   * 基于 DESIGN.md：物理驱动叙事，故事自己涌现
    */
+  generateSceneTransition() {
+    const { player, weather } = this.gameState;
+    
+    // 获取当前位置
+    const currentPos = player.position;
+    
+    // 如果是第一回合，初始化位置
+    if (!this.lastPlayerPosition) {
+      this.lastPlayerPosition = { ...currentPos };
+      this.currentLocation = this.sceneLocationSystem.getLocationByCoordinates(
+        currentPos.x, currentPos.y
+      );
+      return null;
+    }
+    
+    // 检查位置是否变化
+    const distance = Math.sqrt(
+      Math.pow(currentPos.x - this.lastPlayerPosition.x, 2) +
+      Math.pow(currentPos.y - this.lastPlayerPosition.y, 2)
+    );
+    
+    // 位置没有显著变化，不生成转换
+    if (distance < 0.5) {
+      return null;
+    }
+    
+    // 生成转换描述
+    const timeOfDay = this.getTimeOfDay();
+    const transition = this.sceneLocationSystem.generateTransition(
+      this.lastPlayerPosition.x,
+      this.lastPlayerPosition.y,
+      currentPos.x,
+      currentPos.y,
+      weather,
+      timeOfDay
+    );
+    
+    // 更新位置记录
+    this.lastPlayerPosition = { ...currentPos };
+    this.currentLocation = this.sceneLocationSystem.getLocationByCoordinates(
+      currentPos.x, currentPos.y
+    );
+    
+    return transition;
+  }
+  
+  /**
+   * 获取当前时间段
+   */
+  getTimeOfDay() {
+    const hour = this.gameState.datetime.getHours();
+    if (hour >= 5 && hour < 7) return 'dawn';
+    if (hour >= 7 && hour < 11) return 'morning';
+    if (hour >= 11 && hour < 13) return 'noon';
+    if (hour >= 13 && hour < 17) return 'afternoon';
+    if (hour >= 17 && hour < 19) return 'dusk';
+    return 'night';
+  }
   getTurn() {
     return this.turn;
   }

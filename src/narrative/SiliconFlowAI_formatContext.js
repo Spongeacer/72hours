@@ -57,6 +57,17 @@ class SiliconFlowAI_formatContext {
     context += `全局因子 Ω：${omega.toFixed(2)}/5.0（${omegaDesc}）\n`;
     context += `叙事提示：${omegaNarrativeHint}\n\n`;
     
+    // 场景转换
+    if (transition?.text) {
+      context += `【场景转换】${transition.text}\n\n`;
+    }
+    
+    // 当前位置
+    if (scene.location) {
+      context += `【当前位置】${scene.location.name}\n`;
+      context += `${scene.location.description}\n\n`;
+    }
+    
     // 特殊事件
     if (event) {
       context += `*** 涌现事件：${event.id} ***\n`;
