@@ -6,6 +6,7 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const { Game72Hours } = require('./src/Game72Hours');
 const { SiliconFlowAI } = require('./src/narrative/SiliconFlowAI');
@@ -15,9 +16,24 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// 限流配置
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15分钟
+  max: 100, // 每个IP最多100个请求
+  message: {
+    success: false,
+    error: {
+      code: 'RATE_LIMIT',
+      message: '请求过于频繁，请稍后再试'
+    },
+    data: null
+  }
+});
+
 // 中间件
 app.use(cors());
 app.use(bodyParser.json());
+app.use(limiter); // 应用限流
 app.use(express.static('public'));
 
 // 游戏实例存储
