@@ -1,5 +1,5 @@
 /**
- * 72Hours 游戏常量配置（优化版）
+ * 72Hours 游戏常量配置（优化版 - 基于 DESIGN.md v1.1）
  */
 
 const GAME_CONFIG = {
@@ -8,34 +8,40 @@ const GAME_CONFIG = {
   MAX_TURNS: 72,
   START_DATE: new Date('1851-01-08T00:00:00'),
   
-  // 物理参数
+  // 物理参数 - 优化后的数值
   GRAVITY: {
-    G: 10.0,                    // 引力常数，放大10倍便于计算
+    G: 0.8,                     // 引力常数（调整为更合理的范围）
     PRESSURE_MULTIPLIER: 0.05   // 压强调制系数
   },
   
-  // 压强系统
+  // 压强系统 - 优化后的数值
   PRESSURE: {
-    BASE_GROWTH: 1.0,           // 每回合基础增长
-    VIOLENCE_BONUS: 10,         // 暴力行为增加
+    BASE_GROWTH: 0.8,           // 每回合基础增长（72回合后约67）
+    VIOLENCE_BONUS: 5,          // 暴力行为增加
     THRESHOLD_RAID: 50,         // 官兵搜查阈值
     THRESHOLD_DIVINE: 60        // 天父下凡阈值
   },
   
-  // 全局因子 Ω
+  // 全局因子 Ω - 优化后的数值
   OMEGA: {
     INITIAL: 1.0,
-    GROWTH_RATE: 0.02,
+    LINEAR_GROWTH: 0.02,         // 线性阶段每回合增长
     EXPONENTIAL_THRESHOLD: 60,   // 60回合后开始指数增长
+    EXPONENTIAL_BASE: 1.05,      // 指数增长基数
     MAX: 5.0                     // 最大Ω值
   },
   
-  // 质量系统
+  // 质量系统 - 优化后的数值
   MASS: {
-    BASE_RANGE: { min: 1, max: 10 },
-    STORY_PER_EVENT: 1,          // 每个事件增加1
-    KNOT_PER_INTERACTION: 0.5,   // 每次交互增加0.5
-    OBJECT_TRANSFER: true
+    BASE: {
+      ELITE: 5,                  // 精英NPC基础质量
+      NORMAL: 2,                 // 普通NPC基础质量
+      PLAYER: 3                  // 玩家基础质量
+    },
+    STORY_PER_EVENT: 0.1,        // 每个事件增加0.1
+    KNOT_PER_INTERACTION: 0.5,   // 每次深度交互增加0.5
+    OBJECT_KEY: 3,               // 关键道具加成
+    OBJECT_NORMAL: 1             // 普通道具加成
   },
   
   // 引力陷阱

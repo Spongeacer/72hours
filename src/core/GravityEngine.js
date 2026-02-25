@@ -13,6 +13,7 @@ class GravityEngine {
   /**
    * 计算两个实体间的引力
    * F = G × M₁ × M₂ / r² × P × Ω
+   * 基于 DESIGN.md v1.1 引力公式
    */
   calculateGravity(agent1, agent2, pressure, omega) {
     const distance = Utils.distance(agent1.position, agent2.position);
@@ -20,10 +21,10 @@ class GravityEngine {
     // 同一位置，最大引力
     if (distance === 0) return Infinity;
     
-    const m1 = agent1.getTotalMass();
-    const m2 = agent2.getTotalMass();
-    const G = this.config.GRAVITY.G;
-    const P = 1 + (pressure * this.config.GRAVITY.PRESSURE_MULTIPLIER);
+    const m1 = agent1.getTotalMass ? agent1.getTotalMass() : agent1.mass || 3;
+    const m2 = agent2.getTotalMass ? agent2.getTotalMass() : agent2.mass || 3;
+    const G = this.config.GRAVITY?.G || 0.8; // 优化后的引力常数
+    const P = 1 + (pressure * (this.config.GRAVITY?.PRESSURE_MULTIPLIER || 0.05));
     
     return (G * m1 * m2 / (distance * distance)) * P * omega;
   }

@@ -13,14 +13,24 @@ class MassSystem {
   /**
    * 计算总质量
    * M = B + S + K + O
+   * 基于 DESIGN.md v1.1 质量模型
    */
   calculateMass(agent) {
-    const B = agent.baseMass;
+    const B = agent.baseMass || this.getDefaultBaseMass(agent);
     const S = agent.storyMass || 0;
     const K = this.calculateTotalKnot(agent);
     const O = agent.objectMass || 0;
     
     return B + S + K + O;
+  }
+  
+  /**
+   * 获取默认基础质量
+   */
+  getDefaultBaseMass(agent) {
+    if (agent.type === 'player') return this.config.MASS?.BASE?.PLAYER || 3;
+    if (agent.isElite) return this.config.MASS?.BASE?.ELITE || 5;
+    return this.config.MASS?.BASE?.NORMAL || 2;
   }
 
   /**

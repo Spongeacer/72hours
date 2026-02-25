@@ -110,19 +110,32 @@ class TurnManager {
 
   /**
    * 计算全局因子Ω
+   * 基于 DESIGN.md v1.1：前期线性增长，60回合后指数增长
    */
   calculateOmega(turn) {
     const config = this.gameState.config || {};
-    const OMEGA = config.OMEGA || { INITIAL: 1.0, GROWTH_RATE: 0.02 };
+    const OMEGA = config.OMEGA || { 
+      INITIAL: 1.0, 
+      LINEAR_GROWTH: 0.02,
+      EXPONENTIAL_THRESHOLD: 60,
+      EXPONENTIAL_BASE: 1.05,
+      MAX: 5.0
+    };
     
-    if (turn < 60) {
-      // 前期线性增长
-      return OMEGA.INITIAL + (turn * OMEGA.GROWTH_RATE);
+    let omega;
+    if (turn <= OMEGA.EXPONENTIAL_THRESHOLD) {
+      // 线性阶段：Ω = 1.0 + turn * 0.02
+      omega = OMEGA.INITIAL + (turn * OMEGA.LINEAR_GROWTH);
     } else {
-      // 后期指数增长
-      const base = OMEGA.INITIAL + (60 * OMEGA.GROWTH_RATE);
-      return base * Math.exp((turn - 60) * 0.05);
+      // 指数阶段：线性部分 * (1.05 ^ (turn - 60))
+      const linearPart = OMEGA.INITIAL + 
+        (OMEGA.EXPONENTIAL_THRESHOLD * OMEGA.LINEAR_GROWTH);
+      const expTurns = turn - OMEGA.EXPONENTIAL_THRESHOLD;
+      omega = linearPart * Math.pow(OMEGA.EXPONENTIAL_BASE, expTurns);
     }
+    
+    // 限制最大值
+    return Math.min(omega, OMEGA.MAX);
   }
 
   /**
