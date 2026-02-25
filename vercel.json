@@ -5,14 +5,14 @@
       "maxDuration": 30
     }
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/game/(.*)",
-      "dest": "/api/game.js"
+      "source": "/api/game/:path*",
+      "destination": "/api/game.js"
     },
     {
-      "src": "/(.*)",
-      "dest": "/public/$1"
+      "source": "/:path*",
+      "destination": "/public/:path*"
     }
   ]
 }
