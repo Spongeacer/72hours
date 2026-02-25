@@ -133,12 +133,14 @@
             margin-bottom: 20px;
             white-space: pre-line;
             line-height: 2;
+            min-height: 100px;
         }
         
         .choices {
             display: flex;
             flex-direction: column;
             gap: 15px;
+            margin-bottom: 20px;
         }
         
         .choice-btn {
@@ -153,7 +155,7 @@
             transition: all 0.3s ease;
         }
         
-        .choice-btn:hover {
+        .choice-btn:hover:not(:disabled) {
             border-color: #8a7a5a;
             background: #2a2a2a;
         }
@@ -197,6 +199,16 @@
             padding: 2px 8px;
             font-size: 0.8em;
             margin-right: 10px;
+        }
+        
+        .debug-info {
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            padding: 10px;
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #6a5a4a;
+            font-family: monospace;
         }
     </style>
 </head>
@@ -270,21 +282,41 @@
                 <!-- 选择按钮将在这里生成 -->
             </div>
             
-            <div id="nextTurnContainer" style="text-align: center; margin-top: 20px; display: none;">
-                <button class="btn" onclick="nextTurn()">进入下一回合</button>
-            </div>
-            
             <div class="loading" id="loading" style="display: none;">
                 正在生成叙事...
+            </div>
+            
+            <div class="debug-info" id="debugInfo" style="display: none;">
+                <div>游戏ID: <span id="debugGameId">-</span></div>
+                <div>当前回合: <span id="debugTurn">-</span></div>
+                <div>状态: <span id="debugStatus">-</span></div>
             </div>
         </div>
     </div>
 
     <script>
-        let gameId = null;
-        let currentContext = null;
-        let isProcessing = false;
+        // 游戏状态管理
+        const GameState = {
+            gameId: null,
+            currentContext: null,
+            isProcessing: false,
+            turn: 0,
+            
+            reset() {
+                this.gameId = null;
+                this.currentContext = null;
+                this.isProcessing = false;
+                this.turn = 0;
+            }
+        };
 
+        // 调试日志
+        function debugLog(message, data = null) {
+            console.log(`[72Hours] ${message}`, data || '');
+            document.getElementById('debugStatus').textContent = message;
+        }
+
+        // 开始游戏
         async function startGame() {
             const apiKey = document.getElementById('apiKey').value.trim();
             const identity = document.getElementById('identity').value;
@@ -300,6 +332,7 @@
             btn.textContent = '正在启动...';
 
             try {
+                debugLog('正在创建游戏...');
                 const response = await fetch('/api/game/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -307,172 +340,179 @@
                 });
 
                 const data = await response.json();
+                debugLog('游戏创建响应', data);
 
                 if (data.error) {
                     throw new Error(data.error);
                 }
 
-                gameId = data.gameId;
+                GameState.gameId = data.gameId;
+                document.getElementById('debugGameId').textContent = data.gameId;
                 
                 // 显示游戏面板
                 document.getElementById('setupPanel').style.display = 'none';
                 document.getElementById('gamePanel').style.display = 'block';
+                document.getElementById('debugInfo').style.display = 'block';
                 
                 // 显示开场
                 document.getElementById('narrative').textContent = data.opening;
                 
                 // 开始第一回合
-                await nextTurn();
+                await executeTurn();
 
             } catch (error) {
+                debugLog('启动游戏失败', error.message);
                 alert('启动游戏失败: ' + error.message);
                 btn.disabled = false;
                 btn.textContent = '开始游戏';
             }
         }
 
-        async function nextTurn() {
-            if (isProcessing) return;
-            isProcessing = true;
+        // 执行回合（生成叙事和选择）
+        async function executeTurn() {
+            if (GameState.isProcessing) {
+                debugLog('正在处理中，跳过');
+                return;
+            }
+            
+            GameState.isProcessing = true;
+            debugLog('正在执行回合...');
 
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('choices').innerHTML = '';
+            showLoading(true);
+            clearChoices();
 
             try {
-                const response = await fetch(`/api/game/${gameId}/turn`, {
+                const response = await fetch(`/api/game/${GameState.gameId}/turn`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
                 });
 
                 const data = await response.json();
+                debugLog('回合响应', { turn: data.turn, hasChoices: !!data.choices });
 
                 if (data.error) {
                     throw new Error(data.error);
                 }
 
                 // 更新状态
+                GameState.turn = data.turn;
+                GameState.currentContext = data.context;
+                document.getElementById('debugTurn').textContent = data.turn;
+                
                 updateStatus(data.state);
                 
                 // 显示叙事
-                document.getElementById('narrative').textContent = data.narrative;
-                
-                // 生成选择按钮
-                generateChoices(data.choices || [], data.context);
-                
-                // 显示"下一回合"按钮（如果没有选择）
-                const nextTurnContainer = document.getElementById('nextTurnContainer');
-                if ((!data.choices || data.choices.length === 0) && !data.gameOver) {
-                    nextTurnContainer.style.display = 'block';
-                } else {
-                    nextTurnContainer.style.display = 'none';
+                if (data.narrative) {
+                    document.getElementById('narrative').textContent = data.narrative;
                 }
                 
-                currentContext = data.context;
+                // 生成选择
+                if (data.choices && data.choices.length > 0) {
+                    generateChoices(data.choices);
+                    debugLog(`生成了 ${data.choices.length} 个选择`);
+                } else {
+                    debugLog('警告：没有返回选择');
+                    showError('没有可用的选择，请刷新页面重试');
+                }
 
             } catch (error) {
-                document.getElementById('narrative').textContent = '错误: ' + error.message;
-                console.error('nextTurn 错误:', error);
+                debugLog('执行回合失败', error.message);
+                showError('执行回合失败: ' + error.message);
             } finally {
-                document.getElementById('loading').style.display = 'none';
-                isProcessing = false;
+                GameState.isProcessing = false;
+                showLoading(false);
             }
         }
 
-        async function makeChoice(choiceId) {
-            if (isProcessing) return;
-            isProcessing = true;
+        // 处理玩家选择
+        async function handleChoice(choiceId) {
+            if (GameState.isProcessing) {
+                debugLog('正在处理中，跳过');
+                return;
+            }
 
-            // 从 currentContext.choices 或直接使用 choiceId 查找选择
+            // 查找选择
             let choice = null;
-            if (currentContext && currentContext.choices) {
-                choice = currentContext.choices.find(c => c.id === choiceId);
+            if (GameState.currentContext && GameState.currentContext.choices) {
+                choice = GameState.currentContext.choices.find(c => c.id === choiceId);
             }
             
-            // 如果找不到，创建一个基本的选择对象
             if (!choice) {
-                choice = { id: choiceId };
+                debugLog('警告：找不到选择', choiceId);
+                choice = { id: choiceId, text: '未知选择' };
             }
             
+            GameState.isProcessing = true;
+            debugLog('正在处理选择', choiceId);
+
             // 禁用所有选择按钮
             document.querySelectorAll('.choice-btn').forEach(btn => {
                 btn.disabled = true;
             });
 
-            document.getElementById('loading').style.display = 'block';
+            showLoading(true);
 
             try {
-                const response = await fetch(`/api/game/${gameId}/turn`, {
+                const response = await fetch(`/api/game/${GameState.gameId}/turn`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ choice })
                 });
 
                 const data = await response.json();
+                debugLog('选择响应', { hasResult: !!data.result, gameOver: !!data.gameOver });
 
                 if (data.error) {
                     throw new Error(data.error);
                 }
 
                 // 显示结果
-                if (data.result && data.result.text) {
-                    document.getElementById('resultPanel').style.display = 'block';
-                    document.getElementById('resultText').textContent = data.result.text;
+                if (data.result) {
+                    showResult(data.result.text || '选择已执行');
                 }
 
                 // 检查游戏结束
                 if (data.gameOver) {
-                    document.getElementById('narrative').textContent = '游戏结束';
-                    document.getElementById('choices').innerHTML = `
-                        <button class="btn" onclick="location.reload()">重新开始</button>
-                    `;
-                    document.getElementById('nextTurnContainer').style.display = 'none';
+                    debugLog('游戏结束');
+                    setTimeout(() => {
+                        document.getElementById('narrative').textContent = '游戏结束';
+                        clearChoices();
+                        showResult('游戏已结束，点击重新开始');
+                        addRestartButton();
+                    }, 2000);
                     return;
                 }
 
-                // 继续下一回合
+                // 延迟后进入下一回合
+                debugLog('2秒后进入下一回合');
                 setTimeout(() => {
-                    document.getElementById('resultPanel').style.display = 'none';
-                    nextTurn();
+                    hideResult();
+                    executeTurn();
                 }, 2000);
 
             } catch (error) {
-                document.getElementById('narrative').textContent = '错误: ' + error.message;
-                console.error('makeChoice 错误:', error);
-                isProcessing = false;
-                document.getElementById('loading').style.display = 'none';
+                debugLog('处理选择失败', error.message);
+                showError('处理选择失败: ' + error.message);
+                GameState.isProcessing = false;
+                showLoading(false);
             }
         }
 
-        function updateStatus(state) {
-            document.getElementById('turnDisplay').textContent = `${state.turn}/72`;
-            document.getElementById('timeDisplay').textContent = 
-                new Date(state.datetime).toLocaleString('zh-CN', {
-                    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit'
-                });
-            document.getElementById('pressureDisplay').textContent = `${Math.round(state.pressure)}/100`;
-            document.getElementById('omegaDisplay').textContent = state.omega.toFixed(2);
-        }
-
-        function generateChoices(choices, context) {
+        // 生成选择按钮
+        function generateChoices(choices) {
             const container = document.getElementById('choices');
             container.innerHTML = '';
-
-            if (!choices || choices.length === 0) {
-                container.innerHTML = '<p style="color: #8a7a5a;">暂无选择</p>';
-                return;
-            }
 
             choices.forEach((choice, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'choice-btn';
                 
                 // 确保 choice 有 id
-                if (!choice.id) {
-                    choice.id = `choice_${index}`;
-                }
+                const choiceId = choice.id || `choice_${index}`;
+                const choiceText = choice.text || `选择 ${index + 1}`;
                 
-                btn.textContent = `${index + 1}. ${choice.text || choice}`;
+                btn.textContent = `${index + 1}. ${choiceText}`;
                 
                 // 标记隐藏选择
                 if (choice.type === 'hidden' || choice.isHidden) {
@@ -480,9 +520,65 @@
                     btn.innerHTML = `<span class="hidden-badge">隐藏</span>${btn.textContent}`;
                 }
                 
-                btn.onclick = () => makeChoice(choice.id);
+                btn.onclick = () => handleChoice(choiceId);
                 container.appendChild(btn);
             });
+        }
+
+        // 更新状态显示
+        function updateStatus(state) {
+            if (!state) return;
+            
+            document.getElementById('turnDisplay').textContent = `${state.turn || 0}/72`;
+            
+            if (state.datetime) {
+                document.getElementById('timeDisplay').textContent = 
+                    new Date(state.datetime).toLocaleString('zh-CN', {
+                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit'
+                    });
+            }
+            
+            document.getElementById('pressureDisplay').textContent = 
+                `${Math.round(state.pressure || 0)}/100`;
+            document.getElementById('omegaDisplay').textContent = 
+                (state.omega || 0).toFixed(2);
+        }
+
+        // 显示/隐藏加载
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        // 清除选择
+        function clearChoices() {
+            document.getElementById('choices').innerHTML = '';
+        }
+
+        // 显示结果
+        function showResult(text) {
+            document.getElementById('resultPanel').style.display = 'block';
+            document.getElementById('resultText').textContent = text;
+        }
+
+        // 隐藏结果
+        function hideResult() {
+            document.getElementById('resultPanel').style.display = 'none';
+        }
+
+        // 显示错误
+        function showError(message) {
+            document.getElementById('narrative').textContent = message;
+            document.getElementById('narrative').style.color = '#c9a0a0';
+        }
+
+        // 添加重新开始按钮
+        function addRestartButton() {
+            const container = document.getElementById('choices');
+            const btn = document.createElement('button');
+            btn.className = 'btn';
+            btn.textContent = '重新开始';
+            btn.onclick = () => location.reload();
+            container.appendChild(btn);
         }
     </script>
 </body>
