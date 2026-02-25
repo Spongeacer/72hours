@@ -11,6 +11,7 @@ const { ClueSystem } = require('../core/ClueSystem');
 const { AtmosphereSystem } = require('../core/AtmosphereSystem');
 const { ResultDiversitySystem } = require('../core/ResultDiversitySystem');
 const { TimeProgressionSystem } = require('../core/TimeProgressionSystem');
+const { HiddenChoiceSystem } = require('../core/HiddenChoiceSystem');
 const { Utils } = require('../utils/Utils');
 
 class TurnManager {
@@ -28,6 +29,7 @@ class TurnManager {
     this.atmosphereSystem = new AtmosphereSystem(); // 氛围系统
     this.resultDiversitySystem = new ResultDiversitySystem(); // 结果多样性系统
     this.timeProgressionSystem = new TimeProgressionSystem(); // 时间推进系统
+    this.hiddenChoiceSystem = new HiddenChoiceSystem(); // 隐藏选择系统
     
     this.turn = 0;
     
@@ -417,6 +419,18 @@ class TurnManager {
         followUps: this.clueSystem.checkFollowUps(turn, player, spotlightNPC),
         active: this.clueSystem.getActiveClues(),
         stats: this.clueSystem.getStats()
+      },
+      hiddenChoices: {
+        available: this.hiddenChoiceSystem.checkHiddenChoices({
+          spotlight: spotlightNPC,
+          player,
+          scene: { pressure, omega, time: Utils.formatDate(Utils.calculateGameTime(turn)), weather }
+        }),
+        unlockedCategories: this.hiddenChoiceSystem.getUnlockedCategories({
+          spotlight: spotlightNPC,
+          player,
+          scene: { pressure, omega, time: Utils.formatDate(Utils.calculateGameTime(turn)), weather }
+        })
       }
     };
   }

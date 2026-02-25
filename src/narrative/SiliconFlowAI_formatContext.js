@@ -150,6 +150,21 @@ class SiliconFlowAI_formatContext {
       context += `物理影响：K值增加NPC质量，增强引力，使TA更容易成为聚光灯\n\n`;
     }
     
+    // 隐藏选择提示
+    if (hiddenChoices?.available?.length > 0) {
+      context += `=== 隐藏选择 ===\n`;
+      context += `以下特殊选择已根据当前条件解锁：\n\n`;
+      
+      for (const choice of hiddenChoices.available) {
+        context += `【${choice.category}】${choice.text}\n`;
+        context += `说明：${choice.description}\n`;
+        context += `效果：${choice.effect}\n\n`;
+      }
+      
+      context += `请在生成选择时考虑加入这些隐藏选项（最多1-2个）。\n`;
+      context += `隐藏选择应该比普通选择更有影响力，但也更有风险。\n\n`;
+    }
+    
     // 线索跟进
     if (clues?.followUps?.length > 0) {
       context += `=== 线索跟进 ===\n`;
