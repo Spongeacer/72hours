@@ -74,6 +74,7 @@ class TurnManager {
     const gameOver = this.checkGameOver();
     
     return {
+      success: true,
       result,
       gameOver,
       context, // 返回上下文供后续使用

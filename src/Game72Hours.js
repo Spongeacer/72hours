@@ -348,10 +348,10 @@ ${history.map(h => `- 第${h.turn}回合：${h.event}`).join('\n')}
     return {
       success: true,
       result: {
-        text: result.narrative || result.text || '选择已执行'
+        text: result.result?.text || result.result?.narrative || '选择已执行'
       },
       followUpNarrative: followUpNarrative,
-      stateChanges: result.stateChanges,
+      stateChanges: result.result?.stateDelta,
       player: this.gameState.player
     };
   }
