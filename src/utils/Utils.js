@@ -86,12 +86,45 @@ const Utils = {
   },
 
   /**
-   * 计算游戏内时间
+   * 计算游戏内时间（基础版，每回合1小时）
+   * 注意：实际游戏中使用 TimeProgressionSystem 进行更复杂的时间计算
    */
   calculateGameTime(turn) {
     const date = new Date('1851-01-08T00:00:00');
     date.setHours(date.getHours() + turn);
     return date;
+  },
+  
+  /**
+   * 计算游戏内时间（优化版，支持变速推进）
+   * 前期：每回合1小时
+   * 中期：每回合1.5小时
+   * 后期：每回合2小时
+   * 最终阶段：每回合4小时
+   */
+  calculateGameTimeOptimized(turn) {
+    const baseDate = new Date('1851-01-08T00:00:00');
+    let totalHours = 0;
+    
+    // 前期（1-24回合）：每回合1小时
+    if (turn <= 24) {
+      totalHours = turn;
+    }
+    // 中期（25-48回合）：每回合1.5小时
+    else if (turn <= 48) {
+      totalHours = 24 + (turn - 24) * 1.5;
+    }
+    // 后期（49-66回合）：每回合2小时
+    else if (turn <= 66) {
+      totalHours = 24 + 36 + (turn - 48) * 2;
+    }
+    // 最终阶段（67-72回合）：每回合4小时
+    else {
+      totalHours = 24 + 36 + 36 + (turn - 66) * 4;
+    }
+    
+    baseDate.setHours(baseDate.getHours() + Math.floor(totalHours));
+    return baseDate;
   },
 
   /**

@@ -10,6 +10,7 @@ const { SceneLocationSystem } = require('../core/SceneLocationSystem');
 const { ClueSystem } = require('../core/ClueSystem');
 const { AtmosphereSystem } = require('../core/AtmosphereSystem');
 const { ResultDiversitySystem } = require('../core/ResultDiversitySystem');
+const { TimeProgressionSystem } = require('../core/TimeProgressionSystem');
 const { Utils } = require('../utils/Utils');
 
 class TurnManager {
@@ -26,6 +27,7 @@ class TurnManager {
     this.clueSystem = new ClueSystem(); // 线索系统
     this.atmosphereSystem = new AtmosphereSystem(); // 氛围系统
     this.resultDiversitySystem = new ResultDiversitySystem(); // 结果多样性系统
+    this.timeProgressionSystem = new TimeProgressionSystem(); // 时间推进系统
     
     this.turn = 0;
     
@@ -129,6 +131,10 @@ class TurnManager {
   /**
    * 更新世界状态
    */
+  /**
+   * 更新世界状态
+   * 使用 TimeProgressionSystem 进行变速时间推进
+   */
   updateWorldState() {
     const { player } = this.gameState;
     
@@ -142,11 +148,14 @@ class TurnManager {
     this.pressureSystem.update(this.turn);
     this.gameState.pressure = this.pressureSystem.getPressure();
     
-    // 更新天气
-    this.gameState.weather = Utils.calculateWeather(this.turn);
+    // 使用 TimeProgressionSystem 计算游戏时间（变速推进）
+    this.gameState.datetime = this.timeProgressionSystem.calculateGameTime(this.turn);
     
-    // 更新日期时间
-    this.gameState.datetime = Utils.calculateGameTime(this.turn);
+    // 获取当前小时数用于天气计算
+    const currentHour = this.gameState.datetime.getHours();
+    
+    // 更新天气（基于时间和回合）
+    this.gameState.weather = this.timeProgressionSystem.calculateWeather(this.turn, currentHour);
   }
 
   /**
@@ -351,6 +360,11 @@ class TurnManager {
     const atmosphere = this.atmosphereSystem.generateAtmosphere(pressure, omega, weather, timeOfDay);
     const atmosphereHints = this.atmosphereSystem.generateNarrativeHints(pressure, omega);
     
+    // 获取时间推进信息
+    const timeProgression = this.timeProgressionSystem.getTimeProgressionDescription(turn);
+    const timeNarrativeHint = this.timeProgressionSystem.generateTimeNarrativeHint(turn);
+    const timeStats = this.timeProgressionSystem.getTimeStats(turn);
+    
     return {
       turn,
       scene: {
@@ -367,6 +381,11 @@ class TurnManager {
         atmosphere: {
           ...atmosphere,
           hints: atmosphereHints
+        },
+        timeProgression: {
+          ...timeProgression,
+          hint: timeNarrativeHint,
+          stats: timeStats
         }
       },
       spotlight: spotlightNPC ? {

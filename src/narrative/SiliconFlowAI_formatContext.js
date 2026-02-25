@@ -15,6 +15,16 @@ class SiliconFlowAI_formatContext {
     context += `时间：${scene.time}\n`;
     context += `天气：${scene.weather}\n`;
     
+    // 时间推进信息
+    if (scene.timeProgression?.hint) {
+      context += `${scene.timeProgression.hint}\n`;
+    }
+    
+    if (scene.timeProgression?.stageChange) {
+      context += `【时间推进】进入${scene.timeProgression.toStage}，每回合推进${scene.timeProgression.hoursPerTurn}小时\n`;
+      context += `${scene.timeProgression.description}\n\n`;
+    }
+    
     // 压强氛围描述 - 物理驱动
     const pressure = scene.pressure;
     const atmosphere = scene.atmosphere;
