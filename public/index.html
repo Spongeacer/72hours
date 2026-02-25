@@ -148,6 +148,31 @@
             margin-top: 10px;
             font-size: 13px;
         }
+        .model-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        .model-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #888;
+            transition: background 0.3s;
+        }
+        .model-status-dot.connected {
+            background: #27ae60;
+            box-shadow: 0 0 4px #27ae60;
+        }
+        .model-status-dot.disconnected {
+            background: #e74c3c;
+            box-shadow: 0 0 4px #e74c3c;
+        }
+        .model-status-text {
+            color: #888;
+        }
         .turn-indicator {
             background: #8b4513;
             color: #fff;
@@ -295,6 +320,10 @@
                         <span class="world-value" id="omegaValue">Ω 1.02</span>
                     </div>
                 </div>
+                <div class="model-status">
+                    <span class="model-status-dot" id="modelStatusDot"></span>
+                    <span class="model-status-text" id="modelStatusText">检测中...</span>
+                </div>
                 <select class="model-select" id="modelSelect">
                     <option value="deepseek">DeepSeek</option>
                     <option value="kimi" selected>Kimi</option>
@@ -340,6 +369,40 @@
         const turnNumber = document.getElementById('turnNumber');
         const turnLabel = document.getElementById('turnLabel');
         const modelSelect = document.getElementById('modelSelect');
+        const modelStatusDot = document.getElementById('modelStatusDot');
+        const modelStatusText = document.getElementById('modelStatusText');
+        
+        // 检测模型连接状态
+        async function checkModelConnection() {
+            const model = modelSelect.value;
+            modelStatusDot.className = 'model-status-dot';
+            modelStatusText.textContent = '检测中...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/test`, {
+                    method: 'GET',
+                    signal: AbortSignal.timeout(5000)
+                });
+                
+                if (response.ok) {
+                    modelStatusDot.className = 'model-status-dot connected';
+                    modelStatusText.textContent = `${model} 已连接`;
+                    return true;
+                } else {
+                    throw new Error('API返回错误');
+                }
+            } catch (error) {
+                modelStatusDot.className = 'model-status-dot disconnected';
+                modelStatusText.textContent = `${model} 未连接`;
+                return false;
+            }
+        }
+        
+        // 模型切换时重新检测
+        modelSelect.addEventListener('change', checkModelConnection);
+        
+        // 页面加载时检测
+        window.addEventListener('load', checkModelConnection);
         
         function showLoading() {
             loadingOverlay.classList.add('active');

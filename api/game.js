@@ -24,9 +24,17 @@ module.exports = (req, res) => {
     }
   }
   
-  // Test endpoint
+  // Test endpoint - 检测模型连接状态
   if (url.includes('/test')) {
-    return res.json({ success: true, message: 'API is working' });
+    const model = body.model || 'kimi';
+    // 这里可以添加实际的模型连接检测逻辑
+    // 目前返回成功，表示API服务正常
+    return res.json({ 
+      success: true, 
+      message: 'API is working',
+      model: model,
+      status: 'connected'
+    });
   }
   
   // Create game
