@@ -2,9 +2,9 @@
  * 72Hours Vercel Serverless API
  */
 
-const { Game72Hours } = require('./src/Game72Hours');
+const { Game72Hours } = require('../src/Game72Hours');
 
-// 游戏实例存储（按session）- 注意：Vercel 是无状态的，实际生产环境需要数据库
+// 游戏实例存储（按session）- 注意：Vercel 是无状态的
 const games = new Map();
 
 // API路由处理
@@ -19,15 +19,20 @@ module.exports = async (req, res) => {
     return;
   }
   
-  const url = req.url;
+  // 解析 URL
+  const urlParts = req.url.replace('/api/game', '').split('/').filter(Boolean);
+  const action = urlParts[0] || '';
   const method = req.method;
   
   try {
     // 解析请求体
-    const body = req.body || {};
+    let body = {};
+    if (req.body) {
+      body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    }
     
     // 路由处理
-    if (url === '/api/game/create' && method === 'POST') {
+    if (action === 'create' && method === 'POST') {
       const { identity, apiKey } = body;
       
       const game = new Game72Hours({ 
@@ -38,7 +43,7 @@ module.exports = async (req, res) => {
       const sessionId = Date.now().toString();
       games.set(sessionId, game);
       
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         sessionId,
         data: {
@@ -52,21 +57,19 @@ module.exports = async (req, res) => {
           opening: init.opening
         }
       });
-      return;
     }
     
-    if (url === '/api/game/turn' && method === 'POST') {
+    if (action === 'turn' && method === 'POST') {
       const { sessionId } = body;
       const game = games.get(sessionId);
       
       if (!game) {
-        res.status(404).json({ success: false, error: '游戏不存在' });
-        return;
+        return res.status(404).json({ success: false, error: '游戏不存在' });
       }
       
       const turn = await game.executeTurn();
       
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: {
           turn: turn.turn,
@@ -81,29 +84,26 @@ module.exports = async (req, res) => {
           }
         }
       });
-      return;
     }
     
-    if (url === '/api/game/choice' && method === 'POST') {
+    if (action === 'choice' && method === 'POST') {
       const { sessionId, choiceId } = body;
       const game = games.get(sessionId);
       
       if (!game) {
-        res.status(404).json({ success: false, error: '游戏不存在' });
-        return;
+        return res.status(404).json({ success: false, error: '游戏不存在' });
       }
       
       const currentTurn = game.turnManager.currentContext;
       const choice = currentTurn?.choices?.find(c => c.id === choiceId);
       
       if (!choice) {
-        res.status(400).json({ success: false, error: '无效的选择' });
-        return;
+        return res.status(400).json({ success: false, error: '无效的选择' });
       }
       
       const result = await game.executeChoice(choiceId);
       
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: {
           result: {
@@ -116,16 +116,14 @@ module.exports = async (req, res) => {
           }
         }
       });
-      return;
     }
     
-    if (url.startsWith('/api/game/npcs') && method === 'GET') {
-      const sessionId = new URL(req.url, `http://${req.headers.host}`).searchParams.get('sessionId');
+    if (action === 'npcs' && method === 'GET') {
+      const sessionId = req.query?.sessionId;
       const game = games.get(sessionId);
       
       if (!game) {
-        res.status(404).json({ success: false, error: '游戏不存在' });
-        return;
+        return res.status(404).json({ success: false, error: '游戏不存在' });
       }
       
       const npcs = game.gameState.npcs.map(n => ({
@@ -137,20 +135,18 @@ module.exports = async (req, res) => {
         obsession: n.obsession
       }));
       
-      res.status(200).json({ success: true, data: { npcs } });
-      return;
+      return res.status(200).json({ success: true, data: { npcs } });
     }
     
-    if (url.startsWith('/api/game/state') && method === 'GET') {
-      const sessionId = new URL(req.url, `http://${req.headers.host}`).searchParams.get('sessionId');
+    if (action === 'state' && method === 'GET') {
+      const sessionId = req.query?.sessionId;
       const game = games.get(sessionId);
       
       if (!game) {
-        res.status(404).json({ success: false, error: '游戏不存在' });
-        return;
+        return res.status(404).json({ success: false, error: '游戏不存在' });
       }
       
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: {
           turn: game.gameState.turn,
@@ -163,13 +159,12 @@ module.exports = async (req, res) => {
           }
         }
       });
-      return;
     }
     
-    res.status(404).json({ success: false, error: 'API不存在' });
+    return res.status(404).json({ success: false, error: 'API不存在: ' + action });
     
   } catch (error) {
     console.error('API错误:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
