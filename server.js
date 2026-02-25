@@ -33,13 +33,61 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'game.html'));
 });
 
+/**
+ * 72Hours Game Server
+ * 提供游戏API接口，连接 SiliconFlow
+ */
+
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const path = require('path');
+const { Game72Hours } = require('./src/Game72Hours');
+const { SiliconFlowAI } = require('./src/narrative/SiliconFlowAI');
+
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// 从环境变量获取配置
+const SERVER_API_KEY = process.env.SILICONFLOW_API_KEY;
+const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'Pro/MiniMaxAI/MiniMax-M2.1';
+
+// 中间件
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.static('public'));
+
+// 游戏实例存储
+const games = new Map();
+
+// 创建AI接口
+function createAIInterface(apiKey, model = DEFAULT_MODEL) {
+  return new SiliconFlowAI(apiKey, model);
+}
+
+// 根路径 - 返回游戏页面
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'game.html'));
+});
+
 // 创建新游戏
 app.post('/api/game/create', async (req, res) => {
   try {
-    const { apiKey, identity = 'scholar', model = 'Pro/MiniMaxAI/MiniMax-M2.1' } = req.body;
+    const { identity = 'scholar', model = DEFAULT_MODEL } = req.body;
+    
+    // 优先使用服务器配置的 API Key，如果没有则要求客户端提供
+    let apiKey = SERVER_API_KEY;
+    if (!apiKey && req.body.apiKey) {
+      apiKey = req.body.apiKey;
+    }
     
     if (!apiKey) {
-      return res.status(400).json({ error: '需要提供 SiliconFlow API Key' });
+      return res.status(400).json({ 
+        error: '未配置 API Key',
+        message: '服务器未配置 SILICONFLOW_API_KEY，请提供自己的 API Key'
+      });
     }
     
     const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
