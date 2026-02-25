@@ -116,6 +116,26 @@ class SiliconFlowAI_formatContext {
       context += `物理影响：K值增加NPC质量，增强引力，使TA更容易成为聚光灯\n\n`;
     }
     
+    // 线索跟进
+    if (clues?.followUps?.length > 0) {
+      context += `=== 线索跟进 ===\n`;
+      for (const followUp of clues.followUps) {
+        context += `\n${followUp.text}\n`;
+        context += `提示：${followUp.hint}\n`;
+        context += `叙事建议：${followUp.narrativeHint}\n`;
+      }
+      context += `\n请在叙事中自然融入这些线索，不要生硬提及。\n\n`;
+    }
+    
+    // 活跃线索统计
+    if (clues?.stats?.active > 0) {
+      context += `【线索状态】活跃${clues.stats.active}个`;
+      if (clues.stats.urgent > 0) {
+        context += `，紧急${clues.stats.urgent}个`;
+      }
+      context += `\n\n`;
+    }
+    
     // 轮换信息
     if (spotlight?.rotationInfo) {
       context += `【故事流转】${spotlight.rotationInfo.description}\n`;

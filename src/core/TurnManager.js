@@ -7,6 +7,7 @@ const { PressureSystem } = require('../core/PressureSystem');
 const { MassSystem } = require('../core/MassSystem');
 const { CoordinateSystem } = require('../core/CoordinateSystem');
 const { SceneLocationSystem } = require('../core/SceneLocationSystem');
+const { ClueSystem } = require('../core/ClueSystem');
 const { Utils } = require('../utils/Utils');
 
 class TurnManager {
@@ -19,7 +20,8 @@ class TurnManager {
     this.pressureSystem = new PressureSystem();
     this.massSystem = new MassSystem();
     this.coordinateSystem = new CoordinateSystem();
-    this.sceneLocationSystem = new SceneLocationSystem(); // 场景位置系统
+    this.sceneLocationSystem = new SceneLocationSystem();
+    this.clueSystem = new ClueSystem(); // 线索系统
     
     this.turn = 0;
     
@@ -57,18 +59,32 @@ class TurnManager {
     // 6. 生成叙事
     const narrativeContext = this.assembleContext(spotlightNPC, triggeredEvent, transition);
     const narrative = await this.narrativeEngine.generateScene(narrativeContext);
+    
+    // 7. 从叙事中提取线索
+    const extractedClues = this.clueSystem.extractCluesFromNarrative(
+      narrative, this.turn, this.gameState.npcs
+    );
+    for (const clueData of extractedClues) {
+      this.clueSystem.introduceClue({ ...clueData, turn: this.turn });
+    }
+    
+    // 8. 生成选择
     const choices = await this.narrativeEngine.generateChoices(narrativeContext);
     
     // 将 choices 添加到 context，供后续使用
     narrativeContext.choices = choices;
     
-    // 7. 返回叙事和选择给玩家
+    // 9. 返回叙事和选择给玩家
     return {
       turn: this.turn,
       narrative,
       choices,
       context: narrativeContext,
-      transition: transition // 返回转换信息
+      transition: transition,
+      clues: {
+        extracted: extractedClues,
+        active: this.clueSystem.getActiveClues()
+      }
     };
   }
 
@@ -358,7 +374,12 @@ class TurnManager {
         history: this.spotlightHistory.slice(-5),
         consecutiveCount: this.getConsecutiveCount(spotlightNPC)
       },
-      transition: transition // 场景转换信息
+      transition: transition,
+      clues: {
+        followUps: this.clueSystem.checkFollowUps(turn, player, spotlightNPC),
+        active: this.clueSystem.getActiveClues(),
+        stats: this.clueSystem.getStats()
+      }
     };
   }
 
