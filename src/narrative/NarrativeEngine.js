@@ -168,6 +168,50 @@ class NarrativeEngine {
       knotDelta: 1
     };
   }
+
+  /**
+   * 生成后续叙事（选择后的故事发展）
+   */
+  async generateFollowUp(context) {
+    if (this.ai) {
+      const messages = this.buildFollowUpMessages(context);
+      return await this.ai.callAPI(messages);
+    }
+    
+    return this.generatePlaceholderFollowUp(context);
+  }
+
+  /**
+   * 构建后续叙事Prompt
+   */
+  buildFollowUpMessages(context) {
+    const systemPrompt = `你是《72Hours》的叙事导演。
+根据刚才的选择结果，生成一段后续叙事，推进故事发展。
+
+【要求】
+1. 80-120字，承接上文
+2. 描述选择后的直接后果和场景变化
+3. 为"下一回合"做铺垫
+4. 保持粗粝、留白的叙事风格
+5. 使用第二人称"你"
+
+【风格】
+- 强调动作和环境变化
+- 不解释心理，只呈现外在
+- 时代感（1851年清末）`;
+
+    const userPrompt = this.formatContext(context) + 
+      `\n\n刚才的结果：${context.previousResult?.narrative || '选择已执行'}\n\n请生成后续叙事，推进故事发展：`;
+
+    return [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ];
+  }
+
+  generatePlaceholderFollowUp(context) {
+    return '故事继续发展，新的情况正在出现...';
+  }
 }
 
 // 导出

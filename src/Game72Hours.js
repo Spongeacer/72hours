@@ -307,6 +307,51 @@ ${history.map(h => `- 第${h.turn}回合：${h.event}`).join('\n')}
 游戏结束于第${this.gameState.turn}回合。
 `;
   }
+
+  /**
+   * 执行选择（供API调用）
+   */
+  async executeChoice(choiceId) {
+    if (!this.isRunning || this.isGameOver) {
+      return { error: '游戏未运行或已结束' };
+    }
+    
+    const currentContext = this.turnManager.currentContext;
+    if (!currentContext || !currentContext.choices) {
+      return { error: '当前没有可执行的选择' };
+    }
+    
+    // 找到对应的选择
+    const choice = currentContext.choices.find(c => c.id === choiceId);
+    if (!choice) {
+      return { error: '无效的选择ID' };
+    }
+    
+    // 处理选择
+    const result = await this.turnManager.processChoice(choice, currentContext);
+    
+    // 生成后续叙事（如果有AI接口）
+    let followUpNarrative = null;
+    if (this.aiInterface && result.success) {
+      try {
+        const followUpContext = {
+          ...currentContext,
+          previousResult: result
+        };
+        followUpNarrative = await this.narrativeEngine.generateFollowUp(followUpContext);
+      } catch (e) {
+        console.error('生成后续叙事失败:', e);
+      }
+    }
+    
+    return {
+      success: true,
+      resultText: result.narrative || result.text || '选择已执行',
+      followUpNarrative: followUpNarrative,
+      stateChanges: result.stateChanges,
+      player: this.gameState.player
+    };
+  }
 }
 
 // 导出
