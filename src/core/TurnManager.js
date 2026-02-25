@@ -9,6 +9,7 @@ const { CoordinateSystem } = require('../core/CoordinateSystem');
 const { SceneLocationSystem } = require('../core/SceneLocationSystem');
 const { ClueSystem } = require('../core/ClueSystem');
 const { AtmosphereSystem } = require('../core/AtmosphereSystem');
+const { ResultDiversitySystem } = require('../core/ResultDiversitySystem');
 const { Utils } = require('../utils/Utils');
 
 class TurnManager {
@@ -24,6 +25,7 @@ class TurnManager {
     this.sceneLocationSystem = new SceneLocationSystem();
     this.clueSystem = new ClueSystem(); // 线索系统
     this.atmosphereSystem = new AtmosphereSystem(); // 氛围系统
+    this.resultDiversitySystem = new ResultDiversitySystem(); // 结果多样性系统
     
     this.turn = 0;
     
@@ -99,14 +101,20 @@ class TurnManager {
     const spotlightNPC = context.spotlightNPC;
     
     // 7. 生成结果描述
-    const result = await this.narrativeEngine.generateResult(context, choice);
+    let result = await this.narrativeEngine.generateResult(context, choice);
     
-    // 8. 更新状态
+    // 8. 应用结果多样性（基于 DESIGN.md：物理驱动叙事）
+    result = this.resultDiversitySystem.generateDiverseResult(choice, context, result);
+    
+    // 9. 更新状态
     this.updatePlayerStates(player, result);
     this.updateNPCStates(spotlightNPC, result);
     this.updateRelationships(player, spotlightNPC, result);
     
-    // 9. 检查游戏结束
+    // 10. 应用额外效果（来自结果多样性系统）
+    this.applyDiverseEffects(result, player, spotlightNPC);
+    
+    // 11. 检查游戏结束
     const gameOver = this.checkGameOver();
     
     return {
@@ -449,6 +457,46 @@ class TurnManager {
     }
   }
 
+  /**
+   * 应用多样化的效果
+   * 基于 DESIGN.md：物理驱动叙事，玩家是催化剂
+   */
+  applyDiverseEffects(result, player, npc) {
+    // 应用NPC移动效果
+    if (result.npcMove && npc) {
+      if (result.npcMove.action === 'follow') {
+        // NPC跟随玩家
+        npc.position = { ...player.position };
+        console.log(`[结果多样性] ${npc.name}决定跟随玩家`);
+      } else if (result.npcMove.action === 'leave') {
+        // NPC离开当前位置
+        const escapeDir = {
+          x: npc.position.x - player.position.x,
+          y: npc.position.y - player.position.y
+        };
+        const normalized = this.normalizeVector(escapeDir);
+        npc.position.x += normalized.x * 2;
+        npc.position.y += normalized.y * 2;
+        console.log(`[结果多样性] ${npc.name}选择离开`);
+      }
+    }
+    
+    // 应用位置变化效果
+    if (result.positionChange) {
+      player.position = result.positionChange;
+      console.log(`[结果多样性] 玩家位置变化`);
+    }
+  }
+  
+  /**
+   * 向量归一化辅助函数
+   */
+  normalizeVector(vec) {
+    const length = Math.sqrt(vec.x * vec.x + vec.y * vec.y);
+    if (length === 0) return { x: 0, y: 0 };
+    return { x: vec.x / length, y: vec.y / length };
+  }
+  
   /**
    * 更新关系
    */
