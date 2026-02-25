@@ -5,7 +5,6 @@
 const games = new Map();
 
 module.exports = (req, res) => {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -16,8 +15,6 @@ module.exports = (req, res) => {
   }
   
   const url = req.url || '';
-  
-  // Parse body
   let body = {};
   if (req.body) {
     try {
@@ -29,19 +26,17 @@ module.exports = (req, res) => {
   
   // Test endpoint
   if (url.includes('/test')) {
-    return res.json({ 
-      success: true, 
-      message: 'API is working',
-      url: url
-    });
+    return res.json({ success: true, message: 'API is working' });
   }
   
   // Create game
   if (url.includes('/create')) {
     const sessionId = Date.now().toString();
+    const model = body.model || 'kimi';
     
     games.set(sessionId, {
       identity: body.identity || 'scholar',
+      model: model,
       turn: 1,
       player: { states: { fear: 20, aggression: 15, hunger: 10 } }
     });
@@ -56,7 +51,7 @@ module.exports = (req, res) => {
           { id: 'npc1', name: '神秘商人', knot: 3 },
           { id: 'npc2', name: '老学者', knot: 5 }
         ],
-        opening: '你站在古老的图书馆门前，空气中弥漫着陈旧纸张的气息。'
+        opening: '你站在古老的图书馆门前，空气中弥漫着陈旧纸张的气息。你的执念驱使你来寻找那本失落的古籍。'
       }
     });
   }
@@ -75,7 +70,7 @@ module.exports = (req, res) => {
       data: {
         turn: game.turn,
         scene: { time: '黄昏', weather: '阴沉', pressure: 45, omega: 2 },
-        narrative: '图书馆的大门缓缓打开，一个身影从阴影中走出...',
+        narrative: `第 ${game.turn} 回合：图书馆的大门缓缓打开，一个身影从阴影中走出...（使用模型: ${game.model}）`,
         choices: [
           { id: 1, text: '主动上前搭话' },
           { id: 2, text: '躲在暗处观察' },
@@ -108,23 +103,6 @@ module.exports = (req, res) => {
     });
   }
   
-  // Get NPCs
-  if (url.includes('/npcs')) {
-    return res.json({
-      success: true,
-      data: {
-        npcs: [
-          { id: 'npc1', name: '神秘商人', isUnlocked: true, knot: 3 },
-          { id: 'npc2', name: '老学者', isUnlocked: true, knot: 5 }
-        ]
-      }
-    });
-  }
-  
   // Default
-  return res.json({ 
-    success: true, 
-    message: '72Hours API',
-    url: url
-  });
+  return res.json({ success: true, message: '72Hours API', url: url });
 };
