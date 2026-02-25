@@ -5,10 +5,10 @@
 const { SiliconFlowAI } = require('./SiliconFlowAI');
 
 class NarrativeEngine {
-  constructor(aiInterface = null) {
+  constructor(aiInterface = null, model = 'deepseek-ai/DeepSeek-V3.2') {
     // 如果传入的是API key，创建SiliconFlowAI实例
     if (typeof aiInterface === 'string') {
-      this.ai = new SiliconFlowAI(aiInterface);
+      this.ai = new SiliconFlowAI(aiInterface, model);
     } else if (aiInterface) {
       this.ai = aiInterface;
     } else {

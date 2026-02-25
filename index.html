@@ -321,17 +321,9 @@
                     </div>
                 </div>
                 <div class="model-status">
-                    <span class="model-status-dot" id="modelStatusDot"></span>
-                    <span class="model-status-text" id="modelStatusText">检测中...</span>
+                    <span class="model-status-dot connected" id="modelStatusDot"></span>
+                    <span class="model-status-text" id="modelStatusText">DeepSeek-V3.2</span>
                 </div>
-                <select class="model-select" id="modelSelect">
-                    <option value="deepseek">DeepSeek</option>
-                    <option value="kimi" selected>Kimi</option>
-                    <option value="glm">ChatGLM</option>
-                    <option value="wenxin">文心一言</option>
-                    <option value="minimax">MiniMax</option>
-                    <option value="qwen">通义千问</option>
-                </select>
                 <div class="turn-indicator">
                     <div class="turn-number" id="turnNumber">1</div>
                     <div class="turn-label" id="turnLabel">第 1 / 72 回合</div>
@@ -368,41 +360,6 @@
         const storyMeta = document.getElementById('storyMeta');
         const turnNumber = document.getElementById('turnNumber');
         const turnLabel = document.getElementById('turnLabel');
-        const modelSelect = document.getElementById('modelSelect');
-        const modelStatusDot = document.getElementById('modelStatusDot');
-        const modelStatusText = document.getElementById('modelStatusText');
-        
-        // 检测模型连接状态
-        async function checkModelConnection() {
-            const model = modelSelect.value;
-            modelStatusDot.className = 'model-status-dot';
-            modelStatusText.textContent = '检测中...';
-            
-            try {
-                const response = await fetch(`${API_BASE}/test`, {
-                    method: 'GET',
-                    signal: AbortSignal.timeout(5000)
-                });
-                
-                if (response.ok) {
-                    modelStatusDot.className = 'model-status-dot connected';
-                    modelStatusText.textContent = `${model} 已连接`;
-                    return true;
-                } else {
-                    throw new Error('API返回错误');
-                }
-            } catch (error) {
-                modelStatusDot.className = 'model-status-dot disconnected';
-                modelStatusText.textContent = `${model} 未连接`;
-                return false;
-            }
-        }
-        
-        // 模型切换时重新检测
-        modelSelect.addEventListener('change', checkModelConnection);
-        
-        // 页面加载时检测
-        window.addEventListener('load', checkModelConnection);
         
         function showLoading() {
             loadingOverlay.classList.add('active');
@@ -419,8 +376,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        identity, 
-                        model: modelSelect.value 
+                        identity
                     })
                 });
                 

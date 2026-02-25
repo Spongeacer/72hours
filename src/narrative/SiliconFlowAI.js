@@ -5,7 +5,7 @@
 const { GAME_CONFIG } = require('../utils/Constants');
 
 class SiliconFlowAI {
-  constructor(apiKey, model = 'Qwen/Qwen2.5-72B-Instruct') {
+  constructor(apiKey, model = 'deepseek-ai/DeepSeek-V3.2') {
     this.apiKey = apiKey;
     this.model = model;
     this.baseURL = 'https://api.siliconflow.cn/v1';

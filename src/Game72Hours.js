@@ -13,6 +13,7 @@ class Game72Hours {
   constructor(options = {}) {
     this.config = { ...GAME_CONFIG, ...options.config };
     this.aiInterface = options.aiInterface || null;
+    this.model = options.model || 'deepseek-ai/DeepSeek-V3.2';
     
     // 游戏状态
     this.gameState = {
@@ -28,7 +29,7 @@ class Game72Hours {
     };
     
     // 核心系统
-    this.narrativeEngine = new NarrativeEngine(this.aiInterface);
+    this.narrativeEngine = new NarrativeEngine(this.aiInterface, this.model);
     this.turnManager = null;
     
     this.isRunning = false;

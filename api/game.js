@@ -53,9 +53,10 @@ module.exports = async (req, res) => {
         });
       }
       
-      // 创建真实游戏实例
+      // 创建真实游戏实例，固定使用 DeepSeek-V3.2
       const game = new Game72Hours({ 
-        aiInterface: apiKey
+        aiInterface: apiKey,
+        model: 'deepseek-ai/DeepSeek-V3.2'  // 固定使用 DeepSeek-V3.2
       });
       
       const init = game.init(body.identity || 'scholar');
