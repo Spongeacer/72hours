@@ -20,6 +20,11 @@ class TurnManager {
     this.coordinateSystem = new CoordinateSystem();
     
     this.turn = 0;
+    
+    // NPC轮换追踪（基于 DESIGN.md 涌现式原则）
+    this.spotlightHistory = []; // 记录最近几回合的聚光灯NPC
+    this.maxConsecutiveRounds = 3; // 同一NPC最多连续3回合
+    this.rotationCooldown = new Map(); // NPC轮换冷却
   }
 
   /**
@@ -204,17 +209,92 @@ class TurnManager {
   }
 
   /**
-   * 选择聚光灯NPC
+   * 选择聚光灯NPC（带轮换机制）
+   * 基于 DESIGN.md：物理驱动叙事，玩家是催化剂
+   * 
+   * 轮换原则：
+   * 1. 同一NPC最多连续3回合（避免故事线单一）
+   * 2. 高K值NPC有回归优先权（羁绊深的NPC会主动找你）
+   * 3. 物理引力仍是主要决定因素（F = G×M₁×M₂/r²×P×Ω）
+   * 4. 轮换不是强制，而是物理状态的涌现结果
    */
   selectSpotlight() {
     const { player, npcs, pressure, omega } = this.gameState;
+    const unlockedNPCs = npcs.filter(n => n.isUnlocked);
     
-    return this.gravityEngine.findSpotlightNPC(
-      player, 
-      npcs.filter(n => n.isUnlocked),
-      pressure,
-      omega
-    );
+    if (unlockedNPCs.length === 0) {
+      return { npc: null, gravity: 0 };
+    }
+    
+    // 计算所有NPC的引力
+    const npcGravities = unlockedNPCs.map(npc => ({
+      npc,
+      gravity: this.gravityEngine.calculateGravity(npc, player, pressure, omega),
+      knot: npc.getKnotWith(player.id)
+    }));
+    
+    // 检查是否需要轮换（同一NPC连续超过3回合）
+    const lastNPC = this.spotlightHistory[this.spotlightHistory.length - 1];
+    const consecutiveCount = this.getConsecutiveCount(lastNPC);
+    
+    if (consecutiveCount >= this.maxConsecutiveRounds && unlockedNPCs.length > 1) {
+      // 需要轮换 - 暂时降低当前聚光灯NPC的引力权重
+      // 这不是强制，而是模拟"故事自然流转"的涌现效果
+      const currentSpotlight = npcGravities.find(g => g.npc.id === lastNPC?.id);
+      if (currentSpotlight) {
+        currentSpotlight.gravity *= 0.5; // 降低50%权重，给其他NPC机会
+        currentSpotlight.rotationPenalty = true; // 标记为轮换惩罚
+      }
+    }
+    
+    // 高K值NPC的回归机制（羁绊深的NPC会主动找你）
+    // 这是"玩家是催化剂"的体现 - 你的存在改变了NPC的行为
+    npcGravities.forEach(g => {
+      if (g.knot >= 5 && g.npc.id !== lastNPC?.id) {
+        // 羁绊≥5的NPC，如果不在聚光灯，会增加"回归"引力
+        // 模拟NPC主动寻找玩家的行为
+        g.gravity *= (1 + (g.knot - 5) * 0.1); // 最多增加30%
+        g.regressionBoost = true; // 标记为回归增强
+      }
+    });
+    
+    // 按引力排序，选择最高的
+    npcGravities.sort((a, b) => b.gravity - a.gravity);
+    const selected = npcGravities[0];
+    
+    // 记录历史
+    this.spotlightHistory.push({
+      npcId: selected.npc.id,
+      turn: this.turn,
+      gravity: selected.gravity,
+      knot: selected.knot,
+      rotationPenalty: selected.rotationPenalty || false,
+      regressionBoost: selected.regressionBoost || false
+    });
+    
+    // 只保留最近10回合的历史
+    if (this.spotlightHistory.length > 10) {
+      this.spotlightHistory.shift();
+    }
+    
+    return { npc: selected.npc, gravity: selected.gravity };
+  }
+  
+  /**
+   * 获取同一NPC连续出现的回合数
+   */
+  getConsecutiveCount(npc) {
+    if (!npc || this.spotlightHistory.length === 0) return 0;
+    
+    let count = 0;
+    for (let i = this.spotlightHistory.length - 1; i >= 0; i--) {
+      if (this.spotlightHistory[i].npcId === npc.id) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return count;
   }
 
   /**
@@ -222,6 +302,9 @@ class TurnManager {
    */
   assembleContext(spotlightNPC, event) {
     const { player, pressure, omega, weather, turn } = this.gameState;
+    
+    // 获取轮换信息
+    const rotationInfo = this.getRotationInfo(spotlightNPC);
     
     return {
       turn,
@@ -236,9 +319,11 @@ class TurnManager {
         traits: spotlightNPC.traits,
         obsession: spotlightNPC.obsession,
         states: spotlightNPC.states,
-        knotWithPlayer: spotlightNPC.getKnotWith(player.id)
+        knotWithPlayer: spotlightNPC.getKnotWith(player.id),
+        // 添加轮换相关信息
+        rotationInfo: rotationInfo
       } : null,
-      spotlightNPC: spotlightNPC, // 保留完整的NPC实例引用
+      spotlightNPC: spotlightNPC,
       player: {
         identity: player.getIdentityDescription(),
         traits: player.traits,
@@ -246,9 +331,14 @@ class TurnManager {
         inventory: player.inventory.map(i => i.name),
         aura: player.getAura()
       },
-      playerRef: player, // 保留完整的player实例引用
+      playerRef: player,
       event: event ? { id: event.id, early: event.early } : null,
-      memories: this.getRelevantMemories(player, spotlightNPC)
+      memories: this.getRelevantMemories(player, spotlightNPC),
+      // 添加全局轮换状态
+      rotation: {
+        history: this.spotlightHistory.slice(-5), // 最近5回合
+        consecutiveCount: this.getConsecutiveCount(spotlightNPC)
+      }
     };
   }
 
@@ -356,6 +446,51 @@ class TurnManager {
    */
   getTurn() {
     return this.turn;
+  }
+  
+  /**
+   * 获取轮换信息（用于叙事提示）
+   * 基于 DESIGN.md：物理驱动叙事，故事自己涌现
+   */
+  getRotationInfo(spotlightNPC) {
+    if (!spotlightNPC || this.spotlightHistory.length === 0) {
+      return { type: 'first_meeting', description: '初次相遇' };
+    }
+    
+    const lastEntry = this.spotlightHistory[this.spotlightHistory.length - 1];
+    const consecutive = this.getConsecutiveCount(spotlightNPC);
+    const knot = spotlightNPC.getKnotWith(this.gameState.player.id);
+    
+    // 根据轮换状态生成叙事提示
+    if (consecutive >= 3) {
+      return {
+        type: 'deep_engagement',
+        description: '你们已经深入交流多时，故事在此刻聚焦',
+        hint: '可以体现羁绊的深化或关系的转折'
+      };
+    }
+    
+    if (lastEntry.npcId !== spotlightNPC.id && knot >= 5) {
+      return {
+        type: 'regression',
+        description: `${spotlightNPC.name}主动找到你`,
+        hint: '羁绊深的NPC会主动寻找玩家，体现"玩家是催化剂"'
+      };
+    }
+    
+    if (lastEntry.rotationPenalty && lastEntry.npcId === spotlightNPC.id) {
+      return {
+        type: 'forced_rotation',
+        description: '故事自然流转，新的角色进入视野',
+        hint: '避免单一NPC过度聚焦，保持故事多样性'
+      };
+    }
+    
+    return {
+      type: 'natural_flow',
+      description: '故事自然流淌',
+      hint: '物理引力决定聚光灯，玩家在场即影响'
+    };
   }
 }
 

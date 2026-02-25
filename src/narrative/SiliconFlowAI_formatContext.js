@@ -105,6 +105,15 @@ class SiliconFlowAI_formatContext {
       context += `物理影响：K值增加NPC质量，增强引力，使TA更容易成为聚光灯\n\n`;
     }
     
+    // 轮换信息
+    if (spotlight?.rotationInfo) {
+      context += `【故事流转】${spotlight.rotationInfo.description}\n`;
+      if (spotlight.rotationInfo.hint) {
+        context += `叙事提示：${spotlight.rotationInfo.hint}\n`;
+      }
+      context += `\n`;
+    }
+    
     // 玩家 - 催化剂
     context += `=== 玩家：催化剂 ===\n`;
     context += `身份：${player.identity}\n`;
