@@ -99,6 +99,14 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'game.html'));
 });
 
+// 获取服务器配置状态（用于前端判断是否显示 API Key 输入）
+app.get('/api/config', (req, res) => {
+  res.json(successResponse({
+    hasApiKey: !!SERVER_API_KEY,
+    defaultModel: DEFAULT_MODEL
+  }));
+});
+
 // 创建新游戏
 app.post('/api/game/create', async (req, res) => {
   try {
