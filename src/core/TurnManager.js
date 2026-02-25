@@ -45,6 +45,9 @@ class TurnManager {
     const narrative = await this.narrativeEngine.generateScene(narrativeContext);
     const choices = await this.narrativeEngine.generateChoices(narrativeContext);
     
+    // 将 choices 添加到 context，供后续使用
+    narrativeContext.choices = choices;
+    
     // 6. 返回叙事和选择给玩家
     return {
       turn: this.turn,
