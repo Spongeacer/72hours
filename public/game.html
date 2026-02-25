@@ -301,6 +301,7 @@
             currentContext: null,
             isProcessing: false,
             turn: 0,
+            serverHasApiKey: false,
             
             reset() {
                 this.gameId = null;
@@ -316,13 +317,42 @@
             document.getElementById('debugStatus').textContent = message;
         }
 
+        // 检查服务器配置
+        async function checkServerConfig() {
+            try {
+                debugLog('正在检查服务器配置...');
+                const response = await fetch('/api/config');
+                const result = await response.json();
+                
+                if (result.success && result.data.hasApiKey) {
+                    // 服务器已配置 API Key，隐藏输入框
+                    document.getElementById('apiKeyGroup').style.display = 'none';
+                    GameState.serverHasApiKey = true;
+                    debugLog('服务器已配置 API Key');
+                } else {
+                    // 显示 API Key 输入框
+                    document.getElementById('apiKeyGroup').style.display = 'block';
+                    GameState.serverHasApiKey = false;
+                    debugLog('需要客户端提供 API Key');
+                }
+            } catch (error) {
+                console.error('检查服务器配置失败:', error);
+                // 默认显示输入框
+                document.getElementById('apiKeyGroup').style.display = 'block';
+                GameState.serverHasApiKey = false;
+            }
+        }
+
+        // 页面加载时检查服务器配置
+        document.addEventListener('DOMContentLoaded', checkServerConfig);
+
         // 开始游戏
         async function startGame() {
-            const apiKey = document.getElementById('apiKey').value.trim();
+            const apiKey = GameState.serverHasApiKey ? null : document.getElementById('apiKey').value.trim();
             const identity = document.getElementById('identity').value;
             const model = document.getElementById('model').value;
 
-            if (!apiKey) {
+            if (!GameState.serverHasApiKey && !apiKey) {
                 alert('请输入 SiliconFlow API Key');
                 return;
             }
@@ -339,15 +369,16 @@
                     body: JSON.stringify({ apiKey, identity, model })
                 });
 
-                const data = await response.json();
-                debugLog('游戏创建响应', data);
+                const result = await response.json();
+                debugLog('游戏创建响应', result);
 
                 // 统一错误处理
-                if (!data.success) {
-                    throw new Error(data.error?.message || '创建游戏失败');
+                if (!result.success) {
+                    throw new Error(result.error?.message || '创建游戏失败');
                 }
 
-                GameState.gameId = data.data?.gameId || data.gameId;
+                const data = result.data;
+                GameState.gameId = data.gameId;
                 document.getElementById('debugGameId').textContent = data.gameId;
                 
                 // 显示游戏面板
@@ -356,7 +387,7 @@
                 document.getElementById('debugInfo').style.display = 'block';
                 
                 // 显示开场
-                document.getElementById('narrative').textContent = data.opening;
+                showNarrative(data.opening || '游戏开始');
                 
                 // 开始第一回合
                 await executeTurn();
@@ -405,7 +436,7 @@
                 
                 // 显示叙事
                 if (data.narrative) {
-                    document.getElementById('narrative').textContent = data.narrative;
+                    showNarrative(data.narrative);
                 }
                 
                 // 生成选择
@@ -512,13 +543,14 @@
                 // 确保 choice 有 id
                 const choiceId = choice.id || `choice_${index}`;
                 const choiceText = choice.text || `选择 ${index + 1}`;
-                
-                btn.textContent = `${index + 1}. ${choiceText}`;
+                const prefix = `${index + 1}. `;
                 
                 // 标记隐藏选择
                 if (choice.type === 'hidden' || choice.isHidden) {
                     btn.classList.add('hidden-choice');
-                    btn.innerHTML = `<span class="hidden-badge">隐藏</span>${btn.textContent}`;
+                    btn.innerHTML = `<span class="hidden-badge">隐藏</span>${prefix}${choiceText}`;
+                } else {
+                    btn.textContent = `${prefix}${choiceText}`;
                 }
                 
                 btn.onclick = () => handleChoice(choiceId);
@@ -533,16 +565,33 @@
             document.getElementById('turnDisplay').textContent = `${state.turn || 0}/72`;
             
             if (state.datetime) {
-                document.getElementById('timeDisplay').textContent = 
-                    new Date(state.datetime).toLocaleString('zh-CN', {
-                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit'
-                    });
+                document.getElementById('timeDisplay').textContent = formatGameTime(state.datetime);
             }
             
             document.getElementById('pressureDisplay').textContent = 
                 `${Math.round(state.pressure || 0)}/100`;
             document.getElementById('omegaDisplay').textContent = 
                 (state.omega || 0).toFixed(2);
+        }
+
+        // 格式化游戏时间
+        function formatGameTime(datetime) {
+            // 游戏时间格式: 1851年1月8日 01:00
+            if (typeof datetime === 'string') {
+                return datetime;
+            }
+            // 如果是 Date 对象，手动格式化
+            try {
+                const date = new Date(datetime);
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                const hour = date.getHours().toString().padStart(2, '0');
+                const minute = date.getMinutes().toString().padStart(2, '0');
+                return `${year}年${month}月${day}日 ${hour}:${minute}`;
+            } catch (e) {
+                return String(datetime);
+            }
         }
 
         // 显示/隐藏加载
@@ -566,10 +615,18 @@
             document.getElementById('resultPanel').style.display = 'none';
         }
 
+        // 显示叙事（带颜色重置）
+        function showNarrative(text) {
+            const narrative = document.getElementById('narrative');
+            narrative.textContent = text;
+            narrative.style.color = '#d4c4a8';  // 重置为正常颜色
+        }
+
         // 显示错误
         function showError(message) {
-            document.getElementById('narrative').textContent = message;
-            document.getElementById('narrative').style.color = '#c9a0a0';
+            const narrative = document.getElementById('narrative');
+            narrative.textContent = message;
+            narrative.style.color = '#c9a0a0';
         }
 
         // 添加重新开始按钮
