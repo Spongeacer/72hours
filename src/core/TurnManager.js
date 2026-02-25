@@ -8,6 +8,7 @@ const { MassSystem } = require('../core/MassSystem');
 const { CoordinateSystem } = require('../core/CoordinateSystem');
 const { SceneLocationSystem } = require('../core/SceneLocationSystem');
 const { ClueSystem } = require('../core/ClueSystem');
+const { AtmosphereSystem } = require('../core/AtmosphereSystem');
 const { Utils } = require('../utils/Utils');
 
 class TurnManager {
@@ -22,6 +23,7 @@ class TurnManager {
     this.coordinateSystem = new CoordinateSystem();
     this.sceneLocationSystem = new SceneLocationSystem();
     this.clueSystem = new ClueSystem(); // 线索系统
+    this.atmosphereSystem = new AtmosphereSystem(); // 氛围系统
     
     this.turn = 0;
     
@@ -336,6 +338,11 @@ class TurnManager {
     const currentLocation = this.currentLocation || 
       this.sceneLocationSystem.getLocationByCoordinates(player.position.x, player.position.y);
     
+    // 生成氛围信息
+    const timeOfDay = this.getTimeOfDay();
+    const atmosphere = this.atmosphereSystem.generateAtmosphere(pressure, omega, weather, timeOfDay);
+    const atmosphereHints = this.atmosphereSystem.generateNarrativeHints(pressure, omega);
+    
     return {
       turn,
       scene: {
@@ -348,7 +355,11 @@ class TurnManager {
           name: currentLocation.name,
           description: currentLocation.description,
           tags: currentLocation.tags
-        } : null
+        } : null,
+        atmosphere: {
+          ...atmosphere,
+          hints: atmosphereHints
+        }
       },
       spotlight: spotlightNPC ? {
         name: spotlightNPC.name,

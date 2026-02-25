@@ -17,24 +17,48 @@ class SiliconFlowAI_formatContext {
     
     // 压强氛围描述 - 物理驱动
     const pressure = scene.pressure;
-    let pressureDesc = '';
-    let pressureNarrativeHint = '';
-    if (pressure < 30) {
-      pressureDesc = '平静期';
-      pressureNarrativeHint = '多描写日常细节，异常更隐晦（如"他今天话特别少"）';
-    } else if (pressure < 50) {
-      pressureDesc = '紧张期';
-      pressureNarrativeHint = '开始出现紧张迹象（如"路上行人神色匆匆"）';
-    } else if (pressure < 70) {
-      pressureDesc = '高压期';
-      pressureNarrativeHint = '冲突随时可能爆发，危险元素明显增加';
-    } else {
-      pressureDesc = '危机期';
-      pressureNarrativeHint = '生死存亡，必须有危险或冲突的元素';
-    }
+    const atmosphere = scene.atmosphere;
     
-    context += `环境压强 P：${pressure}/100（${pressureDesc}）\n`;
-    context += `叙事提示：${pressureNarrativeHint}\n`;
+    if (atmosphere) {
+      context += `【当前氛围】${atmosphere.combined}\n\n`;
+      
+      context += `【压强P=${pressure} - ${atmosphere.pressure.name}】\n`;
+      context += `描述：${atmosphere.pressure.description}\n`;
+      if (scene.atmosphere?.hints) {
+        context += `环境元素：${scene.atmosphere.hints.environmental}\n`;
+        context += `行为特征：${scene.atmosphere.hints.behavioral}\n`;
+        context += `情绪基调：${scene.atmosphere.hints.emotional}\n`;
+        context += `冲突水平：${scene.atmosphere.hints.conflict}\n`;
+      }
+      context += `\n`;
+      
+      context += `【全局因子Ω=${scene.omega} - ${atmosphere.omega.name}】\n`;
+      context += `描述：${atmosphere.omega.description}\n`;
+      if (scene.atmosphere?.hints?.omegaHint) {
+        context += `命运感：${scene.atmosphere.hints.omegaHint}\n`;
+      }
+      context += `\n`;
+    } else {
+      // 兼容旧版本
+      let pressureDesc = '';
+      let pressureNarrativeHint = '';
+      if (pressure < 30) {
+        pressureDesc = '平静期';
+        pressureNarrativeHint = '多描写日常细节，异常更隐晦';
+      } else if (pressure < 50) {
+        pressureDesc = '紧张期';
+        pressureNarrativeHint = '开始出现紧张迹象';
+      } else if (pressure < 70) {
+        pressureDesc = '高压期';
+        pressureNarrativeHint = '冲突随时可能爆发';
+      } else {
+        pressureDesc = '危机期';
+        pressureNarrativeHint = '生死存亡，必须有危险或冲突';
+      }
+      
+      context += `环境压强 P：${pressure}/100（${pressureDesc}）\n`;
+      context += `叙事提示：${pressureNarrativeHint}\n\n`;
+    }
     
     // Ω值 - 历史大势
     const omega = scene.omega;
