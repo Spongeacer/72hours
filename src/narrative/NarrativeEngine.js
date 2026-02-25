@@ -200,8 +200,16 @@ class NarrativeEngine {
 - 不解释心理，只呈现外在
 - 时代感（1851年清末）`;
 
-    const userPrompt = this.formatContext(context) + 
-      `\n\n刚才的结果：${context.previousResult?.narrative || '选择已执行'}\n\n请生成后续叙事，推进故事发展：`;
+    // 使用 ai 实例的 formatContext 方法（如果存在），否则使用简化的上下文
+    let userPrompt;
+    if (this.ai && this.ai.formatContext) {
+      userPrompt = this.ai.formatContext(context) + 
+        `\n\n刚才的结果：${context.previousResult?.narrative || '选择已执行'}\n\n请生成后续叙事，推进故事发展：`;
+    } else {
+      // 简化的上下文描述
+      const scene = context.scene || {};
+      userPrompt = `=== 当前场景 ===\n时间：${scene.time || '未知'}\n天气：${scene.weather || '未知'}\n环境压强：${scene.pressure || 0}/100\n\n刚才的结果：${context.previousResult?.narrative || '选择已执行'}\n\n请生成后续叙事，推进故事发展：`;
+    }
 
     return [
       { role: 'system', content: systemPrompt },

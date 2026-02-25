@@ -1,10 +1,11 @@
 /**
- * AI接口实现 - 硅基流动 (SiliconFlow)
+ * 流式 AI 接口实现 - 硅基流动 (SiliconFlow)
+ * 支持 Server-Sent Events (SSE) 流式输出
  */
 
 const { GAME_CONFIG } = require('../utils/Constants');
 
-class SiliconFlowAI {
+class SiliconFlowAIStream {
   constructor(apiKey, model = 'deepseek-ai/DeepSeek-V3.2') {
     this.apiKey = apiKey;
     this.model = model;
@@ -12,29 +13,117 @@ class SiliconFlowAI {
   }
 
   /**
-   * 生成叙事文本
+   * 流式生成叙事文本
+   * @param {Object} promptData - 上下文数据
+   * @param {Function} onChunk - 每个数据块的回调 (chunk, fullText)
+   * @returns {Promise<string>} 完整文本
    */
-  async generateNarrative(promptData) {
+  async generateNarrativeStream(promptData, onChunk) {
     const messages = this.buildNarrativeMessages(promptData);
-    return await this.callAPI(messages);
+    return await this.callAPIStream(messages, onChunk);
   }
 
   /**
-   * 生成选择
+   * 流式生成选择
+   * @param {Object} promptData - 上下文数据  
+   * @param {Function} onChunk - 每个数据块的回调
+   * @returns {Promise<Array>} 解析后的选择数组
    */
-  async generateChoices(promptData) {
+  async generateChoicesStream(promptData, onChunk) {
     const messages = this.buildChoicesMessages(promptData);
-    const response = await this.callAPI(messages);
-    return this.parseChoicesResponse(response);
+    const fullText = await this.callAPIStream(messages, onChunk);
+    return this.parseChoicesResponse(fullText);
   }
 
   /**
-   * 生成结果
+   * 流式生成结果
+   * @param {Object} promptData - 上下文数据
+   * @param {Object} choice - 玩家选择
+   * @param {Function} onChunk - 每个数据块的回调
+   * @returns {Promise<Object>} 解析后的结果对象
    */
-  async generateResult(promptData, choice) {
+  async generateResultStream(promptData, choice, onChunk) {
     const messages = this.buildResultMessages(promptData, choice);
-    const response = await this.callAPI(messages);
-    return this.parseResultResponse(response);
+    const fullText = await this.callAPIStream(messages, onChunk);
+    return this.parseResultResponse(fullText);
+  }
+
+  /**
+   * 流式生成后续叙事
+   * @param {Object} context - 上下文
+   * @param {Function} onChunk - 每个数据块的回调
+   * @returns {Promise<string>} 完整文本
+   */
+  async generateFollowUpStream(context, onChunk) {
+    const messages = this.buildFollowUpMessages(context);
+    return await this.callAPIStream(messages, onChunk);
+  }
+
+  /**
+   * 流式调用 API
+   * @param {Array} messages - 消息数组
+   * @param {Function} onChunk - 每个数据块的回调 (chunk, fullText)
+   * @returns {Promise<string>} 完整文本
+   */
+  async callAPIStream(messages, onChunk) {
+    const response = await fetch(`${this.baseURL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: messages,
+        temperature: 0.8,
+        max_tokens: 500,
+        stream: true  // 启用流式输出
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`API调用失败: ${error}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.trim() === '') continue;
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content || '';
+              if (content) {
+                fullText += content;
+                if (onChunk) {
+                  onChunk(content, fullText);
+                }
+              }
+            } catch (e) {
+              // 忽略解析错误
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    return fullText;
   }
 
   /**
@@ -141,6 +230,34 @@ class SiliconFlowAI {
   }
 
   /**
+   * 构建后续叙事Prompt
+   */
+  buildFollowUpMessages(context) {
+    const systemPrompt = `你是《72Hours》的叙事导演。
+根据刚才的选择结果，生成一段后续叙事，推进故事发展。
+
+【要求】
+1. 80-120字，承接上文
+2. 描述选择后的直接后果和场景变化
+3. 为"下一回合"做铺垫
+4. 保持粗粝、留白的叙事风格
+5. 使用第二人称"你"
+
+【风格】
+- 强调动作和环境变化
+- 不解释心理，只呈现外在
+- 时代感（1851年清末）`;
+
+    const scene = context.scene || {};
+    const userPrompt = `=== 当前场景 ===\n时间：${scene.time || '未知'}\n天气：${scene.weather || '未知'}\n环境压强：${scene.pressure || 0}/100\n\n刚才的结果：${context.previousResult?.narrative || '选择已执行'}\n\n请生成后续叙事，推进故事发展：`;
+
+    return [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ];
+  }
+
+  /**
    * 格式化上下文
    */
   formatContext(data) {
@@ -183,53 +300,6 @@ class SiliconFlowAI {
   }
 
   /**
-   * 生成文本（通用方法）
-   * @param {string} prompt - 提示词
-   * @returns {Promise<string>} 生成的文本
-   */
-  async generateText(prompt) {
-    const messages = [
-      { role: 'system', content: '你是《72Hours》的AI助手，负责生成游戏内容。' },
-      { role: 'user', content: prompt }
-    ];
-    return await this.callAPI(messages);
-  }
-
-  /**
-   * 调用API
-   */
-  async callAPI(messages) {
-    try {
-      const response = await fetch(`${this.baseURL}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
-        },
-        body: JSON.stringify({
-          model: this.model,
-          messages: messages,
-          temperature: 0.8,
-          max_tokens: 500,
-          stream: false
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`API调用失败: ${error}`);
-      }
-
-      const data = await response.json();
-      return data.choices[0].message.content;
-    } catch (error) {
-      console.error('AI调用失败:', error);
-      // 返回占位文本
-      return this.getFallbackResponse(messages);
-    }
-  }
-
-  /**
    * 解析选择响应
    */
   parseChoicesResponse(response) {
@@ -238,7 +308,6 @@ class SiliconFlowAI {
     
     for (let i = 0; i < lines.length && choices.length < 3; i++) {
       const line = lines[i].trim();
-      // 匹配 "1. xxx" 或 "- xxx" 格式
       const match = line.match(/^(?:\d+[.\s]+|-\s*)(.+)$/);
       if (match) {
         choices.push({
@@ -248,7 +317,6 @@ class SiliconFlowAI {
       }
     }
     
-    // 如果解析失败，返回默认选择
     if (choices.length === 0) {
       return [
         { id: 1, text: '你沉默地看着对方，手按在刀柄上' },
@@ -264,11 +332,9 @@ class SiliconFlowAI {
    * 解析结果响应
    */
   parseResultResponse(response) {
-    // 提取结果描述（在"状态变化"之前的部分）
     const resultMatch = response.match(/(.+?)(?=状态变化|$)/s);
     const resultText = resultMatch ? resultMatch[1].trim() : response.trim();
     
-    // 提取状态变化
     const stateDelta = {};
     const knotMatch = response.match(/knot\s*([+-]\d+\.?\d*)/i);
     const fearMatch = response.match(/fear\s*([+-]\d+)/i);
@@ -279,7 +345,6 @@ class SiliconFlowAI {
     if (aggMatch) stateDelta.aggression = parseInt(aggMatch[1]);
     if (hungerMatch) stateDelta.hunger = parseInt(hungerMatch[1]);
     
-    // 默认变化
     if (Object.keys(stateDelta).length === 0) {
       stateDelta.fear = 5;
     }
@@ -290,16 +355,6 @@ class SiliconFlowAI {
       knotDelta: knotMatch ? parseFloat(knotMatch[1]) : 0.5
     };
   }
-
-  /**
-   * 获取备用响应
-   */
-  getFallbackResponse(messages) {
-    return '（AI服务暂时不可用，使用默认叙事）';
-  }
 }
 
-// 导出
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { SiliconFlowAI };
-}
+module.exports = { SiliconFlowAIStream };
