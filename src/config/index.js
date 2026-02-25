@@ -1,123 +1,150 @@
 /**
  * 统一配置管理
+ * 集中管理所有游戏配置
  */
 
-const config = {
-  // 游戏配置
-  game: {
-    maxTurns: 72,
-    initialPressure: 10,
-    initialOmega: 1.0,
-    startDate: '1851-01-08T00:00:00',
-    
-    // 质量系统
-    mass: {
-      baseRange: { min: 2, max: 6 },
-      storyBonus: 0.5,    // 每回合增加
-      knotBonus: 0.3,     // 每次深度交互
-      objectMultiplier: 1.0
+// 游戏基础配置
+const GAME_CONFIG = {
+  // 网格与世界
+  GRID_SIZE: 5,
+  MAX_TURNS: 72,
+  START_DATE: new Date('1851-01-08T00:00:00'),
+  
+  // 物理参数
+  GRAVITY: {
+    G: 0.8,
+    PRESSURE_MULTIPLIER: 0.05
+  },
+  
+  // 压强系统
+  PRESSURE: {
+    BASE_GROWTH: 0.8,
+    VIOLENCE_BONUS: 5,
+    THRESHOLD_RAID: 50,
+    THRESHOLD_DIVINE: 60
+  },
+  
+  // 全局因子 Ω
+  OMEGA: {
+    INITIAL: 1.0,
+    LINEAR_GROWTH: 0.02,
+    EXPONENTIAL_THRESHOLD: 60,
+    EXPONENTIAL_BASE: 1.05,
+    MAX: 5.0
+  },
+  
+  // 质量系统
+  MASS: {
+    BASE: {
+      ELITE: 5,
+      NORMAL: 2,
+      PLAYER: 3
     },
-    
-    // 压强系统
-    pressure: {
-      initial: 10,
-      growthRate: 0.8,    // 每回合增长
-      max: 100
-    },
-    
-    // 全局因子
-    omega: {
-      initial: 1.0,
-      growthRate: 0.02,   // 前期线性增长
-      exponentialThreshold: 60,  // 60回合后指数增长
-      exponentialRate: 0.05
-    }
+    STORY_PER_EVENT: 0.1,
+    KNOT_PER_INTERACTION: 0.5,
+    OBJECT_KEY: 3,
+    OBJECT_NORMAL: 1
   },
-
-  // AI 配置
-  ai: {
-    defaultProvider: 'siliconflow',
-    model: 'deepseek-ai/DeepSeek-V3.2',
-    temperature: 0.8,
-    maxTokens: 500,
-    timeout: 30000,  // 30秒超时
-    
-    // 流式配置
-    stream: {
-      enabled: true,
-      chunkDelay: 50  // 模拟打字机效果的延迟
-    }
+  
+  // 引力陷阱
+  TRAP: {
+    INITIAL: 0,
+    BONUS_PER_DEEP_EVENT: 1.0,
+    DECAY_RATE: 0.1,
+    MAX: 5.0
   },
-
-  // 特质配置
-  traits: {
-    maxPerCharacter: 3,
-    
-    // 特质类型权重（用于随机选择）
-    weights: {
-      boldness: 1,
-      temperament: 1,
-      desire: 1,
-      sociability: 1,
-      morality: 1,
-      zeal: 0.5
-    }
+  
+  // NPC移动
+  MOVEMENT: {
+    FEAR_ESCAPE_THRESHOLD: 70,
+    FEAR_BIAS_FACTOR: 0.5,
+    RANDOM_WALK_RANGE: 2
   },
-
-  // 角色生成配置
-  character: {
-    ageRange: { min: 20, max: 50 },
-    maxItems: 3,
-    maxRelations: 2
-  },
-
-  // NPC 配置
-  npc: {
-    bondedCount: 2,     // 每个玩家初始关联NPC数
-    eliteCount: 5,      // 精英NPC数量
-    unlockThreshold: {  // 解锁条件
-      minTurn: 40,
-      minPressure: 50
-    }
-  },
-
-  // 存储配置
-  storage: {
-    prefix: '72hours_',
-    sessionKey: 'sessionId',
-    identityKey: 'identity',
-    traitsKey: 'traits',
-    gameDataKey: 'gameData'
+  
+  // 状态阈值
+  STATES: {
+    FEAR_ESCAPE: 70,
+    AGGRESSION_VIOLENT: 70,
+    HUNGER_DESPERATE: 70,
+    INJURY_FATAL: 100
   }
 };
 
-/**
- * 获取配置
- * @param {string} path - 配置路径，如 'game.maxTurns'
- * @param {*} defaultValue - 默认值
- * @returns {*} 配置值
- */
-function getConfig(path, defaultValue = null) {
-  const keys = path.split('.');
-  let value = config;
-  
-  for (const key of keys) {
-    if (value && typeof value === 'object' && key in value) {
-      value = value[key];
-    } else {
-      return defaultValue;
-    }
+// 身份配置
+const IDENTITIES = {
+  SCHOLAR: {
+    id: 'scholar',
+    name: '村中的读书人',
+    baseMass: 3,
+    traits: ['scholar'],
+    pressureModifier: 0.8,
+    initialStates: { fear: 30, aggression: 20, hunger: 40, injury: 0 }
+  },
+  LANDLORD: {
+    id: 'landlord',
+    name: '金田村的地主',
+    baseMass: 6,
+    traits: ['wealthy', 'landlord'],
+    pressureModifier: 1.0,
+    initialStates: { fear: 40, aggression: 30, hunger: 20, injury: 0 }
+  },
+  SOLDIER: {
+    id: 'soldier',
+    name: '官府的士兵',
+    baseMass: 5,
+    traits: ['soldier'],
+    pressureModifier: 1.2,
+    initialStates: { fear: 20, aggression: 60, hunger: 50, injury: 0 }
+  },
+  CULTIST: {
+    id: 'cultist',
+    name: '教会的受众',
+    baseMass: 4,
+    traits: ['cultist'],
+    pressureModifier: 1.0,
+    initialStates: { fear: 50, aggression: 40, hunger: 30, injury: 0 }
   }
+};
+
+// AI 模型配置
+const AI_MODELS = {
+  MINIMAX: {
+    id: 'Pro/MiniMaxAI/MiniMax-M2.1',
+    name: 'MiniMax-M2.1',
+    description: '速度快',
+    recommended: true
+  },
+  DEEPSEEK: {
+    id: 'deepseek-ai/DeepSeek-V3.2',
+    name: 'DeepSeek-V3.2',
+    description: '质量好，较慢',
+    recommended: false
+  }
+};
+
+// 天气配置
+const WEATHER = {
+  TYPES: ['clear', 'rain', 'fog', 'night'],
+  TRANSITION: {
+    hour6_18: 'clear',
+    hour20_5: 'night',
+    default: 'fog'
+  }
+};
+
+// 导出
+module.exports = {
+  GAME_CONFIG,
+  IDENTITIES,
+  AI_MODELS,
+  WEATHER,
   
-  return value;
-}
-
-/**
- * 合并配置
- * @param {Object} customConfig - 自定义配置
- */
-function mergeConfig(customConfig) {
-  Object.assign(config, customConfig);
-}
-
-module.exports = { config, getConfig, mergeConfig };
+  // 辅助函数
+  getIdentityConfig(id) {
+    return Object.values(IDENTITIES).find(i => i.id === id) || IDENTITIES.SCHOLAR;
+  },
+  
+  getModelConfig(id) {
+    return Object.values(AI_MODELS).find(m => m.id === id) || AI_MODELS.MINIMAX;
+  }
+};
