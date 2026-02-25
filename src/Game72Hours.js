@@ -346,7 +346,9 @@ ${history.map(h => `- 第${h.turn}回合：${h.event}`).join('\n')}
     
     return {
       success: true,
-      resultText: result.narrative || result.text || '选择已执行',
+      result: {
+        text: result.narrative || result.text || '选择已执行'
+      },
       followUpNarrative: followUpNarrative,
       stateChanges: result.stateChanges,
       player: this.gameState.player

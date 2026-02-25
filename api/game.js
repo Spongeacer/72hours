@@ -133,14 +133,12 @@ module.exports = async (req, res) => {
       return res.json({
         success: true,
         data: {
-          result: {
-            text: result.resultText
-          },
+          result: result.result,
           followUpNarrative: result.followUpNarrative || '故事继续发展...',
           stateChanges: result.stateChanges,
           player: {
-            states: game.gameState.player.states,
-            inventory: game.gameState.player.inventory.map(i => i.name)
+            states: result.player.states,
+            inventory: result.player.inventory.map(i => i.name)
           }
         }
       });
