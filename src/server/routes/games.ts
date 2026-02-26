@@ -315,33 +315,41 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
     // 事件1: 回合1-18 (初始已解锁4个)
     // 事件2: 回合19-36 (解锁第5-8个NPC)
     // 事件3: 回合37-54 (解锁第9-10个NPC + 关键历史人物)
-    // 事件4: 回合55-72 (最后一个回合)
+    // 事件4: 回合55-72 (最后一个回合，高潮/结局)
     let unlockedNPCsThisTurn: string[] = [];
     const previousStoryEvent = state.storyEvent || 0;
     
     if (state.turn >= 55 && previousStoryEvent < 4) {
-      // 事件4: 最终阶段
+      // 事件4: 最终阶段（高潮/结局）
       state.storyEvent = 4;
-      unlockedNPCsThisTurn = ['洪秀全', '杨秀清', '萧朝贵']; // 关键历史人物
-      unlockedNPCsThisTurn.forEach((name: string) => {
-        state.npcs.push({
-          id: `npc_${Date.now()}_${state.npcs.length + 1}`,
-          name,
-          traits: [],
-          isBonded: true,
-          isUnlocked: true,
-          unlockStage: 4
-        });
-      });
+      // 事件4不新增NPC，而是触发最终剧情
+      
     } else if (state.turn >= 37 && previousStoryEvent < 3) {
-      // 事件3: 解锁剩余NPC
+      // 事件3: 解锁剩余NPC + 关键历史人物
       state.storyEvent = 3;
+      
+      // 解锁第9-10个NPC
       state.npcs.forEach((npc: any) => {
         if (npc.unlockStage === 3 && !npc.isUnlocked) {
           npc.isUnlocked = true;
           unlockedNPCsThisTurn.push(npc.name);
         }
       });
+      
+      // 添加关键历史人物
+      const historicalFigures = ['洪秀全', '杨秀清', '萧朝贵'];
+      historicalFigures.forEach((name: string) => {
+        state.npcs.push({
+          id: `npc_${Date.now()}_${state.npcs.length + 1}`,
+          name,
+          traits: [],
+          isBonded: true,
+          isUnlocked: true,
+          unlockStage: 3
+        });
+        unlockedNPCsThisTurn.push(name);
+      });
+      
     } else if (state.turn >= 19 && previousStoryEvent < 2) {
       // 事件2: 解锁第5-8个NPC
       state.storyEvent = 2;
