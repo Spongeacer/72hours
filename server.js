@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3000;
 
 // 从环境变量获取配置
 const SERVER_API_KEY = process.env.SILICONFLOW_API_KEY;
-const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'Pro/MiniMaxAI/MiniMax-M2.1';
+const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'Pro/MiniMaxAI/MiniMax-M2.5';
 
 // 限流配置
 const limiter = rateLimit({

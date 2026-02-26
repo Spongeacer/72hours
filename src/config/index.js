@@ -109,8 +109,8 @@ const IDENTITIES = {
 // AI 模型配置
 const AI_MODELS = {
   MINIMAX: {
-    id: 'Pro/MiniMaxAI/MiniMax-M2.1',
-    name: 'MiniMax-M2.1',
+    id: 'Pro/MiniMaxAI/MiniMax-M2.5',
+    name: 'MiniMax-M2.5',
     description: '速度快',
     recommended: true
   },
