@@ -10,13 +10,13 @@ const API_KEY = 'sk-loulnfpbpzkhwtkfzjeysrgkoflcagblvinuncxyajtiypbn';
 
 async function runFullGame() {
   console.log('=== 72Hours 完整游戏运行 ===\n');
-  console.log('使用模型: Pro/MiniMaxAI/MiniMax-M2.1');
+  console.log('使用模型: Pro/MiniMaxAI/MiniMax-M2.5');
   console.log('API: 硅基流动 (SiliconFlow)\n');
   
   // 创建 AI 提供商
   const aiProvider = AIProviderFactory.create('siliconflow', {
     apiKey: API_KEY,
-    model: 'Pro/MiniMaxAI/MiniMax-M2.1'
+    model: 'Pro/MiniMaxAI/MiniMax-M2.5'
   });
   
   // 创建游戏实例
@@ -46,10 +46,10 @@ async function runFullGame() {
   // 故事记录
   const storyLog = [];
   
-  console.log('\n=== 开始72回合 ===\n');
+  console.log('\n=== 开始10回合（测试模式）===\n');
   
-  // 运行72回合
-  for (let turn = 1; turn <= 72; turn++) {
+  // 运行10回合
+  for (let turn = 1; turn <= 10; turn++) {
     console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     console.log(`【第 ${turn} 回合】`);
     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
@@ -147,7 +147,7 @@ async function runFullGame() {
   fs.writeFileSync('/root/.openclaw/workspace/72hours/story-log.json', JSON.stringify(storyOutput, null, 2));
   fs.writeFileSync('/root/.openclaw/workspace/72hours/story-log.md', generateMarkdown(storyOutput));
   
-  console.log('\n\n=== 游戏结束 ===');
+  console.log('\n\n=== 10回合测试结束 ===');
   console.log(`共进行 ${storyLog.length} 回合`);
   console.log('故事记录已保存到:');
   console.log('  - story-log.json');

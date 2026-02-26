@@ -76,7 +76,7 @@ async function runTests() {
     const createRes = await request('/api/game/create', 'POST', {
       apiKey: API_KEY,
       identity: 'scholar',
-      model: 'Pro/MiniMaxAI/MiniMax-M2.1'
+      model: 'Pro/MiniMaxAI/MiniMax-M2.5'
     });
     
     if (!createRes.success || !createRes.data.gameId) {

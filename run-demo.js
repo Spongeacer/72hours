@@ -10,12 +10,12 @@ const API_KEY = 'sk-loulnfpbpzkhwtkfzjeysrgkoflcagblvinuncxyajtiypbn';
 
 async function runDemo() {
   console.log('=== 72Hours 演示运行 (10回合) ===\n');
-  console.log('使用模型: deepseek-ai/DeepSeek-V3.2');
+  console.log('使用模型: Pro/MiniMaxAI/MiniMax-M2.5');
   console.log('API: 硅基流动 (SiliconFlow)\n');
   
   const aiProvider = AIProviderFactory.create('siliconflow', {
     apiKey: API_KEY,
-    model: 'deepseek-ai/DeepSeek-V3.2'
+    model: 'Pro/MiniMaxAI/MiniMax-M2.5'
   });
   
   const game = new Game72HoursStream({ aiProvider });

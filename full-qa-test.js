@@ -13,9 +13,9 @@ const PORT = 3000;
 const API_KEY = 'sk-loulnfpbpzkhwtkfzjeysrgkoflcagblvinuncxyajtiypbn';
 
 // 测试配置
-const TARGET_TURNS = 72;
+const TARGET_TURNS = 10;
 const TEST_IDENTITY = 'scholar';
-const TEST_MODEL = 'Pro/MiniMaxAI/MiniMax-M2.1';
+const TEST_MODEL = 'Pro/MiniMaxAI/MiniMax-M2.5';
 
 // 存储每回合数据
 const turnData = [];
