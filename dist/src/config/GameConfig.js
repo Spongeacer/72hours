@@ -1,0 +1,185 @@
+"use strict";
+/**
+ * 游戏核心配置
+ * 所有可调参数集中管理
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SERVER_CONFIG = exports.BUTTERFLY_EFFECT_CONFIG = exports.PLAYER_CONFIG = exports.NPC_CONFIG = exports.GAME_CONFIG = exports.AI_CONFIG = exports.GRAVITY_CONFIG = void 0;
+// ==================== 引力引擎配置 ====================
+exports.GRAVITY_CONFIG = {
+    // 引力常数
+    G: 0.8,
+    // 压强调制系数
+    PRESSURE_MULTIPLIER: 0.05,
+    // 最小距离（防止除以0）
+    MIN_DISTANCE: 0.1,
+    // 最大引力限制
+    MAX_FORCE: 10.0,
+    // 移动缩放因子
+    MOVEMENT_SCALE: 0.1,
+    // 恐惧阈值（1-20范围，超过则逃离）
+    FEAR_ESCAPE_THRESHOLD: 14,
+    // 恐惧逃离速度倍率
+    FEAR_ESCAPE_MULTIPLIER: 2.0,
+    // K值跟随阈值（超过则更倾向跟随）
+    KNOT_FOLLOW_THRESHOLD: 10,
+    // K值跟随速度倍率
+    KNOT_FOLLOW_MULTIPLIER: 1.5
+};
+// ==================== AI API 配置 ====================
+exports.AI_CONFIG = {
+    // 默认提供商
+    DEFAULT_PROVIDER: 'siliconflow',
+    // 提供商配置
+    PROVIDERS: {
+        siliconflow: {
+            name: 'SiliconFlow',
+            apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
+            defaultModel: 'Pro/MiniMaxAI/MiniMax-M2.5',
+            defaultApiKey: ''
+        },
+        kimi: {
+            name: 'Kimi',
+            apiUrl: 'https://api.kimi.com/coding/v1/chat/completions',
+            defaultModel: 'k2p5',
+            defaultApiKey: ''
+        }
+    },
+    // 默认模型参数
+    DEFAULT_PARAMS: {
+        model: 'Pro/MiniMaxAI/MiniMax-M2.5',
+        temperature: 0.8,
+        maxTokens: 400,
+        systemPrompt: '你是一个涌现式叙事引擎。'
+    }
+};
+// ==================== 游戏核心配置 ====================
+exports.GAME_CONFIG = {
+    // 总回合数
+    MAX_TURNS: 36,
+    // 每回合小时数
+    HOURS_PER_TURN: 2,
+    // 初始时间
+    START_DATE: '1851-01-08T00:00:00',
+    // 初始压强 (1-20范围)
+    INITIAL_PRESSURE: 2,
+    // 初始Ω值 (1-20范围)
+    INITIAL_OMEGA: 4,
+    // 压强每回合增长
+    PRESSURE_INCREASE: 0.16,
+    // Ω基础增长
+    OMEGA_BASE_INCREASE: 0.08,
+    // 高压阈值（超过则Ω加速）
+    HIGH_PRESSURE_THRESHOLD: 12,
+    // 高压时Ω增长倍率
+    OMEGA_HIGH_PRESSURE_MULTIPLIER: 1.02,
+    // 压强上限
+    MAX_PRESSURE: 20,
+    // Ω上限
+    MAX_OMEGA: 20
+};
+// ==================== NPC配置 ====================
+exports.NPC_CONFIG = {
+    // 初始NPC总数
+    TOTAL_NPC_COUNT: 10,
+    // 初始解锁NPC数
+    INITIAL_UNLOCKED_COUNT: 4,
+    // 剧本事件解锁阈值（Ω值）
+    STORY_EVENT_THRESHOLDS: {
+        EVENT_2: 5, // 解锁第5-8个NPC
+        EVENT_3: 10, // 解锁第9-10个NPC + 历史人物
+        EVENT_4: 15 // 最终阶段
+    },
+    // 关键历史人物
+    HISTORICAL_FIGURES: ['洪秀全', '杨秀清', '萧朝贵'],
+    // NPC名字池
+    NPC_NAME_POOL: [
+        '母亲', '教书先生', '同窗好友', '邻家少女', '老猎人',
+        '货郎', '寡妇', '赌徒', '郎中', '乞丐'
+    ]
+};
+// ==================== 玩家配置 ====================
+exports.PLAYER_CONFIG = {
+    // 可用身份
+    IDENTITIES: {
+        scholar: {
+            name: '村中的读书人',
+            baseMass: 3,
+            initialStates: { fear: 6, aggression: 4, hunger: 8, injury: 1 }
+        },
+        landlord: {
+            name: '金田村的地主',
+            baseMass: 6,
+            initialStates: { fear: 8, aggression: 6, hunger: 4, injury: 1 }
+        },
+        soldier: {
+            name: '官府的士兵',
+            baseMass: 5,
+            initialStates: { fear: 4, aggression: 12, hunger: 10, injury: 1 }
+        },
+        cultist: {
+            name: '教会的受众',
+            baseMass: 4,
+            initialStates: { fear: 10, aggression: 8, hunger: 6, injury: 1 }
+        }
+    },
+    // 执念池
+    OBSESSIONS: [
+        '在乱世中活下去',
+        '保护家人平安',
+        '守住祖传的家业',
+        '寻找失散的兄弟',
+        '完成父亲的遗愿',
+        '逃离这个村子',
+        '找到真相',
+        '守护心中的正义'
+    ],
+    // 特质池
+    TRAITS: [
+        { id: 'calm', type: 'personality' },
+        { id: 'curious', type: 'personality' },
+        { id: 'brave', type: 'personality' },
+        { id: 'greedy', type: 'personality' },
+        { id: 'compassionate', type: 'personality' },
+        { id: 'deceitful', type: 'personality' },
+        { id: 'honest', type: 'personality' },
+        { id: 'fearful', type: 'personality' }
+    ],
+    // 特质数量范围
+    MIN_TRAITS: 2,
+    MAX_TRAITS: 3,
+    // 状态上限
+    MAX_STATE_VALUE: 20,
+    MIN_STATE_VALUE: 1
+};
+// ==================== 蝴蝶效应配置 ====================
+exports.BUTTERFLY_EFFECT_CONFIG = {
+    // 无影响概率
+    NO_EFFECT_CHANCE: 0.3,
+    // 轻微影响概率
+    MINOR_EFFECT_CHANCE: 0.3,
+    // 显著影响概率（剩余部分）
+    SIGNIFICANT_EFFECT_CHANCE: 0.4,
+    // 影响值
+    EFFECT_VALUES: {
+        NO_EFFECT: 0,
+        MINOR: 0.1,
+        SIGNIFICANT: 0.2
+    }
+};
+// ==================== 服务器配置 ====================
+exports.SERVER_CONFIG = {
+    PORT: 3000,
+    VERSION: '2.0.0'
+};
+// 导出所有配置
+exports.default = {
+    GRAVITY: exports.GRAVITY_CONFIG,
+    AI: exports.AI_CONFIG,
+    GAME: exports.GAME_CONFIG,
+    NPC: exports.NPC_CONFIG,
+    PLAYER: exports.PLAYER_CONFIG,
+    BUTTERFLY: exports.BUTTERFLY_EFFECT_CONFIG,
+    SERVER: exports.SERVER_CONFIG
+};
+//# sourceMappingURL=GameConfig.js.map

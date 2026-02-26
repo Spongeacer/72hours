@@ -10,6 +10,13 @@ import {
   createErrorResponse,
   validateChoice
 } from '../utils/apiResponse';
+import { 
+  GAME_CONFIG, 
+  NPC_CONFIG, 
+  PLAYER_CONFIG, 
+  BUTTERFLY_EFFECT_CONFIG,
+  AI_CONFIG 
+} from '../../config/GameConfig';
 
 const router = Router();
 const games = new Map();
@@ -43,44 +50,17 @@ router.post('/', validateRequest({ body: createGameSchema }), async (req, res) =
     const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     // 随机选择身份（如果未指定）
-    const availableIdentities = ['scholar', 'landlord', 'soldier', 'cultist'];
+    const availableIdentities = Object.keys(PLAYER_CONFIG.IDENTITIES);
     const selectedIdentity = identity || availableIdentities[Math.floor(Math.random() * availableIdentities.length)];
     
-    const identities: any = {
-      scholar: { name: '村中的读书人', baseMass: 3, initialStates: { fear: 6, aggression: 4, hunger: 8, injury: 1 } },
-      landlord: { name: '金田村的地主', baseMass: 6, initialStates: { fear: 8, aggression: 6, hunger: 4, injury: 1 } },
-      soldier: { name: '官府的士兵', baseMass: 5, initialStates: { fear: 4, aggression: 12, hunger: 10, injury: 1 } },
-      cultist: { name: '教会的受众', baseMass: 4, initialStates: { fear: 10, aggression: 8, hunger: 6, injury: 1 } }
-    };
+    const identityConfig = PLAYER_CONFIG.IDENTITIES[selectedIdentity];
     
-    const identityConfig = identities[selectedIdentity];
-    
-    // 随机执念列表
-    const obsessions = [
-      '在乱世中活下去',
-      '保护家人平安',
-      '守住祖传的家业',
-      '寻找失散的兄弟',
-      '完成父亲的遗愿',
-      '逃离这个村子',
-      '找到真相',
-      '守护心中的正义'
-    ];
-    const randomObsession = obsessions[Math.floor(Math.random() * obsessions.length)];
+    // 随机执念
+    const randomObsession = PLAYER_CONFIG.OBSESSIONS[Math.floor(Math.random() * PLAYER_CONFIG.OBSESSIONS.length)];
     
     // 随机特质
-    const allTraits = [
-      { id: 'calm', type: 'personality' },
-      { id: 'curious', type: 'personality' },
-      { id: 'brave', type: 'personality' },
-      { id: 'greedy', type: 'personality' },
-      { id: 'compassionate', type: 'personality' },
-      { id: 'deceitful', type: 'personality' },
-      { id: 'honest', type: 'personality' },
-      { id: 'fearful', type: 'personality' }
-    ];
-    const numTraits = 2 + Math.floor(Math.random() * 2); // 2-3个特质
-    const shuffledTraits = [...allTraits].sort(() => 0.5 - Math.random());
+    const numTraits = PLAYER_CONFIG.MIN_TRAITS + Math.floor(Math.random() * (PLAYER_CONFIG.MAX_TRAITS - PLAYER_CONFIG.MIN_TRAITS + 1));
+    const shuffledTraits = [...PLAYER_CONFIG.TRAITS].sort(() => 0.5 - Math.random());
     const selectedTraits = shuffledTraits.slice(0, numTraits);
     
     const player = {
@@ -95,35 +75,31 @@ router.post('/', validateRequest({ body: createGameSchema }), async (req, res) =
     };
     
     // 生成10个NPC（初始全部锁定）
-    const allNPCNames = [
-      '母亲', '教书先生', '同窗好友', '邻家少女', '老猎人',
-      '货郎', '寡妇', '赌徒', '郎中', '乞丐'
-    ];
-    const shuffledNPCNames = [...allNPCNames].sort(() => 0.5 - Math.random());
+    const shuffledNPCNames = [...NPC_CONFIG.NPC_NAME_POOL].sort(() => 0.5 - Math.random());
     
     const allNPCs = shuffledNPCNames.map((name: string, index: number) => ({
       id: `npc_${Date.now()}_${index + 1}`,
       name,
       traits: [],
-      isBonded: index < 4,  // 前4个是 bonded
-      isUnlocked: index < 4, // 前4个初始解锁
-      unlockStage: index < 4 ? 1 : index < 8 ? 2 : 3  // 1=初始, 2=第2事件, 3=第3事件
+      isBonded: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT,
+      isUnlocked: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT,
+      unlockStage: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT ? 1 : index < 8 ? 2 : 3
     }));
     
     const gameState = {
       turn: 0,
-      datetime: new Date('1851-01-08T00:00:00').toISOString(),
-      pressure: 2,
-      omega: 4,
+      datetime: new Date(GAME_CONFIG.START_DATE).toISOString(),
+      pressure: GAME_CONFIG.INITIAL_PRESSURE,
+      omega: GAME_CONFIG.INITIAL_OMEGA,
       weather: 'night',
       player,
       npcs: allNPCs,
       history: [],
       isGameOver: false,
-      storyEvent: 0  // 当前剧本事件阶段 (0-3)
+      storyEvent: 0
     };
     
-    games.set(gameId, { id: gameId, state: gameState, model: model || 'Pro/MiniMaxAI/MiniMax-M2.5', apiKey });
+    games.set(gameId, { id: gameId, state: gameState, model: model || AI_CONFIG.DEFAULT_PARAMS.model, apiKey });
     
     const openings: any = {
       scholar: `> 你被一阵奇怪的声音惊醒。\n> 不是鸡鸣，是人在低语，很多声音叠在一起，像潮水。\n> 你走到窗边，看到远处有火光，不是灯笼的颜色。\n> 这是金田村，1851年1月8日，凌晨。\n> 你是一个读书人，不知道历史已经开始了。`,
@@ -245,25 +221,25 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
     state.pressure = Math.min(20, state.pressure + 0.16);
     
     // Ω增长 (1-20范围) - 基础增长 + 用户选择的蝴蝶效应
-    let omegaIncrease = 0.08; // 基础增长
+    let omegaIncrease = GAME_CONFIG.OMEGA_BASE_INCREASE;
     
-    // 用户选择的蝴蝶效应：随机影响 Ω 增长
+    // 用户选择的蝴蝶效应
     if (choice) {
       const butterflyEffect = Math.random();
-      if (butterflyEffect < 0.3) {
-        omegaIncrease = 0; // 30% 概率无影响
-      } else if (butterflyEffect < 0.6) {
-        omegaIncrease = 0.1; // 30% 概率 +0.1
+      if (butterflyEffect < BUTTERFLY_EFFECT_CONFIG.NO_EFFECT_CHANCE) {
+        omegaIncrease = BUTTERFLY_EFFECT_CONFIG.EFFECT_VALUES.NO_EFFECT;
+      } else if (butterflyEffect < BUTTERFLY_EFFECT_CONFIG.NO_EFFECT_CHANCE + BUTTERFLY_EFFECT_CONFIG.MINOR_EFFECT_CHANCE) {
+        omegaIncrease = BUTTERFLY_EFFECT_CONFIG.EFFECT_VALUES.MINOR;
       } else {
-        omegaIncrease = 0.2; // 40% 概率 +0.2
+        omegaIncrease = BUTTERFLY_EFFECT_CONFIG.EFFECT_VALUES.SIGNIFICANT;
       }
     }
     
     // 高压时 Ω 加速增长
-    if (state.pressure >= 12) {
-      state.omega = Math.min(20, state.omega * 1.02 + omegaIncrease);
+    if (state.pressure >= GAME_CONFIG.HIGH_PRESSURE_THRESHOLD) {
+      state.omega = Math.min(GAME_CONFIG.MAX_OMEGA, state.omega * GAME_CONFIG.OMEGA_HIGH_PRESSURE_MULTIPLIER + omegaIncrease);
     } else {
-      state.omega = Math.min(20, state.omega + omegaIncrease);
+      state.omega = Math.min(GAME_CONFIG.MAX_OMEGA, state.omega + omegaIncrease);
     }
     
     const hour = current.getHours();
@@ -327,21 +303,15 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
     }
     
     // 剧本事件解锁NPC机制 - 基于Ω（历史必然感）
-    // Ω 范围 1-20，对应历史必然感的累积
-    // 事件1: Ω 0-5 (初始已解锁4个)
-    // 事件2: Ω 5-10 (解锁第5-8个NPC)
-    // 事件3: Ω 10-15 (解锁第9-10个NPC + 关键历史人物)
-    // 事件4: Ω 15-20 (最后一个回合，高潮/结局)
     let unlockedNPCsThisTurn: string[] = [];
     const currentOmega = state.omega;
     const previousStoryEvent = state.storyEvent || 0;
     
-    if (currentOmega >= 15 && previousStoryEvent < 4) {
+    if (currentOmega >= NPC_CONFIG.STORY_EVENT_THRESHOLDS.EVENT_4 && previousStoryEvent < 4) {
       // 事件4: 最终阶段（高潮/结局）
       state.storyEvent = 4;
-      // 事件4不新增NPC，而是触发最终剧情
       
-    } else if (currentOmega >= 10 && previousStoryEvent < 3) {
+    } else if (currentOmega >= NPC_CONFIG.STORY_EVENT_THRESHOLDS.EVENT_3 && previousStoryEvent < 3) {
       // 事件3: 解锁剩余NPC + 关键历史人物
       state.storyEvent = 3;
       
@@ -354,8 +324,7 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
       });
       
       // 添加关键历史人物
-      const historicalFigures = ['洪秀全', '杨秀清', '萧朝贵'];
-      historicalFigures.forEach((name: string) => {
+      NPC_CONFIG.HISTORICAL_FIGURES.forEach((name: string) => {
         state.npcs.push({
           id: `npc_${Date.now()}_${state.npcs.length + 1}`,
           name,
@@ -367,7 +336,7 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
         unlockedNPCsThisTurn.push(name);
       });
       
-    } else if (currentOmega >= 5 && previousStoryEvent < 2) {
+    } else if (currentOmega >= NPC_CONFIG.STORY_EVENT_THRESHOLDS.EVENT_2 && previousStoryEvent < 2) {
       // 事件2: 解锁第5-8个NPC
       state.storyEvent = 2;
       state.npcs.forEach((npc: any) => {
@@ -386,7 +355,7 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
     if (state.player.states.injury >= 20 || state.player.states.hunger >= 20) {
       gameOver = { type: 'death', reason: state.player.states.injury >= 20 ? '伤势过重' : '饥饿致死' };
       state.isGameOver = true;
-    } else if (state.turn >= 36) {
+    } else if (state.turn >= GAME_CONFIG.MAX_TURNS) {
       gameOver = { type: 'completed', reason: '金田起义爆发' };
       state.isGameOver = true;
     }
@@ -454,7 +423,7 @@ router.get('/:id/ai-prompt', (req, res) => {
   
   // 构建 prompt（与 EmergentNarrativeEngine 一致）
   const prompt = `
-【时间】第${state.turn}/36回合，${new Date(state.datetime).toLocaleString('zh-CN')}
+【时间】第${state.turn}/${GAME_CONFIG.MAX_TURNS}回合，${new Date(state.datetime).toLocaleString('zh-CN')}
 
 【场】
 压强：${Math.round(state.pressure)}/20
@@ -479,23 +448,9 @@ ${spotlightNPC ? `恐惧：${spotlightNPC.states?.fear || 6}/20
 - 200字，第二人称，暗示而非说明
 `;
 
-  // AI 提供商配置
-  const AI_PROVIDERS = {
-    siliconflow: {
-      name: 'SiliconFlow',
-      apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
-      defaultModel: 'Pro/MiniMaxAI/MiniMax-M2.5'
-    },
-    kimi: {
-      name: 'Kimi',
-      apiUrl: 'https://api.kimi.com/coding/v1/chat/completions',
-      defaultModel: 'k2p5'
-    }
-  };
-
-  // 默认使用 SiliconFlow（Kimi API 需要特定权限）
-  const defaultProvider = 'siliconflow';
-  const provider = AI_PROVIDERS[defaultProvider];
+  // AI 提供商配置 - 使用统一配置
+  const defaultProvider = AI_CONFIG.DEFAULT_PROVIDER;
+  const provider = AI_CONFIG.PROVIDERS[defaultProvider];
 
   res.json(createSuccessResponse({
     prompt,
