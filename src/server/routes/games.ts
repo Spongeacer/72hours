@@ -42,28 +42,76 @@ router.post('/', validateRequest({ body: createGameSchema }), async (req, res) =
     
     const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
+    // 随机选择身份（如果未指定）
+    const availableIdentities = ['scholar', 'landlord', 'soldier', 'cultist'];
+    const selectedIdentity = identity || availableIdentities[Math.floor(Math.random() * availableIdentities.length)];
+    
     const identities: any = {
-      scholar: { name: '村中的读书人', baseMass: 3 },
-      landlord: { name: '金田村的地主', baseMass: 6 },
-      soldier: { name: '官府的士兵', baseMass: 5 },
-      cultist: { name: '教会的受众', baseMass: 4 }
+      scholar: { name: '村中的读书人', baseMass: 3, initialStates: { fear: 6, aggression: 4, hunger: 8, injury: 1 } },
+      landlord: { name: '金田村的地主', baseMass: 6, initialStates: { fear: 8, aggression: 6, hunger: 4, injury: 1 } },
+      soldier: { name: '官府的士兵', baseMass: 5, initialStates: { fear: 4, aggression: 12, hunger: 10, injury: 1 } },
+      cultist: { name: '教会的受众', baseMass: 4, initialStates: { fear: 10, aggression: 8, hunger: 6, injury: 1 } }
     };
+    
+    const identityConfig = identities[selectedIdentity];
+    
+    // 随机执念列表
+    const obsessions = [
+      '在乱世中活下去',
+      '保护家人平安',
+      '守住祖传的家业',
+      '寻找失散的兄弟',
+      '完成父亲的遗愿',
+      '逃离这个村子',
+      '找到真相',
+      '守护心中的正义'
+    ];
+    const randomObsession = obsessions[Math.floor(Math.random() * obsessions.length)];
+    
+    // 随机特质
+    const allTraits = [
+      { id: 'calm', type: 'personality' },
+      { id: 'curious', type: 'personality' },
+      { id: 'brave', type: 'personality' },
+      { id: 'greedy', type: 'personality' },
+      { id: 'compassionate', type: 'personality' },
+      { id: 'deceitful', type: 'personality' },
+      { id: 'honest', type: 'personality' },
+      { id: 'fearful', type: 'personality' }
+    ];
+    const numTraits = 2 + Math.floor(Math.random() * 2); // 2-3个特质
+    const shuffledTraits = [...allTraits].sort(() => 0.5 - Math.random());
+    const selectedTraits = shuffledTraits.slice(0, numTraits);
     
     const player = {
       id: `player_${Date.now()}`,
       name: '你',
-      identityType: identity,
-      identity: identities[identity],
-      traits: [{ id: 'calm', type: 'personality' }, { id: 'curious', type: 'personality' }],
-      obsession: '在乱世中活下去',
-      states: { fear: 6, aggression: 4, hunger: 8, injury: 1 },
+      identityType: selectedIdentity,
+      identity: identityConfig,
+      traits: selectedTraits,
+      obsession: randomObsession,
+      states: { ...identityConfig.initialStates },
       position: { x: 0, y: 0 }
     };
     
-    const bondedNPCs = [
-      { id: `npc_${Date.now()}_1`, name: '母亲', traits: [], isBonded: true, isUnlocked: true },
-      { id: `npc_${Date.now()}_2`, name: '教书先生', traits: [], isBonded: true, isUnlocked: true }
-    ];
+    // 根据身份随机生成关联NPC
+    const npcPools: any = {
+      scholar: ['母亲', '教书先生', '同窗好友', '邻家少女'],
+      landlord: ['管家', '长工', '佃户', '账房先生'],
+      soldier: ['战友', '上司', '军医', '俘虏'],
+      cultist: ['教友', '传教士', '告密者', '异端']
+    };
+    const availableNPCs = npcPools[selectedIdentity] || ['母亲', '教书先生'];
+    const shuffledNPCs = [...availableNPCs].sort(() => 0.5 - Math.random());
+    const selectedNPCs = shuffledNPCs.slice(0, 2);
+    
+    const bondedNPCs = selectedNPCs.map((name: string, index: number) => ({
+      id: `npc_${Date.now()}_${index + 1}`,
+      name,
+      traits: [],
+      isBonded: true,
+      isUnlocked: true
+    }));
     
     const gameState = {
       turn: 0,
