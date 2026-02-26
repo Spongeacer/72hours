@@ -5,6 +5,9 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generatePlayerReactionsWithAI = generatePlayerReactionsWithAI;
+exports.buildPrompt = buildPrompt;
+exports.parseAIResponse = parseAIResponse;
+exports.generateFallbackReactions = generateFallbackReactions;
 const GameConfig_1 = require("../config/GameConfig");
 /**
  * 使用 AI API 生成玩家反应

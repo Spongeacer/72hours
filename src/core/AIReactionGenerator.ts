@@ -84,7 +84,7 @@ export async function generatePlayerReactionsWithAI(
 /**
  * 构建 AI Prompt
  */
-function buildPrompt(player: any, npcBehavior: NPCBehavior, context: Context): string {
+export function buildPrompt(player: any, npcBehavior: NPCBehavior, context: Context): string {
   return `
 【情境】
 第${context.turn}/36回合，${context.weather === 'night' ? '深夜' : context.weather === 'fog' ? '雾中' : '白天'}
@@ -136,7 +136,7 @@ ${context.narrative}
 /**
  * 解析 AI 响应
  */
-function parseAIResponse(content: string, player: any): PlayerReaction[] {
+export function parseAIResponse(content: string, player: any): PlayerReaction[] {
   try {
     // 尝试提取 JSON
     const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -192,7 +192,7 @@ function parseTextResponse(content: string, player: any): PlayerReaction[] {
 /**
  * 本地降级生成（AI失败时使用）
  */
-function generateFallbackReactions(
+export function generateFallbackReactions(
   player: any,
   npcBehavior: NPCBehavior,
   context: Context
