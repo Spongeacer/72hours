@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+  
+  body {
+    @apply bg-game-bg text-game-text font-serif min-h-screen leading-relaxed;
+  }
+}
+
+@layer components {
+  .game-panel {
+    @apply bg-game-panel border border-game-border p-6 mb-6;
+  }
+  
+  .game-btn {
+    @apply inline-block px-8 py-3 bg-game-muted text-game-bg font-serif 
+           transition-all duration-300 hover:bg-game-accent 
+           disabled:bg-game-border disabled:text-gray-500 disabled:cursor-not-allowed;
+  }
+  
+  .game-input {
+    @apply w-full p-3 bg-game-bg border border-game-border text-game-text 
+           font-serif focus:outline-none focus:border-game-muted;
+  }
+  
+  .game-select {
+    @apply w-full p-3 bg-game-bg border border-game-border text-game-text 
+           font-serif focus:outline-none focus:border-game-muted appearance-none;
+  }
+  
+  .choice-btn {
+    @apply w-full p-5 bg-transparent border border-game-border text-left 
+           font-serif transition-all duration-300 
+           hover:border-game-muted hover:bg-opacity-10 hover:bg-white
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .choice-btn.hidden-choice {
+    @apply border-game-muted bg-opacity-5 bg-game-accent;
+  }
+  
+  .status-bar {
+    @apply flex flex-wrap justify-between bg-game-panel border border-game-border 
+           p-4 gap-3;
+  }
+  
+  .narrative-text {
+    @apply bg-game-panel border border-game-border p-8 whitespace-pre-line 
+           leading-loose min-h-[100px] text-lg;
+  }
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4a4a4a;
+}
