@@ -1,14 +1,10 @@
-const { Router } = require('express');
-const { z } = require('zod');
-const { validateRequest } = require('../middleware/validateRequest');
-const { createSuccessResponse, createErrorResponse } = require('../middleware/errorHandler');
+import { Router } from 'express';
+import { z } from 'zod';
+import { validateRequest } from '../middleware/validateRequest';
 
 const router = Router();
-
-// 游戏实例存储
 const games = new Map();
 
-// 创建游戏
 const createGameSchema = z.object({
   identity: z.enum(['scholar', 'landlord', 'soldier', 'cultist']),
   model: z.string().optional(),
@@ -21,8 +17,7 @@ router.post('/', validateRequest({ body: createGameSchema }), async (req, res) =
     
     const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // 简化版游戏初始化
-    const identities = {
+    const identities: any = {
       scholar: { name: '村中的读书人', baseMass: 3 },
       landlord: { name: '金田村的地主', baseMass: 6 },
       soldier: { name: '官府的士兵', baseMass: 5 },
@@ -57,85 +52,100 @@ router.post('/', validateRequest({ body: createGameSchema }), async (req, res) =
       isGameOver: false
     };
     
-    games.set(gameId, {
-      id: gameId,
-      state: gameState,
-      model: model || 'Pro/MiniMaxAI/MiniMax-M2.5',
-      apiKey
-    });
+    games.set(gameId, { id: gameId, state: gameState, model: model || 'Pro/MiniMaxAI/MiniMax-M2.5', apiKey });
     
-    const openings = {
+    const openings: any = {
       scholar: `> 你被一阵奇怪的声音惊醒。\n> 不是鸡鸣，是人在低语，很多声音叠在一起，像潮水。\n> 你走到窗边，看到远处有火光，不是灯笼的颜色。\n> 这是金田村，1851年1月8日，凌晨。\n> 你是一个读书人，不知道历史已经开始了。`,
       landlord: `> 玉扳指在指节上转了三圈，这是你紧张时的习惯。\n> 窗外有火光，不是灯笼，是火把。\n> 你想起韦昌辉——那个被你排挤过的小地主，现在据说在会众里很有地位。`,
       soldier: `> 刀鞘上的血还没擦干净，是上一个村子的。\n> 上峰说金田有会匪，格杀勿论。\n> 你舔了舔嘴唇，有点干。`,
       cultist: `> 十字架贴在胸口，已经温热了。\n> 密信上的字你背得出来："十一日，万寿起义。"\n> 还有三天。上帝会保护他的子民，但你也握紧了刀。`
     };
     
-    res.status(201).json(createSuccessResponse({
-      gameId,
-      player,
-      bondedNPCs,
-      opening: openings[identity] || openings.scholar,
-      state: gameState
-    }));
-  } catch (error) {
-    res.status(500).json(createErrorResponse('GAME_INIT_FAILED', error.message || '创建游戏失败'));
+    res.status(201).json({
+      success: true,
+      data: {
+        gameId,
+        player,
+        bondedNPCs,
+        opening: openings[identity] || openings.scholar,
+        state: gameState
+      },
+      error: null,
+      meta: {
+        timestamp: new Date().toISOString(),
+        requestId: Math.random().toString(36).substring(2, 15)
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      data: null,
+      error: { code: 'GAME_INIT_FAILED', message: error.message || '创建游戏失败' },
+      meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+    });
   }
 });
 
-// 获取游戏状态
 router.get('/:id/state', (req, res) => {
   const game = games.get(req.params.id);
-  
   if (!game) {
-    return res.status(404).json(createErrorResponse('GAME_NOT_FOUND', '游戏不存在或已结束'));
+    return res.status(404).json({
+      success: false,
+      data: null,
+      error: { code: 'GAME_NOT_FOUND', message: '游戏不存在或已结束' },
+      meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+    });
   }
-  
-  res.json(createSuccessResponse(game.state));
+  res.json({
+    success: true,
+    data: game.state,
+    error: null,
+    meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+  });
 });
 
-// 执行回合
 const executeTurnSchema = z.object({
-  choice: z.object({
-    id: z.string(),
-    text: z.string()
-  }).optional()
+  choice: z.object({ id: z.string(), text: z.string() }).optional()
 });
 
 router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (req, res) => {
   const game = games.get(req.params.id);
-  
   if (!game) {
-    return res.status(404).json(createErrorResponse('GAME_NOT_FOUND', '游戏不存在或已结束'));
+    return res.status(404).json({
+      success: false,
+      data: null,
+      error: { code: 'GAME_NOT_FOUND', message: '游戏不存在或已结束' },
+      meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+    });
   }
   
   if (game.state.isGameOver) {
-    return res.status(400).json(createErrorResponse('GAME_ALREADY_OVER', '游戏已结束'));
+    return res.status(400).json({
+      success: false,
+      data: null,
+      error: { code: 'GAME_ALREADY_OVER', message: '游戏已结束' },
+      meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+    });
   }
   
   try {
     const { choice } = req.body;
     const state = game.state;
     
-    // 增加回合
     state.turn++;
     
-    // 更新时间（每小时一回合）
     const current = new Date(state.datetime);
     current.setHours(current.getHours() + 1);
     state.datetime = current.toISOString();
     
-    // 更新压强
     state.pressure += 0.8;
     
-    // 更新Ω
     if (state.pressure >= 60) {
       state.omega = Math.min(5.0, state.omega * 1.05);
     } else {
       state.omega += 0.02;
     }
     
-    // 更新天气
     const hour = current.getHours();
     if (hour >= 6 && hour < 18) {
       state.weather = 'clear';
@@ -145,7 +155,6 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
       state.weather = 'fog';
     }
     
-    // 生成叙事和选择
     const narratives = [
       `> 第${state.turn}回合。你站在村子里，空气中弥漫着紧张的气氛。\n> 远处传来人声，不知道是谁在说话。`,
       `> 夜色更深了。你感到一种莫名的恐惧在蔓延。\n> 有人在暗处看着你。`,
@@ -155,17 +164,16 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
     
     const narrative = narratives[Math.floor(Math.random() * narratives.length)];
     
-    const choices = [
+    const choices: any[] = [
       { id: 'explore', text: '探索周围环境' },
       { id: 'rest', text: '找个地方休息' },
       { id: 'observe', text: '观察附近的人' }
     ];
     
     if (state.player.states.fear > 60) {
-      choices.push({ id: 'flee', text: '逃离这个危险的地方', isHidden: state.player.states.fear < 80 });
+      choices.push({ id: 'flee', text: '逃离这个危险的地方', type: 'hidden' });
     }
     
-    // 处理选择结果
     let result = '';
     if (choice) {
       switch (choice.id) {
@@ -190,15 +198,9 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
           result = '你做出了选择，等待结果...';
       }
       
-      state.history.push({
-        turn: state.turn,
-        choice: choice.text,
-        result,
-        timestamp: new Date().toISOString()
-      });
+      state.history.push({ turn: state.turn, choice: choice.text, result, timestamp: new Date().toISOString() });
     }
     
-    // 检查游戏结束
     let gameOver = null;
     if (state.player.states.injury >= 100 || state.player.states.hunger >= 100) {
       gameOver = { type: 'death', reason: state.player.states.injury >= 100 ? '伤势过重' : '饥饿致死' };
@@ -208,40 +210,57 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
       state.isGameOver = true;
     }
     
-    res.json(createSuccessResponse({
-      turn: state.turn,
-      narrative,
-      choices,
-      result,
-      state,
-      gameOver
-    }));
-  } catch (error) {
-    res.status(500).json(createErrorResponse('TURN_EXECUTION_FAILED', error.message || '执行回合失败'));
+    res.json({
+      success: true,
+      data: { turn: state.turn, narrative, choices, result, state, gameOver },
+      error: null,
+      meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      data: null,
+      error: { code: 'TURN_EXECUTION_FAILED', message: error.message || '执行回合失败' },
+      meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+    });
   }
 });
 
-// 获取历史记录
 router.get('/:id/history', (req, res) => {
   const game = games.get(req.params.id);
-  
   if (!game) {
-    return res.status(404).json(createErrorResponse('GAME_NOT_FOUND', '游戏不存在或已结束'));
+    return res.status(404).json({
+      success: false,
+      data: null,
+      error: { code: 'GAME_NOT_FOUND', message: '游戏不存在或已结束' },
+      meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+    });
   }
-  
-  res.json(createSuccessResponse(game.state.history));
+  res.json({
+    success: true,
+    data: game.state.history,
+    error: null,
+    meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+  });
 });
 
-// 结束游戏
 router.delete('/:id', (req, res) => {
   const game = games.get(req.params.id);
-  
   if (!game) {
-    return res.status(404).json(createErrorResponse('GAME_NOT_FOUND', '游戏不存在'));
+    return res.status(404).json({
+      success: false,
+      data: null,
+      error: { code: 'GAME_NOT_FOUND', message: '游戏不存在' },
+      meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+    });
   }
-  
   games.delete(req.params.id);
-  res.json(createSuccessResponse(null));
+  res.json({
+    success: true,
+    data: null,
+    error: null,
+    meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+  });
 });
 
-module.exports = router;
+export default router;

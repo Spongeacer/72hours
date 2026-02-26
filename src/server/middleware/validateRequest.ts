@@ -1,14 +1,14 @@
-/**
- * 请求验证中间件
- */
+import { Request, Response, NextFunction } from 'express';
+import { ZodSchema, ZodError } from 'zod';
 
-const { z } = require('zod');
+interface ValidateSchema {
+  body?: ZodSchema;
+  query?: ZodSchema;
+  params?: ZodSchema;
+}
 
-/**
- * 验证请求中间件
- */
-function validateRequest(schemas) {
-  return (req, res, next) => {
+export function validateRequest(schemas: ValidateSchema) {
+  return (req: Request, res: Response, next: NextFunction): void => {
     try {
       if (schemas.body) {
         schemas.body.parse(req.body);
@@ -21,7 +21,7 @@ function validateRequest(schemas) {
       }
       next();
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof ZodError) {
         const details = error.errors.map(err => ({
           path: err.path.join('.'),
           message: err.message
@@ -58,5 +58,3 @@ function validateRequest(schemas) {
     }
   };
 }
-
-module.exports = { validateRequest };
