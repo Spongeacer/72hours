@@ -5,7 +5,7 @@
 import { Player } from './Player';
 import { NPC } from './NPC';
 import { TurnManager } from './TurnManager';
-import { NarrativeEngine } from '../narrative/NarrativeEngine';
+import { EmergentNarrativeEngine } from '../narrative/EmergentNarrativeEngine';
 import { GAME_CONFIG, IDENTITIES } from '../utils/Constants';
 import { 
   GameState, 
@@ -27,7 +27,7 @@ export class Game72Hours {
   model: string;
   
   gameState: GameState;
-  narrativeEngine: NarrativeEngine;
+  narrativeEngine: EmergentNarrativeEngine;
   turnManager: TurnManager | null = null;
   
   isRunning: boolean = false;
@@ -52,7 +52,7 @@ export class Game72Hours {
       isGameOver: false
     };
     
-    this.narrativeEngine = new NarrativeEngine(this.aiInterface, this.model);
+    this.narrativeEngine = new EmergentNarrativeEngine(this.aiInterface, this.model);
   }
 
   /**

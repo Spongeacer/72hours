@@ -50,6 +50,9 @@ router.post('/', (0, validateRequest_1.validateRequest)({ body: createGameSchema
                 getTotalMass: function () { return this.baseMass + this.storyMass; },
                 getEffectiveMass: function () { return this.getTotalMass() * (1 + this.trapConstant); },
                 getKnotWith: function () { return 5; },
+                knotMap: new Map([['player', 5]]),
+                memories: [],
+                obsession: '保护家人',
                 isUnlocked: true,
                 checkUnlock: function () { return true; }
             },
@@ -66,6 +69,9 @@ router.post('/', (0, validateRequest_1.validateRequest)({ body: createGameSchema
                 getTotalMass: function () { return this.baseMass + this.storyMass; },
                 getEffectiveMass: function () { return this.getTotalMass() * (1 + this.trapConstant); },
                 getKnotWith: function () { return 2; },
+                knotMap: new Map([['player', 2]]),
+                memories: [],
+                obsession: '教书育人',
                 isUnlocked: true,
                 checkUnlock: function () { return true; }
             }
