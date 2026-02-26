@@ -17,6 +17,7 @@ import {
   BUTTERFLY_EFFECT_CONFIG,
   AI_CONFIG 
 } from '../../config/GameConfig';
+import { generatePlayerReactions } from '../../core/ReactionGenerator';
 
 const router = Router();
 const games = new Map();
@@ -261,41 +262,62 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
     
     const narrative = narratives[Math.floor(Math.random() * narratives.length)];
     
-    const choices: any[] = [
-      { id: 'explore', text: '探索周围环境', type: 'normal' },
-      { id: 'rest', text: '找个地方休息', type: 'normal' },
-      { id: 'observe', text: '观察附近的人', type: 'normal' }
-    ];
+    // 获取聚光灯NPC（已解锁NPC中第一个）
+    const unlockedNPCs = state.npcs.filter((npc: any) => npc.isUnlocked);
+    const spotlightNPC = unlockedNPCs.length > 0 ? unlockedNPCs[0] : null;
     
-    if (state.player.states.fear > 12) {  // 1-20范围，12对应原60
-      choices.push({ id: 'flee', text: '逃离这个危险的地方', type: 'hidden' });
-    }
+    // 模拟NPC行为（从六类行为中根据情境选择）
+    const npcBehavior = {
+      type: ['抢夺', '冲突', '偷听', '聊天', '请求', '给予'][Math.floor(Math.random() * 6)] as any,
+      description: 'NPC的行为描述',
+      intensity: Math.floor(Math.random() * 10) + 1
+    };
+    
+    // 基于玩家特质/执念 + NPC行为 + 情境 → 生成玩家反应
+    const context = {
+      pressure: state.pressure,
+      omega: state.omega,
+      weather: state.weather,
+      turn: state.turn
+    };
+    
+    const reactions = generatePlayerReactions(state.player, npcBehavior, context);
+    
+    // 转换为选择格式
+    const choices = reactions.map((r, idx) => ({
+      id: r.id,
+      text: r.text,
+      type: r.type,
+      drive: r.drive
+    }));
     
     let result = '';
     if (choice) {
-      switch (choice.id) {
-        case 'explore':
-          // 探索不增加饥饿，让玩家能持续探索
-          result = '你在村子里走了一圈，发现了一些有趣的东西。';
-          break;
-        case 'rest':
-          state.player.states.fear = Math.max(1, state.player.states.fear - 2);
-          // 休息恢复少量饥饿（吃东西/恢复体力）
-          state.player.states.hunger = Math.max(1, state.player.states.hunger - 1);
-          result = '你休息了一会儿，感觉稍微平静了一些。';
-          break;
-        case 'observe':
-          result = '你观察着周围的人，试图理解这个混乱的夜晚。';
-          break;
-        case 'flee':
-          state.player.position.x += 2;
-          state.player.states.fear = Math.max(1, state.player.states.fear - 4);
-          // 逃跑消耗体力，增加饥饿
-          state.player.states.hunger = Math.min(20, state.player.states.hunger + 2);
-          result = '你决定离开这个危险的地方。';
-          break;
-        default:
-          result = '你做出了选择，等待结果...';
+      // 找到选中的反应
+      const selectedReaction = reactions.find(r => r.id === choice.id);
+      
+      if (selectedReaction) {
+        // 应用效果
+        if (selectedReaction.effect.fear) {
+          state.player.states.fear = Math.max(1, Math.min(20, 
+            state.player.states.fear + selectedReaction.effect.fear));
+        }
+        if (selectedReaction.effect.aggression) {
+          state.player.states.aggression = Math.max(1, Math.min(20, 
+            state.player.states.aggression + selectedReaction.effect.aggression));
+        }
+        if (selectedReaction.effect.hunger) {
+          state.player.states.hunger = Math.max(1, Math.min(20, 
+            state.player.states.hunger + selectedReaction.effect.hunger));
+        }
+        if (selectedReaction.effect.injury) {
+          state.player.states.injury = Math.max(1, Math.min(20, 
+            state.player.states.injury + selectedReaction.effect.injury));
+        }
+        
+        result = `你${selectedReaction.text}。`;
+      } else {
+        result = '你做出了选择，等待结果...';
       }
       
       state.history.push({
