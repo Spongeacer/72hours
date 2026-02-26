@@ -178,40 +178,79 @@ export class EmergentNarrativeEngine {
   }
 
   /**
-   * 涌现行为选择
-   * 不是公式决定，而是"感觉对感觉"的碰撞
+   * 涌现行为选择（整合社会心理学机制）
+   * 
+   * 理论基础：
+   * - 社会交换理论：资源稀缺下的成本-收益计算
+   * - 挫折-攻击假说：目标受阻引发攻击
+   * - 依恋理论：安全基地寻求
+   * - 互惠规范：社会交换的道德基础
    */
   private emergeBehavior(npc: NPC, force: number, knot: number): string {
     const { fear, aggression, hunger } = npc.states;
     
-    // 构建"感觉场"
-    const feelings: { type: string; intensity: number }[] = [];
+    // 构建"感觉场"（心理学：认知评价 → 情绪唤醒）
+    const feelings: { type: string; intensity: number; theory: string }[] = [];
     
-    if (fear > 60) feelings.push({ type: 'panic', intensity: fear });
-    if (aggression > 60) feelings.push({ type: 'hostility', intensity: aggression });
-    if (hunger > 60) feelings.push({ type: 'desperation', intensity: hunger });
-    if (knot > 5) feelings.push({ type: 'attachment', intensity: knot * 10 });
-    if (force > 5) feelings.push({ type: 'attraction', intensity: force * 10 });
+    // 基础生存需求（马斯洛：生理/安全需求）
+    if (fear > 60) feelings.push({ type: 'panic', intensity: fear, theory: '恐惧管理理论' });
+    if (aggression > 60) feelings.push({ type: 'hostility', intensity: aggression, theory: '挫折-攻击假说' });
+    if (hunger > 60) feelings.push({ type: 'desperation', intensity: hunger, theory: '生存本能' });
     
-    // 有执念相关的特质
+    // 社会连接需求（马斯洛：归属需求）
+    if (knot > 5) feelings.push({ type: 'attachment', intensity: knot * 10, theory: '依恋理论' });
+    if (force > 5) feelings.push({ type: 'attraction', intensity: force * 10, theory: '社会引力' });
+    
+    // 特质驱动的社会角色行为（Goffman：社会角色表演）
     const hasGreedy = npc.traits.some(t => t.id === 'greedy');
     const hasCompassionate = npc.traits.some(t => t.id === 'compassionate');
     const hasCurious = npc.traits.some(t => t.id === 'curious');
+    const hasBrave = npc.traits.some(t => t.id === 'brave');
+    const hasDeceitful = npc.traits.some(t => t.id === 'deceitful');
     
-    if (hasGreedy && fear > 40) feelings.push({ type: 'seizure', intensity: 70 });
-    if (hasCompassionate && knot > 3) feelings.push({ type: 'give', intensity: 60 });
-    if (hasCurious && fear < 50) feelings.push({ type: 'eavesdrop', intensity: 50 });
+    // 社会交换理论：贪婪+恐惧 = 资源抢占
+    if (hasGreedy && fear > 40) {
+      feelings.push({ type: 'seizure', intensity: 70, theory: '社会交换理论' });
+    }
+    
+    // 互惠规范：慈悲+关系 = 无条件给予
+    if (hasCompassionate && knot > 3) {
+      feelings.push({ type: 'give', intensity: 60, theory: '互惠规范' });
+    }
+    
+    // 信息缺口理论：好奇+安全 = 探索
+    if (hasCurious && fear < 50) {
+      feelings.push({ type: 'eavesdrop', intensity: 50, theory: '信息缺口理论' });
+    }
+    
+    // 社会认同理论：勇敢+高压 = 保护行为
+    if (hasBrave && fear > 50) {
+      feelings.push({ type: 'protect', intensity: 65, theory: '社会认同理论' });
+    }
+    
+    // 博弈论：狡诈+距离 = 策略观察
+    if (hasDeceitful && force < 3) {
+      feelings.push({ type: 'manipulate', intensity: 55, theory: '博弈论' });
+    }
+    
+    // Durkheim失范理论：高压下的规范瓦解
+    if (fear > 70 && hunger > 60) {
+      feelings.push({ type: 'anomie', intensity: 80, theory: '失范理论' });
+    }
     
     // 选择最强烈的感觉
     feelings.sort((a, b) => b.intensity - a.intensity);
     
     if (feelings.length === 0) return 'idle';
     
-    // 再次加入随机性 - 不是最强的一定发生
+    // 再次加入随机性（20%混沌）- 不是最强的一定发生
     const topFeelings = feelings.slice(0, Math.min(3, feelings.length));
     const randomIndex = Math.floor(Math.random() * topFeelings.length);
     
-    return topFeelings[randomIndex].type;
+    const selected = topFeelings[randomIndex];
+    console.log(`[BehaviorEmerge] ${npc.name} 涌现行为: ${selected.type} (强度:${selected.intensity}, 理论:${selected.theory})`);
+    
+    return selected.type;
   }
 
   /**
@@ -466,25 +505,74 @@ ${environmentalSignals.map(s => `- ${s.description} (${s.emotionalTone}, 强度$
       narrative += `${strongestSignal.description}。\n> `;
     }
     
-    // 聚光灯NPC
+    // 聚光灯NPC（加入社会心理学行为描述）
     if (spotlightNPC) {
-      const behaviors: Record<string, string> = {
-        panic: `${spotlightNPC.name}在发抖，眼神游离。`,
-        hostility: `${spotlightNPC.name}握紧了拳头，指节发白。`,
-        desperation: `${spotlightNPC.name}的肚子在叫，但目光却在你的包袱上停留。`,
-        attachment: `${spotlightNPC.name}靠了过来，像是要确认你还在。`,
-        attraction: `${spotlightNPC.name}被什么吸引着，目光无法移开。`,
-        seizure: `${spotlightNPC.name}的手在腰间摸索，呼吸急促。`,
-        give: `${spotlightNPC.name}递过来 something，眼神温柔。`,
-        eavesdrop: `${spotlightNPC.name}假装在看别处，耳朵却朝向你。`,
-        idle: `${spotlightNPC.name}沉默地站着，不知道在想什么。`
+      const behaviors: Record<string, { desc: string; theory: string }> = {
+        panic: { 
+          desc: `${spotlightNPC.name}在发抖，眼神游离。`, 
+          theory: '恐惧管理理论' 
+        },
+        hostility: { 
+          desc: `${spotlightNPC.name}握紧了拳头，指节发白。`, 
+          theory: '挫折-攻击假说' 
+        },
+        desperation: { 
+          desc: `${spotlightNPC.name}的肚子在叫，但目光却在你的包袱上停留。`, 
+          theory: '社会交换理论' 
+        },
+        attachment: { 
+          desc: `${spotlightNPC.name}靠了过来，像是要确认你还在。`, 
+          theory: '依恋理论' 
+        },
+        attraction: { 
+          desc: `${spotlightNPC.name}被什么吸引着，目光无法移开。`, 
+          theory: '社会引力' 
+        },
+        seizure: { 
+          desc: `${spotlightNPC.name}的手在腰间摸索，呼吸急促。`, 
+          theory: '失范理论' 
+        },
+        give: { 
+          desc: `${spotlightNPC.name}递过来 something，眼神温柔。`, 
+          theory: '互惠规范' 
+        },
+        eavesdrop: { 
+          desc: `${spotlightNPC.name}假装在看别处，耳朵却朝向你。`, 
+          theory: '信息缺口理论' 
+        },
+        protect: {
+          desc: `${spotlightNPC.name}站在你身前，像一堵墙。`,
+          theory: '社会认同理论'
+        },
+        manipulate: {
+          desc: `${spotlightNPC.name}嘴角微微上扬，眼里有算计。`,
+          theory: '博弈论'
+        },
+        anomie: {
+          desc: `${spotlightNPC.name}的眼神空洞，像失去了所有方向。`,
+          theory: '失范状态'
+        },
+        idle: { 
+          desc: `${spotlightNPC.name}沉默地站着，不知道在想什么。`, 
+          theory: '认知评价' 
+        }
       };
       
-      narrative += `${behaviors[spotlightNPC.behavior] || behaviors.idle}\n> `;
+      const behavior = behaviors[spotlightNPC.behavior] || behaviors.idle;
+      narrative += `${behavior.desc} /* ${behavior.theory} */
+> `;
       
-      // 执念暗示
+      // 执念暗示（心理学：图式激活）
       if (Math.random() > 0.5) {
-        narrative += `你想起${spotlightNPC.name}曾说过："${spotlightNPC.obsession}"\n> `;
+        narrative += `你想起${spotlightNPC.name}曾说过："${spotlightNPC.obsession}" /* 图式激活 */
+> `;
+      }
+      
+      // 记忆触发（心理学：情绪记忆）
+      if (spotlightNPC.memories.length > 0 && Math.random() > 0.7) {
+        const memory = spotlightNPC.memories[0];
+        narrative += `这一刻让你想起${memory.content} /* 情绪记忆 */
+> `;
       }
     }
     
