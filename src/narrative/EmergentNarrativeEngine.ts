@@ -8,10 +8,14 @@
  * 4. 故事自然流淌
  */
 
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import { GameState, NPC as INPC, Memory } from '../../shared/types';
 import { Player } from '../game/Player';
 import { NPC } from '../game/NPC';
 import { GravityEngine, MassObject } from '../core/GravityEngine';
+
+const execAsync = promisify(exec);
 
 export interface ResonanceContext {
   turn: number;
@@ -413,14 +417,41 @@ export class EmergentNarrativeEngine {
   }
 
   /**
-   * AI生成共振文本
+   * AI生成共振文本 - 使用curl调用
    */
   private async generateAIResonance(context: ResonanceContext): Promise<string> {
     const prompt = this.buildResonancePrompt(context);
     
     try {
-      const response = await this.ai.generate(prompt, this.model);
-      return response.trim();
+      // 使用curl调用API
+      const apiKey = process.env.SILICONFLOW_API_KEY || '';
+      const requestBody = JSON.stringify({
+        model: this.model,
+        messages: [
+          { role: 'system', content: '你是一个涌现式叙事引擎。' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.8,
+        max_tokens: 400
+      });
+      
+      // 转义单引号
+      const escapedBody = requestBody.replace(/'/g, "'\\''");
+      
+      const cmd = `curl -s -X POST https://api.siliconflow.cn/v1/chat/completions \
+        -H "Authorization: Bearer ${apiKey}" \
+        -H "Content-Type: application/json" \
+        -d '${escapedBody}' \
+        --max-time 60`;
+      
+      const { stdout } = await execAsync(cmd, { timeout: 65000 });
+      const result = JSON.parse(stdout);
+      
+      if (result.choices && result.choices[0]) {
+        return result.choices[0].message.content.trim();
+      }
+      
+      throw new Error('Invalid response format');
     } catch (error) {
       console.error('[EmergentNarrative] AI生成失败:', error);
       return this.generateOfflineResonance(context);
