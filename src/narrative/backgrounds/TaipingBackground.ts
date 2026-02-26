@@ -1,6 +1,6 @@
 /**
  * TaipingBackground - 太平天国金田起义背景
- * 1851年1月8日 - 1月11日，72小时
+ * 1851年1月8日 - 1月10日，36个时辰
  */
 
 import { IStoryBackground, FixedEvent, EventEffect } from '../interfaces/IStoryBackground';
@@ -9,10 +9,10 @@ import { NPC, Player } from '../../../shared/types';
 export class TaipingBackground implements IStoryBackground {
   id = 'taiping_1851';
   name = '金田起义';
-  description = '1851年1月，广西金田村，太平天国起义前夕的72小时';
+  description = '1851年1月，广西金田村，太平天国起义前夕的36个时辰';
   
   startDate = '1851-01-08T00:00:00';
-  totalTurns = 72;
+  totalTurns = 36;
   
   // 历史事件时间线
   private fixedEvents: Map<number, FixedEvent> = new Map([
@@ -43,8 +43,8 @@ export class TaipingBackground implements IStoryBackground {
         { type: 'omega', value: 1.5 }
       ]
     }],
-    [72, {
-      turn: 72,
+    [36, {
+      turn: 36,
       title: '金田起义爆发',
       description: '子时三刻，拜上帝会的火把照亮了夜空',
       effects: [

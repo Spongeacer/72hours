@@ -396,15 +396,15 @@ export class Game72Hours {
     const { player } = this.gameState;
     
     if (gameOver.type === 'death') {
-      return '你死了。历史继续，太平天国将在72小时后爆发。';
+      return '你死了。历史继续，太平天国将在36个时辰后爆发。';
     }
     
     if (gameOver.type === 'escape') {
-      return '你逃离了金田。72小时后，太平天国起义爆发，你不在那里。';
+      return '你逃离了金田。36个时辰后，太平天国起义爆发，你不在那里。';
     }
     
     if (gameOver.type === 'completed') {
-      return '第72回合，金田起义爆发。你的故事结束了。';
+      return '第36回合，金田起义爆发。你的故事结束了。';
     }
     
     return '游戏结束。';

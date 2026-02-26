@@ -7,7 +7,7 @@ import { Identity, PersonalityTrait } from '../shared/types';
 export const GAME_CONFIG = {
   // 网格与世界
   GRID_SIZE: 5,
-  MAX_TURNS: 72,
+  MAX_TURNS: 36,
   START_DATE: '1851-01-08T00:00:00',
   
   // 物理参数

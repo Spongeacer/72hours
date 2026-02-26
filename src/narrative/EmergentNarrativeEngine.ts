@@ -545,7 +545,7 @@ export class EmergentNarrativeEngine {
     const { spotlightNPC, player } = context;
     
     const prompt = `
-【时间】第${context.turn}/72回合，${new Date(context.datetime).toLocaleString('zh-CN')}
+【时间】第${context.turn}/36回合，${new Date(context.datetime).toLocaleString('zh-CN')}
 
 【场】
 压强：${Math.round(context.pressure)}/20

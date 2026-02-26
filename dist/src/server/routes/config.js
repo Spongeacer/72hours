@@ -4,7 +4,7 @@ const express_1 = require("express");
 const router = (0, express_1.Router)();
 const GAME_CONFIG = {
     GRID_SIZE: 5,
-    MAX_TURNS: 72,
+    MAX_TURNS: 36,
     START_DATE: '1851-01-08T00:00:00',
 };
 const IDENTITIES = {

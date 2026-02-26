@@ -182,7 +182,7 @@ router.post('/:id/turns', (0, validateRequest_1.validateRequest)({ body: execute
         }
         state.turn++;
         const current = new Date(state.datetime);
-        current.setHours(current.getHours() + 1);
+        current.setHours(current.getHours() + 2); // 每2小时一个回合
         state.datetime = current.toISOString();
         // 压强增长 (1-20范围)
         state.pressure = Math.min(20, state.pressure + 0.16);
@@ -319,7 +319,7 @@ router.post('/:id/turns', (0, validateRequest_1.validateRequest)({ body: execute
             gameOver = { type: 'death', reason: state.player.states.injury >= 20 ? '伤势过重' : '饥饿致死' };
             state.isGameOver = true;
         }
-        else if (state.turn >= 72) {
+        else if (state.turn >= 36) {
             gameOver = { type: 'completed', reason: '金田起义爆发' };
             state.isGameOver = true;
         }
@@ -365,7 +365,7 @@ router.get('/:id/ai-prompt', (req, res) => {
     const spotlightNPC = unlockedNPCs.length > 0 ? unlockedNPCs[0] : null;
     // 构建 prompt（与 EmergentNarrativeEngine 一致）
     const prompt = `
-【时间】第${state.turn}/72回合，${new Date(state.datetime).toLocaleString('zh-CN')}
+【时间】第${state.turn}/36回合，${new Date(state.datetime).toLocaleString('zh-CN')}
 
 【场】
 压强：${Math.round(state.pressure)}/20

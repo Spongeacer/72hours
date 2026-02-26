@@ -220,7 +220,7 @@ export class NarrativeEngine {
     return `你是一个叙事游戏引擎。根据以下游戏状态，生成一段沉浸式的叙事文本。
 
 游戏状态：
-- 回合: ${context.turn}/72
+- 回合: ${context.turn}/36
 - 时间: ${new Date(context.datetime).toLocaleString('zh-CN')}
 - 天气: ${context.weather}
 - 压强: ${context.pressure.toFixed(1)}
