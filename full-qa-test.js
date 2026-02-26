@@ -90,8 +90,7 @@ async function runFullGameTest() {
     
     // 步骤2: 创建游戏
     log('步骤2: 创建游戏...');
-    const createRes = await request('/api/game/create', 'POST', {
-      apiKey: API_KEY,
+    const createRes = await request('/api/games', 'POST', {
       identity: TEST_IDENTITY,
       model: TEST_MODEL
     });
@@ -123,7 +122,7 @@ async function runFullGameTest() {
     for (let turn = 1; turn <= TARGET_TURNS; turn++) {
       try {
         // 3.1 生成叙事和选择
-        const turnRes = await request(`/api/game/${gameId}/turn`, 'POST', {});
+        const turnRes = await request(`/api/games/${gameId}/turns`, 'POST', {});
         
         if (!turnRes.success) {
           throw new Error(`回合 ${turn} 生成失败: ${turnRes.error?.message || '未知错误'}`);
@@ -175,7 +174,7 @@ async function runFullGameTest() {
         // 3.2 提交选择（随机选择）
         const randomChoice = turnRes.data.choices[Math.floor(Math.random() * turnRes.data.choices.length)];
         
-        const choiceRes = await request(`/api/game/${gameId}/turn`, 'POST', {
+        const choiceRes = await request(`/api/games/${gameId}/turns`, 'POST', {
           choice: {
             id: randomChoice.id,
             text: randomChoice.text
@@ -214,7 +213,7 @@ async function runFullGameTest() {
     
     // 步骤4: 获取最终状态
     log('步骤4: 获取最终游戏状态...');
-    const finalStateRes = await request(`/api/game/${gameId}/state`);
+    const finalStateRes = await request(`/api/games/${gameId}/state`);
     if (!finalStateRes.success) {
       throw new Error('获取最终状态失败');
     }
@@ -229,7 +228,7 @@ async function runFullGameTest() {
     // 步骤5: 获取故事记录
     log('');
     log('步骤5: 获取故事记录...');
-    const storyRes = await request(`/api/game/${gameId}/story`);
+    const storyRes = await request(`/api/games/${gameId}/history`);
     if (!storyRes.success) {
       throw new Error('获取故事记录失败');
     }

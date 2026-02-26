@@ -26,15 +26,15 @@
 
 创建一个新的游戏实例。
 
-**Endpoint**: `POST /api/game/create`
+**Endpoint**: `POST /api/games`
 
 **请求参数**:
 
 | 字段 | 类型 | 必需 | 说明 |
 |------|------|------|------|
-| `apiKey` | string | 条件 | SiliconFlow API Key（如果服务器未配置）|
-| `identity` | string | 否 | 玩家身份，默认 `scholar` |
-| `model` | string | 否 | AI 模型，默认 `Pro/MiniMaxAI/MiniMax-M2.1` |
+| `identity` | string | **是** | 玩家身份 |
+| `model` | string | 否 | AI 模型，默认 `Pro/MiniMaxAI/MiniMax-M2.5` |
+| `apiKey` | string | 否 | SiliconFlow API Key（如果服务器未配置）|
 
 **identity 可选值**:
 - `scholar` - 村中的读书人
@@ -51,21 +51,20 @@
     "gameId": "game_1234567890_abc123",
     "player": {
       "id": "player_xxx",
-      "name": "沈墨池",
-      "identity": "scholar",
-      "traits": ["calm", "curious", "honest"],
-      "states": {
-        "fear": 30,
-        "aggression": 20,
-        "hunger": 40,
-        "injury": 0
-      }
+      "name": "你",
+      "identityType": "scholar",
+      "identity": { "name": "村中的读书人", "baseMass": 3 },
+      "traits": [{ "id": "calm", "type": "personality" }],
+      "obsession": "在乱世中活下去",
+      "states": { "fear": 30, "aggression": 20, "hunger": 40, "injury": 0 },
+      "position": { "x": 0, "y": 0 }
     },
     "bondedNPCs": [
       {
-        "id": "mother",
+        "id": "npc_xxx",
         "name": "母亲",
-        "knot": 5
+        "traits": [],
+        "isBonded": true
       }
     ],
     "opening": "游戏开场叙事文本...",
@@ -100,7 +99,7 @@
 
 执行一个游戏回合（生成叙事或处理选择）。
 
-**Endpoint**: `POST /api/game/:gameId/turn`
+**Endpoint**: `POST /api/games/:gameId/turns`
 
 **路径参数**:
 
@@ -119,10 +118,8 @@
 ```json
 {
   "id": "choice_1",
-  "text": "你压低声音问：'先生究竟在怕什么？'",
-  "type": "normal"
+  "text": "你压低声音问：'先生究竟在怕什么？'"
 }
-```
 
 **成功响应（生成新回合）**:
 
@@ -137,42 +134,8 @@
         "id": "choice_1",
         "text": "你压低声音问：'先生究竟在怕什么？'",
         "type": "normal"
-      },
-      {
-        "id": "choice_2",
-        "text": "你起身说要出去醒酒...",
-        "type": "normal"
-      },
-      {
-        "id": "choice_3",
-        "text": "你把最后一块干粮递给TA...",
-        "type": "hidden"
       }
     ],
-    "context": {
-      "turn": 1,
-      "scene": {
-        "time": "1851年1月8日 01:00",
-        "weather": "night",
-        "pressure": 11,
-        "omega": "1.02",
-        "location": {
-          "id": "home",
-          "name": "家中",
-          "description": "土坯房，灶台前..."
-        }
-      },
-      "spotlight": {
-        "name": "教书先生",
-        "traits": ["cautious", "scholar"],
-        "obsession": "保护藏书",
-        "knotWithPlayer": 2
-      },
-      "player": {
-        "identity": "村中的读书人",
-        "states": { "fear": 30, "aggression": 20, "hunger": 40 }
-      }
-    },
     "state": {
       "turn": 1,
       "datetime": "1851-01-08T01:00:00.000Z",
@@ -192,11 +155,7 @@
 {
   "success": true,
   "data": {
-    "result": {
-      "text": "教书先生没有回答，但肩上的僵硬似乎松了一瞬...",
-      "stateDelta": { "fear": -5 },
-      "knotDelta": 0.5
-    },
+    "result": "教书先生没有回答，但肩上的僵硬似乎松了一瞬...",
     "state": {
       "turn": 1,
       "datetime": "1851-01-08T01:00:00.000Z",
@@ -228,7 +187,7 @@
 
 获取当前游戏状态。
 
-**Endpoint**: `GET /api/game/:gameId/state`
+**Endpoint**: `GET /api/games/:gameId/state`
 
 **路径参数**:
 
@@ -259,11 +218,11 @@
 
 ---
 
-### 4. 获取故事记录
+### 4. 获取历史记录
 
-获取完整的游戏故事记录。
+获取完整的游戏历史记录。
 
-**Endpoint**: `GET /api/game/:gameId/story`
+**Endpoint**: `GET /api/games/:gameId/history`
 
 **路径参数**:
 
@@ -276,14 +235,14 @@
 ```json
 {
   "success": true,
-  "data": {
-    "story": "# 沈墨池的生平\n\n## 身份\n村中的读书人...",
-    "history": [
-      { "turn": 1, "event": "与教书先生相遇" },
-      { "turn": 2, "event": "回到家中" }
-    ],
-    "turn": 72
-  },
+  "data": [
+    {
+      "turn": 1,
+      "choice": "探索周围环境",
+      "result": "你在村子里走了一圈...",
+      "timestamp": "2026-02-26T10:30:00.000Z"
+    }
+  ],
   "error": null
 }
 ```
