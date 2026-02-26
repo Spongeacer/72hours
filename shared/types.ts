@@ -119,11 +119,21 @@ export interface TurnResult {
   choices: Choice[];
   result?: string;
   state: GameState;
+  context?: TurnContext;
   gameOver?: {
     type: 'death' | 'escape' | 'completed';
     reason: string;
-  };
+  } | null;
   epilogue?: string;
+}
+
+// 回合上下文
+export interface TurnContext {
+  turn: number;
+  narrative: string;
+  choices: Choice[];
+  npcs: NPC[];
+  player: Player;
 }
 
 // 游戏初始化结果
