@@ -244,11 +244,26 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
     // 压强增长 (1-20范围)
     state.pressure = Math.min(20, state.pressure + 0.16);
     
-    // Ω增长 (1-20范围)
+    // Ω增长 (1-20范围) - 基础增长 + 用户选择的蝴蝶效应
+    let omegaIncrease = 0.08; // 基础增长
+    
+    // 用户选择的蝴蝶效应：随机影响 Ω 增长
+    if (choice) {
+      const butterflyEffect = Math.random();
+      if (butterflyEffect < 0.3) {
+        omegaIncrease = 0; // 30% 概率无影响
+      } else if (butterflyEffect < 0.6) {
+        omegaIncrease = 0.1; // 30% 概率 +0.1
+      } else {
+        omegaIncrease = 0.2; // 40% 概率 +0.2
+      }
+    }
+    
+    // 高压时 Ω 加速增长
     if (state.pressure >= 12) {
-      state.omega = Math.min(20, state.omega * 1.02);
+      state.omega = Math.min(20, state.omega * 1.02 + omegaIncrease);
     } else {
-      state.omega = Math.min(20, state.omega + 0.08);
+      state.omega = Math.min(20, state.omega + omegaIncrease);
     }
     
     const hour = current.getHours();
@@ -311,20 +326,22 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
       });
     }
     
-    // 剧本事件解锁NPC机制
-    // 事件1: 回合1-18 (初始已解锁4个)
-    // 事件2: 回合19-36 (解锁第5-8个NPC)
-    // 事件3: 回合37-54 (解锁第9-10个NPC + 关键历史人物)
-    // 事件4: 回合55-72 (最后一个回合，高潮/结局)
+    // 剧本事件解锁NPC机制 - 基于Ω（历史必然感）
+    // Ω 范围 1-20，对应历史必然感的累积
+    // 事件1: Ω 0-5 (初始已解锁4个)
+    // 事件2: Ω 5-10 (解锁第5-8个NPC)
+    // 事件3: Ω 10-15 (解锁第9-10个NPC + 关键历史人物)
+    // 事件4: Ω 15-20 (最后一个回合，高潮/结局)
     let unlockedNPCsThisTurn: string[] = [];
+    const currentOmega = state.omega;
     const previousStoryEvent = state.storyEvent || 0;
     
-    if (state.turn >= 55 && previousStoryEvent < 4) {
+    if (currentOmega >= 15 && previousStoryEvent < 4) {
       // 事件4: 最终阶段（高潮/结局）
       state.storyEvent = 4;
       // 事件4不新增NPC，而是触发最终剧情
       
-    } else if (state.turn >= 37 && previousStoryEvent < 3) {
+    } else if (currentOmega >= 10 && previousStoryEvent < 3) {
       // 事件3: 解锁剩余NPC + 关键历史人物
       state.storyEvent = 3;
       
@@ -350,7 +367,7 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
         unlockedNPCsThisTurn.push(name);
       });
       
-    } else if (state.turn >= 19 && previousStoryEvent < 2) {
+    } else if (currentOmega >= 5 && previousStoryEvent < 2) {
       // 事件2: 解锁第5-8个NPC
       state.storyEvent = 2;
       state.npcs.forEach((npc: any) => {
