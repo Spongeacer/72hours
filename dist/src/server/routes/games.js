@@ -1,16 +1,33 @@
 "use strict";
+/**
+ * 统一响应格式的 games 路由
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const zod_1 = require("zod");
 const validateRequest_1 = require("../middleware/validateRequest");
+const apiResponse_1 = require("../utils/apiResponse");
 const router = (0, express_1.Router)();
 const games = new Map();
+// 生成请求ID
+function generateRequestId() {
+    return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
+// Schemas
 const createGameSchema = zod_1.z.object({
     identity: zod_1.z.enum(['scholar', 'landlord', 'soldier', 'cultist']),
     model: zod_1.z.string().optional(),
     apiKey: zod_1.z.string().optional()
 });
+const executeTurnSchema = zod_1.z.object({
+    choice: zod_1.z.object({
+        id: zod_1.z.string(),
+        text: zod_1.z.string()
+    }).optional()
+});
+// 创建游戏
 router.post('/', (0, validateRequest_1.validateRequest)({ body: createGameSchema }), async (req, res) => {
+    const requestId = generateRequestId();
     try {
         const { identity, model, apiKey } = req.body;
         const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -28,53 +45,11 @@ router.post('/', (0, validateRequest_1.validateRequest)({ body: createGameSchema
             traits: [{ id: 'calm', type: 'personality' }, { id: 'curious', type: 'personality' }],
             obsession: '在乱世中活下去',
             states: { fear: 30, aggression: 20, hunger: 40, injury: 0 },
-            position: { x: 0, y: 0 },
-            baseMass: identities[identity].baseMass,
-            storyMass: 0,
-            objectMass: 0,
-            trapConstant: 0,
-            getTotalMass: function () { return this.baseMass + this.storyMass + this.objectMass; },
-            getEffectiveMass: function () { return this.getTotalMass() * (1 + this.trapConstant); }
+            position: { x: 0, y: 0 }
         };
         const bondedNPCs = [
-            {
-                id: `npc_${Date.now()}_1`,
-                name: '母亲',
-                traits: [],
-                isBonded: true,
-                position: { x: 1, y: 0 },
-                baseMass: 4,
-                storyMass: 0,
-                trapConstant: 0,
-                states: { fear: 20, aggression: 10, hunger: 30, injury: 0 },
-                getTotalMass: function () { return this.baseMass + this.storyMass; },
-                getEffectiveMass: function () { return this.getTotalMass() * (1 + this.trapConstant); },
-                getKnotWith: function () { return 5; },
-                knotMap: new Map([['player', 5]]),
-                memories: [],
-                obsession: '保护家人',
-                isUnlocked: true,
-                checkUnlock: function () { return true; }
-            },
-            {
-                id: `npc_${Date.now()}_2`,
-                name: '教书先生',
-                traits: [],
-                isBonded: true,
-                position: { x: -1, y: 1 },
-                baseMass: 3,
-                storyMass: 0,
-                trapConstant: 0,
-                states: { fear: 40, aggression: 5, hunger: 20, injury: 0 },
-                getTotalMass: function () { return this.baseMass + this.storyMass; },
-                getEffectiveMass: function () { return this.getTotalMass() * (1 + this.trapConstant); },
-                getKnotWith: function () { return 2; },
-                knotMap: new Map([['player', 2]]),
-                memories: [],
-                obsession: '教书育人',
-                isUnlocked: true,
-                checkUnlock: function () { return true; }
-            }
+            { id: `npc_${Date.now()}_1`, name: '母亲', traits: [], isBonded: true, isUnlocked: true },
+            { id: `npc_${Date.now()}_2`, name: '教书先生', traits: [], isBonded: true, isUnlocked: true }
         ];
         const gameState = {
             turn: 0,
@@ -94,72 +69,76 @@ router.post('/', (0, validateRequest_1.validateRequest)({ body: createGameSchema
             soldier: `> 刀鞘上的血还没擦干净，是上一个村子的。\n> 上峰说金田有会匪，格杀勿论。\n> 你舔了舔嘴唇，有点干。`,
             cultist: `> 十字架贴在胸口，已经温热了。\n> 密信上的字你背得出来："十一日，万寿起义。"\n> 还有三天。上帝会保护他的子民，但你也握紧了刀。`
         };
-        res.status(201).json({
-            success: true,
-            data: {
-                gameId,
-                player,
-                bondedNPCs,
-                opening: openings[identity] || openings.scholar,
-                state: gameState
+        res.status(201).json((0, apiResponse_1.createSuccessResponse)({
+            gameId,
+            player: {
+                id: player.id,
+                name: player.name,
+                identityType: player.identityType,
+                identity: player.identity,
+                traits: player.traits,
+                obsession: player.obsession,
+                states: player.states,
+                position: player.position
             },
-            error: null,
-            meta: {
-                timestamp: new Date().toISOString(),
-                requestId: Math.random().toString(36).substring(2, 15)
+            bondedNPCs: bondedNPCs.map((npc) => ({
+                id: npc.id,
+                name: npc.name,
+                traits: npc.traits,
+                isBonded: npc.isBonded,
+                isUnlocked: npc.isUnlocked
+            })),
+            opening: openings[identity] || openings.scholar,
+            state: {
+                turn: gameState.turn,
+                datetime: gameState.datetime,
+                pressure: gameState.pressure,
+                omega: gameState.omega,
+                weather: gameState.weather,
+                isGameOver: gameState.isGameOver
             }
-        });
+        }, requestId));
     }
     catch (error) {
-        res.status(500).json({
-            success: false,
-            data: null,
-            error: { code: 'GAME_INIT_FAILED', message: error.message || '创建游戏失败' },
-            meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
-        });
+        res.status(500).json((0, apiResponse_1.createErrorResponse)('GAME_INIT_FAILED', error.message || '创建游戏失败', undefined, requestId));
     }
 });
+// 获取游戏状态
 router.get('/:id/state', (req, res) => {
+    const requestId = generateRequestId();
     const game = games.get(req.params.id);
     if (!game) {
-        return res.status(404).json({
-            success: false,
-            data: null,
-            error: { code: 'GAME_NOT_FOUND', message: '游戏不存在或已结束' },
-            meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
-        });
+        return res.status(404).json((0, apiResponse_1.createErrorResponse)('GAME_NOT_FOUND', '游戏不存在或已结束', undefined, requestId));
     }
-    res.json({
-        success: true,
-        data: game.state,
-        error: null,
-        meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
-    });
+    res.json((0, apiResponse_1.createSuccessResponse)({
+        turn: game.state.turn,
+        datetime: game.state.datetime,
+        pressure: game.state.pressure,
+        omega: game.state.omega,
+        weather: game.state.weather,
+        isGameOver: game.state.isGameOver
+    }, requestId));
 });
-const executeTurnSchema = zod_1.z.object({
-    choice: zod_1.z.object({ id: zod_1.z.string(), text: zod_1.z.string() }).optional()
-});
+// 执行回合
 router.post('/:id/turns', (0, validateRequest_1.validateRequest)({ body: executeTurnSchema }), async (req, res) => {
+    const requestId = generateRequestId();
     const game = games.get(req.params.id);
     if (!game) {
-        return res.status(404).json({
-            success: false,
-            data: null,
-            error: { code: 'GAME_NOT_FOUND', message: '游戏不存在或已结束' },
-            meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
-        });
+        return res.status(404).json((0, apiResponse_1.createErrorResponse)('GAME_NOT_FOUND', '游戏不存在或已结束', undefined, requestId));
     }
     if (game.state.isGameOver) {
-        return res.status(400).json({
-            success: false,
-            data: null,
-            error: { code: 'GAME_ALREADY_OVER', message: '游戏已结束' },
-            meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
-        });
+        return res.status(400).json((0, apiResponse_1.createErrorResponse)('GAME_ALREADY_OVER', '游戏已结束', undefined, requestId));
     }
     try {
         const { choice } = req.body;
         const state = game.state;
+        // 验证选择
+        if (choice) {
+            const validation = (0, apiResponse_1.validateChoice)(choice);
+            if (!validation.valid) {
+                return res.status(400).json((0, apiResponse_1.createErrorResponse)('INVALID_CHOICE', validation.error || '无效的选择', undefined, requestId));
+            }
+        }
         state.turn++;
         const current = new Date(state.datetime);
         current.setHours(current.getHours() + 1);
@@ -189,9 +168,9 @@ router.post('/:id/turns', (0, validateRequest_1.validateRequest)({ body: execute
         ];
         const narrative = narratives[Math.floor(Math.random() * narratives.length)];
         const choices = [
-            { id: 'explore', text: '探索周围环境' },
-            { id: 'rest', text: '找个地方休息' },
-            { id: 'observe', text: '观察附近的人' }
+            { id: 'explore', text: '探索周围环境', type: 'normal' },
+            { id: 'rest', text: '找个地方休息', type: 'normal' },
+            { id: 'observe', text: '观察附近的人', type: 'normal' }
         ];
         if (state.player.states.fear > 60) {
             choices.push({ id: 'flee', text: '逃离这个危险的地方', type: 'hidden' });
@@ -219,7 +198,12 @@ router.post('/:id/turns', (0, validateRequest_1.validateRequest)({ body: execute
                 default:
                     result = '你做出了选择，等待结果...';
             }
-            state.history.push({ turn: state.turn, choice: choice.text, result, timestamp: new Date().toISOString() });
+            state.history.push({
+                turn: state.turn,
+                choice: choice.text,
+                result,
+                timestamp: new Date().toISOString()
+            });
         }
         let gameOver = null;
         if (state.player.states.injury >= 100 || state.player.states.hunger >= 100) {
@@ -230,56 +214,44 @@ router.post('/:id/turns', (0, validateRequest_1.validateRequest)({ body: execute
             gameOver = { type: 'completed', reason: '金田起义爆发' };
             state.isGameOver = true;
         }
-        res.json({
-            success: true,
-            data: { turn: state.turn, narrative, choices, result, state, gameOver },
-            error: null,
-            meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
-        });
+        res.json((0, apiResponse_1.createSuccessResponse)({
+            turn: state.turn,
+            narrative,
+            choices,
+            result,
+            state: {
+                turn: state.turn,
+                datetime: state.datetime,
+                pressure: state.pressure,
+                omega: state.omega,
+                weather: state.weather,
+                isGameOver: state.isGameOver
+            },
+            gameOver
+        }, requestId));
     }
     catch (error) {
-        res.status(500).json({
-            success: false,
-            data: null,
-            error: { code: 'TURN_EXECUTION_FAILED', message: error.message || '执行回合失败' },
-            meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
-        });
+        res.status(500).json((0, apiResponse_1.createErrorResponse)('TURN_EXECUTION_FAILED', error.message || '执行回合失败', undefined, requestId));
     }
 });
+// 获取历史记录
 router.get('/:id/history', (req, res) => {
+    const requestId = generateRequestId();
     const game = games.get(req.params.id);
     if (!game) {
-        return res.status(404).json({
-            success: false,
-            data: null,
-            error: { code: 'GAME_NOT_FOUND', message: '游戏不存在或已结束' },
-            meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
-        });
+        return res.status(404).json((0, apiResponse_1.createErrorResponse)('GAME_NOT_FOUND', '游戏不存在或已结束', undefined, requestId));
     }
-    res.json({
-        success: true,
-        data: game.state.history,
-        error: null,
-        meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
-    });
+    res.json((0, apiResponse_1.createSuccessResponse)(game.state.history, requestId));
 });
+// 结束游戏
 router.delete('/:id', (req, res) => {
+    const requestId = generateRequestId();
     const game = games.get(req.params.id);
     if (!game) {
-        return res.status(404).json({
-            success: false,
-            data: null,
-            error: { code: 'GAME_NOT_FOUND', message: '游戏不存在' },
-            meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
-        });
+        return res.status(404).json((0, apiResponse_1.createErrorResponse)('GAME_NOT_FOUND', '游戏不存在', undefined, requestId));
     }
     games.delete(req.params.id);
-    res.json({
-        success: true,
-        data: null,
-        error: null,
-        meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
-    });
+    res.json((0, apiResponse_1.createSuccessResponse)(null, requestId));
 });
 exports.default = router;
 //# sourceMappingURL=games.js.map
