@@ -8,14 +8,11 @@
  * 4. 故事自然流淌
  */
 
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import { GameState, NPC as INPC, Memory } from '../../shared/types';
 import { Player } from '../game/Player';
 import { NPC } from '../game/NPC';
 import { GravityEngine, MassObject } from '../core/GravityEngine';
-
-const execAsync = promisify(exec);
 
 export interface ResonanceContext {
   turn: number;
@@ -418,44 +415,127 @@ export class EmergentNarrativeEngine {
 
   /**
    * AI生成共振文本 - 使用curl调用
+   * 
+   * 修复要点：
+   * 1. 使用 spawn 代替 exec（避免缓冲区限制）
+   * 2. 改进错误处理
+   * 3. 确保 JSON 数据正确转义（通过 spawn 参数传递，无需手动转义）
+   * 4. 添加超时处理
    */
   private async generateAIResonance(context: ResonanceContext): Promise<string> {
     const prompt = this.buildResonancePrompt(context);
     
-    try {
-      // 使用curl调用API
-      const apiKey = process.env.SILICONFLOW_API_KEY || '';
-      const requestBody = JSON.stringify({
-        model: this.model,
-        messages: [
-          { role: 'system', content: '你是一个涌现式叙事引擎。' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.8,
-        max_tokens: 400
-      });
-      
-      // 转义单引号
-      const escapedBody = requestBody.replace(/'/g, "'\\''");
-      
-      const cmd = `curl -s -X POST https://api.siliconflow.cn/v1/chat/completions \
-        -H "Authorization: Bearer ${apiKey}" \
-        -H "Content-Type: application/json" \
-        -d '${escapedBody}' \
-        --max-time 60`;
-      
-      const { stdout } = await execAsync(cmd, { timeout: 65000 });
-      const result = JSON.parse(stdout);
-      
-      if (result.choices && result.choices[0]) {
-        return result.choices[0].message.content.trim();
+    return new Promise((resolve, reject) => {
+      try {
+        const apiKey = process.env.SILICONFLOW_API_KEY || '';
+        const requestBody = JSON.stringify({
+          model: this.model,
+          messages: [
+            { role: 'system', content: '你是一个涌现式叙事引擎。' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.8,
+          max_tokens: 400
+        });
+
+        // 使用 spawn 启动 curl 进程
+        const curlArgs = [
+          '-s', // 静默模式
+          '-X', 'POST',
+          'https://api.siliconflow.cn/v1/chat/completions',
+          '-H', `Authorization: Bearer ${apiKey}`,
+          '-H', 'Content-Type: application/json',
+          '-d', requestBody, // 直接传递 JSON 字符串，无需手动转义
+          '--max-time', '60',
+          '--connect-timeout', '10'
+        ];
+
+        const curl = spawn('curl', curlArgs);
+        
+        let stdout = '';
+        let stderr = '';
+        let timeoutId: NodeJS.Timeout;
+
+        // 设置超时处理（65秒，比 curl 的 --max-time 稍长）
+        const TIMEOUT_MS = 65000;
+        
+        const cleanup = () => {
+          if (timeoutId) clearTimeout(timeoutId);
+          curl.kill('SIGTERM');
+        };
+
+        timeoutId = setTimeout(() => {
+          cleanup();
+          console.error('[EmergentNarrative] AI请求超时');
+          // 超时后使用离线模式
+          resolve(this.generateOfflineResonance(context));
+        }, TIMEOUT_MS);
+
+        // 收集标准输出
+        curl.stdout.on('data', (data: Buffer) => {
+          stdout += data.toString('utf-8');
+        });
+
+        // 收集标准错误
+        curl.stderr.on('data', (data: Buffer) => {
+          stderr += data.toString('utf-8');
+        });
+
+        // 进程关闭处理
+        curl.on('close', (code: number | null) => {
+          clearTimeout(timeoutId);
+
+          // 非零退出码处理
+          if (code !== 0) {
+            console.error(`[EmergentNarrative] curl 进程退出码: ${code}, stderr: ${stderr}`);
+            // 失败时回退到离线模式
+            resolve(this.generateOfflineResonance(context));
+            return;
+          }
+
+          try {
+            // 空响应处理
+            if (!stdout.trim()) {
+              console.error('[EmergentNarrative] API 返回空响应');
+              resolve(this.generateOfflineResonance(context));
+              return;
+            }
+
+            const result = JSON.parse(stdout);
+
+            // 检查 API 错误响应
+            if (result.error) {
+              console.error('[EmergentNarrative] API 错误:', result.error);
+              resolve(this.generateOfflineResonance(context));
+              return;
+            }
+
+            // 检查响应格式
+            if (result.choices && result.choices[0] && result.choices[0].message) {
+              resolve(result.choices[0].message.content.trim());
+            } else {
+              console.error('[EmergentNarrative] 无效的响应格式:', result);
+              resolve(this.generateOfflineResonance(context));
+            }
+          } catch (parseError) {
+            console.error('[EmergentNarrative] JSON 解析失败:', parseError);
+            console.error('[EmergentNarrative] 原始响应:', stdout.substring(0, 500));
+            resolve(this.generateOfflineResonance(context));
+          }
+        });
+
+        // 进程错误处理
+        curl.on('error', (error: Error) => {
+          clearTimeout(timeoutId);
+          console.error('[EmergentNarrative] curl 进程启动失败:', error);
+          resolve(this.generateOfflineResonance(context));
+        });
+
+      } catch (error) {
+        console.error('[EmergentNarrative] AI生成失败:', error);
+        resolve(this.generateOfflineResonance(context));
       }
-      
-      throw new Error('Invalid response format');
-    } catch (error) {
-      console.error('[EmergentNarrative] AI生成失败:', error);
-      return this.generateOfflineResonance(context);
-    }
+    });
   }
 
   /**

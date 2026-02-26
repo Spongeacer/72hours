@@ -316,6 +316,59 @@ router.get('/:id/history', (req, res) => {
   res.json(createSuccessResponse(game.state.history, requestId));
 });
 
+// 获取 AI Prompt（前端直连 AI 使用）
+router.get('/:id/ai-prompt', (req, res) => {
+  const requestId = generateRequestId();
+  const game = games.get(req.params.id);
+  
+  if (!game) {
+    return res.status(404).json(createErrorResponse(
+      'GAME_NOT_FOUND',
+      '游戏不存在或已结束',
+      undefined,
+      requestId
+    ));
+  }
+  
+  const state = game.state;
+  const player = state.player;
+  const npcs = state.npcs || [];
+  const spotlightNPC = npcs.length > 0 ? npcs[0] : null;
+  
+  // 构建 prompt（与 EmergentNarrativeEngine 一致）
+  const prompt = `
+【时间】第${state.turn}/72回合，${new Date(state.datetime).toLocaleString('zh-CN')}
+
+【场】
+压强：${Math.round(state.pressure)}/20
+历史必然感：${Math.round(state.omega)}/20
+
+【你】
+恐惧：${player.states.fear}/20
+攻击性：${player.states.aggression}/20
+饥饿：${player.states.hunger}/20
+伤势：${player.states.injury}/20
+执念：${player.obsession}
+
+【在场者】${spotlightNPC ? spotlightNPC.name : '无'}
+${spotlightNPC ? `恐惧：${spotlightNPC.states?.fear || 6}/20
+攻击性：${spotlightNPC.states?.aggression || 4}/20
+与你的关系：${spotlightNPC.knot || 6}/20
+执念：${spotlightNPC.obsession || '活下去'}` : ''}
+
+【约束】
+- 从视觉、听觉、嗅觉写环境，不解释"压强高"是什么意思
+- 让${spotlightNPC ? spotlightNPC.name : '环境'}的执念自然流露，不直接说"他想..."
+- 200字，第二人称，暗示而非说明
+`;
+
+  res.json(createSuccessResponse({
+    prompt,
+    model: game.model || 'Pro/MiniMaxAI/MiniMax-M2.5',
+    apiUrl: 'https://api.siliconflow.cn/v1/chat/completions'
+  }, requestId));
+});
+
 // 结束游戏
 router.delete('/:id', (req, res) => {
   const requestId = generateRequestId();

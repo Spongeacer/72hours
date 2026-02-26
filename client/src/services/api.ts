@@ -129,5 +129,52 @@ export const api = {
       saveData
     });
     return response.data;
+  },
+
+  // ==================== AI 叙事（前端直连）====================
+  
+  async getAIPrompt(gameId: string): Promise<ApiResponse<{
+    prompt: string;
+    model: string;
+    apiUrl: string;
+  }>> {
+    const response = await apiClient.get(`/games/${gameId}/ai-prompt`);
+    return response.data;
+  },
+
+  // 前端直接调用 SiliconFlow API
+  async generateNarrative(
+    prompt: string, 
+    model: string, 
+    apiKey: string
+  ): Promise<string> {
+    const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          { role: 'system', content: '你是一个涌现式叙事引擎。' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.8,
+        max_tokens: 400
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI API 错误: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error.message || 'AI 生成失败');
+    }
+
+    return data.choices[0].message.content.trim();
   }
 };
