@@ -16,21 +16,33 @@ export const GAME_CONFIG = {
     PRESSURE_MULTIPLIER: 0.05
   },
   
-  // 压强系统
+  // 压强系统 (1-20范围)
   PRESSURE: {
-    BASE_GROWTH: 0.8,
-    VIOLENCE_BONUS: 5,
-    THRESHOLD_RAID: 50,
-    THRESHOLD_DIVINE: 60
+    INITIAL: 2,
+    BASE_GROWTH: 0.16,
+    VIOLENCE_BONUS: 1,
+    THRESHOLD_RAID: 10,
+    THRESHOLD_DIVINE: 12,
+    MAX: 20
   },
   
-  // 全局因子 Ω
+  // 全局因子 Ω (1-20范围)
   OMEGA: {
-    INITIAL: 1.0,
-    LINEAR_GROWTH: 0.02,
-    EXPONENTIAL_THRESHOLD: 60,
-    EXPONENTIAL_BASE: 1.05,
-    MAX: 5.0
+    INITIAL: 4,
+    LINEAR_GROWTH: 0.08,
+    EXPONENTIAL_THRESHOLD: 12,
+    EXPONENTIAL_BASE: 1.02,
+    MAX: 20
+  },
+  
+  // 状态系统 (1-20范围)
+  STATES: {
+    MIN: 1,
+    MAX: 20,
+    DEFAULT_FEAR: 6,
+    DEFAULT_AGGRESSION: 4,
+    DEFAULT_HUNGER: 8,
+    DEFAULT_INJURY: 1
   },
   
   // 质量系统
@@ -46,17 +58,24 @@ export const GAME_CONFIG = {
     OBJECT_NORMAL: 1
   },
   
-  // 引力陷阱
-  TRAP: {
-    INITIAL: 0,
-    BONUS_PER_DEEP_EVENT: 1.0,
-    DECAY_RATE: 0.1,
-    MAX: 5.0
+  // K值系统 (1-20范围)
+  KNOT: {
+    INITIAL: 2,
+    PER_INTERACTION: 2,
+    MAX: 20
   },
   
-  // NPC移动
+  // 引力陷阱 (1-20范围)
+  TRAP: {
+    INITIAL: 1,
+    BONUS_PER_DEEP_EVENT: 4,
+    DECAY_RATE: 0.4,
+    MAX: 20
+  },
+  
+  // NPC移动 (1-20范围)
   MOVEMENT: {
-    FEAR_ESCAPE_THRESHOLD: 70,
+    FEAR_ESCAPE_THRESHOLD: 14,
     FEAR_BIAS_FACTOR: 0.5,
     RANDOM_WALK_RANGE: 2
   },
@@ -76,7 +95,7 @@ export const IDENTITIES: Record<string, Identity> = {
     baseMass: 3,
     trait: 'scholar',
     pressureModifier: 0.8,
-    initialStates: { fear: 30, aggression: 20, hunger: 40, injury: 0 },
+    initialStates: { fear: 6, aggression: 4, hunger: 8, injury: 1 },
     suitableTraits: ['calm', 'curious', 'honest', 'analytical', 'reserved', 'idealistic']
   },
   LANDLORD: {
@@ -85,7 +104,7 @@ export const IDENTITIES: Record<string, Identity> = {
     baseMass: 6,
     traits: ['wealthy', 'landlord'],
     pressureModifier: 1.0,
-    initialStates: { fear: 40, aggression: 30, hunger: 20, injury: 0 },
+    initialStates: { fear: 8, aggression: 6, hunger: 4, injury: 1 },
     suitableTraits: ['greedy', 'ambitious', 'calculating', 'worldly', 'proud', 'pragmatic']
   },
   SOLDIER: {
@@ -94,7 +113,7 @@ export const IDENTITIES: Record<string, Identity> = {
     baseMass: 5,
     trait: 'soldier',
     pressureModifier: 1.2,
-    initialStates: { fear: 20, aggression: 60, hunger: 50, injury: 0 },
+    initialStates: { fear: 4, aggression: 12, hunger: 10, injury: 1 },
     suitableTraits: ['brave', 'brutal', 'loyal', 'disciplined', 'callous', 'vigilant']
   },
   CULTIST: {
@@ -103,7 +122,7 @@ export const IDENTITIES: Record<string, Identity> = {
     baseMass: 4,
     trait: 'cultist',
     pressureModifier: 1.0,
-    initialStates: { fear: 50, aggression: 40, hunger: 30, injury: 0 },
+    initialStates: { fear: 10, aggression: 8, hunger: 6, injury: 1 },
     suitableTraits: ['zealous', 'pious', 'fanatical', 'hopeful', 'fearful', 'devoted']
   }
 };

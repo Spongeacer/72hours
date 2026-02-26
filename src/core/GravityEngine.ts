@@ -66,16 +66,19 @@ export class GravityEngine {
     
     // 压强调制: 高压下引力增强
     const pressureModifier = 1 + this.omega * this.config.PRESSURE_MULTIPLIER;
-    const forceMagnitude = Math.min(baseForce * pressureModifier, this.config.MAX_FORCE);
+    const rawForce = baseForce * pressureModifier;
     
-    // 计算方向向量
-    const fx = (dx / safeDistance) * forceMagnitude;
-    const fy = (dy / safeDistance) * forceMagnitude;
+    // 映射到1-20范围
+    const normalizedForce = Math.min(20, Math.max(1, Math.round(rawForce * 2)));
+    
+    // 计算方向向量（使用原始力计算方向）
+    const fx = (dx / safeDistance) * rawForce;
+    const fy = (dy / safeDistance) * rawForce;
     
     return {
       fx,
       fy,
-      magnitude: forceMagnitude,
+      magnitude: normalizedForce,  // 1-20
       distance
     };
   }
@@ -120,14 +123,14 @@ export class GravityEngine {
     let moveX = force.fx * 0.1;  // 缩放因子
     let moveY = force.fy * 0.1;
 
-    // 恐惧修正：高恐惧时远离引力源
-    if (fear > 70) {
+    // 恐惧修正：高恐惧时远离引力源 (1-20范围，14对应原70)
+    if (fear > 14) {
       moveX = -moveX * 2;
       moveY = -moveY * 2;
     }
 
-    // K值修正：高K值时更倾向跟随引力
-    if (knot > 5) {
+    // K值修正：高K值时更倾向跟随引力 (1-20范围，10对应原5)
+    if (knot > 10) {
       moveX *= 1.5;
       moveY *= 1.5;
     } else if (knot < 0) {

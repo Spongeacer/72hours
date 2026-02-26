@@ -193,50 +193,50 @@ export class EmergentNarrativeEngine {
     // 构建"感觉场"（心理学：认知评价 → 情绪唤醒）
     const feelings: { type: string; intensity: number; theory: string }[] = [];
     
-    // 基础生存需求（马斯洛：生理/安全需求）
-    if (fear > 60) feelings.push({ type: 'panic', intensity: fear, theory: '恐惧管理理论' });
-    if (aggression > 60) feelings.push({ type: 'hostility', intensity: aggression, theory: '挫折-攻击假说' });
-    if (hunger > 60) feelings.push({ type: 'desperation', intensity: hunger, theory: '生存本能' });
+    // 基础生存需求（1-20范围）
+    if (fear > 12) feelings.push({ type: 'panic', intensity: fear, theory: '恐惧管理理论' });
+    if (aggression > 12) feelings.push({ type: 'hostility', intensity: aggression, theory: '挫折-攻击假说' });
+    if (hunger > 12) feelings.push({ type: 'desperation', intensity: hunger, theory: '生存本能' });
     
-    // 社会连接需求（马斯洛：归属需求）
-    if (knot > 5) feelings.push({ type: 'attachment', intensity: knot * 10, theory: '依恋理论' });
-    if (force > 5) feelings.push({ type: 'attraction', intensity: force * 10, theory: '社会引力' });
+    // 社会连接需求（1-20范围）
+    if (knot > 10) feelings.push({ type: 'attachment', intensity: knot, theory: '依恋理论' });
+    if (force > 10) feelings.push({ type: 'attraction', intensity: force, theory: '社会引力' });
     
-    // 特质驱动的社会角色行为（Goffman：社会角色表演）
+    // 特质驱动的社会角色行为
     const hasGreedy = npc.traits.some(t => t.id === 'greedy');
     const hasCompassionate = npc.traits.some(t => t.id === 'compassionate');
     const hasCurious = npc.traits.some(t => t.id === 'curious');
     const hasBrave = npc.traits.some(t => t.id === 'brave');
     const hasDeceitful = npc.traits.some(t => t.id === 'deceitful');
     
-    // 社会交换理论：贪婪+恐惧 = 资源抢占
-    if (hasGreedy && fear > 40) {
-      feelings.push({ type: 'seizure', intensity: 70, theory: '社会交换理论' });
+    // 社会交换理论：贪婪+恐惧 = 资源抢占（1-20范围，8对应原40）
+    if (hasGreedy && fear > 8) {
+      feelings.push({ type: 'seizure', intensity: 14, theory: '社会交换理论' });
     }
     
-    // 互惠规范：慈悲+关系 = 无条件给予
-    if (hasCompassionate && knot > 3) {
-      feelings.push({ type: 'give', intensity: 60, theory: '互惠规范' });
+    // 互惠规范：慈悲+关系 = 无条件给予（1-20范围，6对应原3*2）
+    if (hasCompassionate && knot > 6) {
+      feelings.push({ type: 'give', intensity: 12, theory: '互惠规范' });
     }
     
-    // 信息缺口理论：好奇+安全 = 探索
-    if (hasCurious && fear < 50) {
-      feelings.push({ type: 'eavesdrop', intensity: 50, theory: '信息缺口理论' });
+    // 信息缺口理论：好奇+安全 = 探索（1-20范围，10对应原50）
+    if (hasCurious && fear < 10) {
+      feelings.push({ type: 'eavesdrop', intensity: 10, theory: '信息缺口理论' });
     }
     
-    // 社会认同理论：勇敢+高压 = 保护行为
-    if (hasBrave && fear > 50) {
-      feelings.push({ type: 'protect', intensity: 65, theory: '社会认同理论' });
+    // 社会认同理论：勇敢+高压 = 保护行为（1-20范围，10对应原50）
+    if (hasBrave && fear > 10) {
+      feelings.push({ type: 'protect', intensity: 13, theory: '社会认同理论' });
     }
     
-    // 博弈论：狡诈+距离 = 策略观察
-    if (hasDeceitful && force < 3) {
-      feelings.push({ type: 'manipulate', intensity: 55, theory: '博弈论' });
+    // 博弈论：狡诈+距离 = 策略观察（1-20范围，6对应原3*2）
+    if (hasDeceitful && force < 6) {
+      feelings.push({ type: 'manipulate', intensity: 11, theory: '博弈论' });
     }
     
-    // Durkheim失范理论：高压下的规范瓦解
-    if (fear > 70 && hunger > 60) {
-      feelings.push({ type: 'anomie', intensity: 80, theory: '失范理论' });
+    // Durkheim失范理论：高压下的规范瓦解（1-20范围，14对应原70，12对应原60）
+    if (fear > 14 && hunger > 12) {
+      feelings.push({ type: 'anomie', intensity: 16, theory: '失范理论' });
     }
     
     // 选择最强烈的感觉
@@ -293,31 +293,31 @@ export class EmergentNarrativeEngine {
       signals.push(weatherSignals[weather]);
     }
     
-    // 压强信号
-    if (pressure > 50) {
+    // 压强信号 (1-20范围)
+    if (pressure > 10) {
       signals.push({
         type: 'atmospheric',
         description: '空气中弥漫着不安',
-        intensity: pressure,
+        intensity: pressure * 5,  // 映射到0-100用于显示
         emotionalTone: '焦虑'
       });
     }
     
-    if (pressure > 70) {
+    if (pressure > 14) {
       signals.push({
         type: 'olfactory',
         description: '远处传来烟味和血腥味',
-        intensity: pressure - 20,
+        intensity: (pressure - 4) * 5,
         emotionalTone: '恐惧'
       });
     }
     
-    // Ω信号 - 历史必然性
-    if (omega > 3) {
+    // Ω信号 - 历史必然性 (1-20范围)
+    if (omega > 12) {
       signals.push({
         type: 'atmospheric',
         description: '一种无法逃避的命运感笼罩着所有人',
-        intensity: omega * 20,
+        intensity: omega * 5,
         emotionalTone: '宿命'
       });
     }
@@ -354,10 +354,10 @@ export class EmergentNarrativeEngine {
     const avgFear = totalFear / count;
     const avgAggression = totalAggression / count;
     
-    if (pressure > 70 && avgFear > 60) return '恐慌蔓延';
-    if (avgAggression > 60) return '暴力酝酿';
-    if (avgFear > 60) return '恐惧笼罩';
-    if (pressure > 50) return '紧张不安';
+    if (pressure > 14 && avgFear > 12) return '恐慌蔓延';
+    if (avgAggression > 12) return '暴力酝酿';
+    if (avgFear > 12) return '恐惧笼罩';
+    if (pressure > 10) return '紧张不安';
     return '沉默等待';
   }
 

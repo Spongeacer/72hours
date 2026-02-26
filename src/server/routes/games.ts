@@ -68,8 +68,8 @@ router.post('/', validateRequest({ body: createGameSchema }), async (req, res) =
     const gameState = {
       turn: 0,
       datetime: new Date('1851-01-08T00:00:00').toISOString(),
-      pressure: 10,
-      omega: 1.0,
+      pressure: 2,  // 1-20范围，初始2
+      omega: 4,     // 1-20范围，初始4
       weather: 'night',
       player,
       npcs: bondedNPCs,
@@ -195,12 +195,14 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
     current.setHours(current.getHours() + 1);
     state.datetime = current.toISOString();
     
-    state.pressure += 0.8;
+    // 压强增长 (1-20范围)
+    state.pressure = Math.min(20, state.pressure + 0.16);
     
-    if (state.pressure >= 60) {
-      state.omega = Math.min(5.0, state.omega * 1.05);
+    // Ω增长 (1-20范围)
+    if (state.pressure >= 12) {
+      state.omega = Math.min(20, state.omega * 1.02);
     } else {
-      state.omega += 0.02;
+      state.omega = Math.min(20, state.omega + 0.08);
     }
     
     const hour = current.getHours();
@@ -227,7 +229,7 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
       { id: 'observe', text: '观察附近的人', type: 'normal' }
     ];
     
-    if (state.player.states.fear > 60) {
+    if (state.player.states.fear > 12) {  // 1-20范围，12对应原60
       choices.push({ id: 'flee', text: '逃离这个危险的地方', type: 'hidden' });
     }
     
@@ -235,12 +237,12 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
     if (choice) {
       switch (choice.id) {
         case 'explore':
-          state.player.states.hunger += 5;
+          state.player.states.hunger = Math.min(20, state.player.states.hunger + 1);
           result = '你在村子里走了一圈，发现了一些有趣的东西。';
           break;
         case 'rest':
-          state.player.states.fear = Math.max(0, state.player.states.fear - 10);
-          state.player.states.hunger += 10;
+          state.player.states.fear = Math.max(1, state.player.states.fear - 2);
+          state.player.states.hunger = Math.min(20, state.player.states.hunger + 2);
           result = '你休息了一会儿，感觉稍微平静了一些。';
           break;
         case 'observe':
@@ -248,7 +250,7 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
           break;
         case 'flee':
           state.player.position.x += 2;
-          state.player.states.fear = Math.max(0, state.player.states.fear - 20);
+          state.player.states.fear = Math.max(1, state.player.states.fear - 4);
           result = '你决定离开这个危险的地方。';
           break;
         default:
@@ -264,8 +266,8 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
     }
     
     let gameOver = null;
-    if (state.player.states.injury >= 100 || state.player.states.hunger >= 100) {
-      gameOver = { type: 'death', reason: state.player.states.injury >= 100 ? '伤势过重' : '饥饿致死' };
+    if (state.player.states.injury >= 20 || state.player.states.hunger >= 20) {
+      gameOver = { type: 'death', reason: state.player.states.injury >= 20 ? '伤势过重' : '饥饿致死' };
       state.isGameOver = true;
     } else if (state.turn >= 72) {
       gameOver = { type: 'completed', reason: '金田起义爆发' };
