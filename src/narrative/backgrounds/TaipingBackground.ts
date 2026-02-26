@@ -125,30 +125,30 @@ export class TaipingBackground implements IStoryBackground {
   
   generateNPCBackstory(role: string): string {
     const backstories: Record<string, string> = {
-      mother: '你的母亲，一个普通的农妇，经历过饥荒和战乱，
+      mother: `你的母亲，一个普通的农妇，经历过饥荒和战乱，
         最大的愿望就是儿子能平安。她不懂什么天下大势，
-        只知道最近村子里不太平。',
-      
-      teacher: '村中的教书先生，比你年长十岁，
+        只知道最近村子里不太平。`,
+
+      teacher: `村中的教书先生，比你年长十岁，
         曾在省城读过书，见过世面。
         他对时局有自己的判断，但从不明说。
-        你们因为都是读书人而走近。',
-      
-      hong_xiuquan: '洪秀全，拜上帝会的创始人，
+        你们因为都是读书人而走近。`,
+
+      hong_xiuquan: `洪秀全，拜上帝会的创始人，
         自称上帝的二子，耶稣的弟弟。
         他的眼中有一种狂热的光芒，
-        让人既敬畏又恐惧。',
-      
-      yang_xiuqing: '杨秀清，拜上帝会的实际组织者，
+        让人既敬畏又恐惧。`,
+
+      yang_xiuqing: `杨秀清，拜上帝会的实际组织者，
         出身贫寒，但极具政治手腕。
-        他善于笼络人心，也善于排除异己。',
-      
-      missionary: '西洋传教士，在广西一带活动多年，
+        他善于笼络人心，也善于排除异己。`,
+
+      missionary: `西洋传教士，在广西一带活动多年，
         表面上传播福音，实际上也在收集情报。
-        他对拜上帝会既好奇又警惕。'
+        他对拜上帝会既好奇又警惕。`
     };
-    
-    return backstories[role] || '一个普通的村民，在这个乱世中艰难求生。';
+
+    return backstories[role] || `一个普通的村民，在这个乱世中艰难求生。`;
   }
   
   getAtmosphericWords(mood: string): string[] {

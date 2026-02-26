@@ -8,8 +8,9 @@
  * 4. 故事自然流淌
  */
 
-import { GameState, NPC, Memory } from '../../shared/types';
+import { GameState, NPC as INPC, Memory } from '../../shared/types';
 import { Player } from '../game/Player';
+import { NPC } from '../game/NPC';
 import { GravityEngine, MassObject } from '../core/GravityEngine';
 
 export interface ResonanceContext {
@@ -161,7 +162,7 @@ export class EmergentNarrativeEngine {
     const selected = npcForces[0];
 
     // 涌现行为
-    const behavior = this.emergeBehavior(selected.npc, selected.force, selected.knot);
+    const behavior = this.emergeBehavior(selected.npc as any, selected.force, selected.knot);
 
     return {
       id: selected.npc.id,
@@ -169,7 +170,7 @@ export class EmergentNarrativeEngine {
       obsession: this.getObsession(selected.npc),
       traits: selected.npc.traits.map(t => t.id),
       states: selected.npc.states,
-      memories: selected.npc.memories || [],
+      memories: (selected.npc as any).memories || [],
       knotWithPlayer: selected.knot,
       distance: selected.distance,
       force: selected.force,
@@ -186,7 +187,7 @@ export class EmergentNarrativeEngine {
    * - 依恋理论：安全基地寻求
    * - 互惠规范：社会交换的道德基础
    */
-  private emergeBehavior(npc: NPC, force: number, knot: number): string {
+  private emergeBehavior(npc: any, force: number, knot: number): string {
     const { fear, aggression, hunger } = npc.states;
     
     // 构建"感觉场"（心理学：认知评价 → 情绪唤醒）
@@ -394,7 +395,7 @@ export class EmergentNarrativeEngine {
   /**
    * 计算玩家气场
    */
-  private calculatePlayerAura(player: Player): string {
+  private calculatePlayerAura(player: any): string {
     const { fear, aggression, hunger, injury } = player.states;
     
     if (fear > 70) return '恐惧的颤抖';
@@ -588,7 +589,14 @@ ${environmentalSignals.map(s => `- ${s.description} (${s.emotionalTone}, 强度$
     const base = entity.baseMass || 3;
     const story = entity.storyMass || 0;
     const object = entity.objectMass || 0;
-    const knot = (entity.knotMap ? Array.from(entity.knotMap.values()).reduce((a: number, b: number) => a + b, 0) : 0) * 0.5;
+    let knotSum = 0;
+    if (entity.knotMap) {
+      const values = Array.from(entity.knotMap.values());
+      for (const v of values) {
+        knotSum += v as number;
+      }
+    }
+    const knot = knotSum * 0.5;
     return base + story + knot + object;
   }
   
@@ -604,7 +612,7 @@ ${environmentalSignals.map(s => `- ${s.description} (${s.emotionalTone}, 强度$
     return Math.sqrt(dx * dx + dy * dy);
   }
   
-  private getKnotWithPlayer(npc: NPC, playerId: string): number {
+  private getKnotWithPlayer(npc: any, playerId: string): number {
     if (npc.knotMap) {
       return npc.knotMap.get(playerId) || 0;
     }
