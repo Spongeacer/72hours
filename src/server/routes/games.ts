@@ -362,10 +362,29 @@ ${spotlightNPC ? `恐惧：${spotlightNPC.states?.fear || 6}/20
 - 200字，第二人称，暗示而非说明
 `;
 
+  // AI 提供商配置
+  const AI_PROVIDERS = {
+    siliconflow: {
+      name: 'SiliconFlow',
+      apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
+      defaultModel: 'Pro/MiniMaxAI/MiniMax-M2.5'
+    },
+    kimi: {
+      name: 'Kimi',
+      apiUrl: 'https://api.kimi.com/coding/v1/chat/completions',
+      defaultModel: 'k2p5'
+    }
+  };
+
+  // 默认使用 SiliconFlow（Kimi API 需要特定权限）
+  const defaultProvider = 'siliconflow';
+  const provider = AI_PROVIDERS[defaultProvider];
+
   res.json(createSuccessResponse({
     prompt,
-    model: game.model || 'Pro/MiniMaxAI/MiniMax-M2.5',
-    apiUrl: 'https://api.siliconflow.cn/v1/chat/completions'
+    provider: defaultProvider,
+    model: provider.defaultModel,
+    apiUrl: provider.apiUrl
   }, requestId));
 });
 
