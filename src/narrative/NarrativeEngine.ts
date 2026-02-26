@@ -3,8 +3,8 @@
  */
 
 import { GameState, Choice, TurnContext } from '../../shared/types';
-import { Player } from './Player';
-import { NPC } from './NPC';
+import { Player } from '../game/Player';
+import { NPC } from '../game/NPC';
 
 export class NarrativeEngine {
   ai: any;

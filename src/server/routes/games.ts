@@ -32,12 +32,48 @@ router.post('/', validateRequest({ body: createGameSchema }), async (req, res) =
       traits: [{ id: 'calm', type: 'personality' }, { id: 'curious', type: 'personality' }],
       obsession: '在乱世中活下去',
       states: { fear: 30, aggression: 20, hunger: 40, injury: 0 },
-      position: { x: 0, y: 0 }
+      position: { x: 0, y: 0 },
+      baseMass: identities[identity].baseMass,
+      storyMass: 0,
+      objectMass: 0,
+      trapConstant: 0,
+      getTotalMass: function() { return this.baseMass + this.storyMass + this.objectMass; },
+      getEffectiveMass: function() { return this.getTotalMass() * (1 + this.trapConstant); }
     };
     
     const bondedNPCs = [
-      { id: `npc_${Date.now()}_1`, name: '母亲', traits: [], isBonded: true },
-      { id: `npc_${Date.now()}_2`, name: '教书先生', traits: [], isBonded: true }
+      { 
+        id: `npc_${Date.now()}_1`, 
+        name: '母亲', 
+        traits: [], 
+        isBonded: true,
+        position: { x: 1, y: 0 },
+        baseMass: 4,
+        storyMass: 0,
+        trapConstant: 0,
+        states: { fear: 20, aggression: 10, hunger: 30, injury: 0 },
+        getTotalMass: function() { return this.baseMass + this.storyMass; },
+        getEffectiveMass: function() { return this.getTotalMass() * (1 + this.trapConstant); },
+        getKnotWith: function() { return 5; },
+        isUnlocked: true,
+        checkUnlock: function() { return true; }
+      },
+      { 
+        id: `npc_${Date.now()}_2`, 
+        name: '教书先生', 
+        traits: [], 
+        isBonded: true,
+        position: { x: -1, y: 1 },
+        baseMass: 3,
+        storyMass: 0,
+        trapConstant: 0,
+        states: { fear: 40, aggression: 5, hunger: 20, injury: 0 },
+        getTotalMass: function() { return this.baseMass + this.storyMass; },
+        getEffectiveMass: function() { return this.getTotalMass() * (1 + this.trapConstant); },
+        getKnotWith: function() { return 2; },
+        isUnlocked: true,
+        checkUnlock: function() { return true; }
+      }
     ];
     
     const gameState = {

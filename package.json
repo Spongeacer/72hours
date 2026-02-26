@@ -2,10 +2,10 @@
   "name": "72hours-server",
   "version": "2.0.0",
   "description": "72Hours Game Server - TypeScript",
-  "main": "dist/server/index.js",
+  "main": "dist/src/server/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server/index.js",
+    "start": "node dist/src/server/index.js",
     "dev": "ts-node src/server/index.ts"
   },
   "dependencies": {
