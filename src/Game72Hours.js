@@ -70,6 +70,7 @@ class Game72Hours {
 
   /**
    * 生成玩家特质
+   * 随机抽取性格特质，基于身份有倾向性
    */
   generatePlayerTraits() {
     const { player } = this.gameState;
@@ -85,12 +86,39 @@ class Game72Hours {
       });
     }
     
-    // TODO: 从特质库随机抽取2-3个性格特质
-    // 暂时使用默认特质
-    const defaultTraits = ['calm', 'curious'];
-    defaultTraits.forEach(t => {
-      player.traits.push({ id: t, type: 'personality' });
-    });
+    // 从特质库随机抽取性格特质
+    const { MIN_TRAITS, MAX_TRAITS } = GAME_CONFIG.TRAIT_CONFIG;
+    const numTraits = Math.floor(Math.random() * (MAX_TRAITS - MIN_TRAITS + 1)) + MIN_TRAITS;
+    
+    // 获取适合该身份的特质列表
+    const suitableTraits = identity.suitableTraits || [];
+    const allTraits = Object.keys(GAME_CONFIG.PERSONALITY_TRAITS);
+    
+    // 70%概率从适合特质中抽取，30%概率从所有特质中抽取
+    const selectedTraits = [];
+    for (let i = 0; i < numTraits; i++) {
+      let traitPool;
+      if (Math.random() < 0.7 && suitableTraits.length > 0) {
+        // 从适合特质中抽取（排除已选的）
+        traitPool = suitableTraits.filter(t => !selectedTraits.includes(t));
+      } else {
+        // 从所有特质中抽取（排除已选的）
+        traitPool = allTraits.filter(t => !selectedTraits.includes(t));
+      }
+      
+      // 如果池子空了，从所有特质中重新选
+      if (traitPool.length === 0) {
+        traitPool = allTraits.filter(t => !selectedTraits.includes(t));
+      }
+      
+      if (traitPool.length > 0) {
+        const randomTrait = traitPool[Math.floor(Math.random() * traitPool.length)];
+        selectedTraits.push(randomTrait);
+        player.traits.push({ id: randomTrait, type: 'personality' });
+      }
+    }
+    
+    console.log(`[Game] 玩家特质生成完成: ${selectedTraits.join(', ')}`);
   }
 
   /**
@@ -202,25 +230,30 @@ class Game72Hours {
    */
   generateOpening() {
     const { player } = this.gameState;
+    const traits = player.getPersonalityTraits();
+    const traitsDesc = traits.length > 0 ? `（${traits.join(' · ')}）` : '';
     
     const openings = {
       scholar: `> 你被一阵奇怪的声音惊醒。
 > 不是鸡鸣，是人在低语，很多声音叠在一起，像潮水。
 > 你走到窗边，看到远处有火光，不是灯笼的颜色。
 > 这是金田村，1851年1月8日，凌晨。
-> 你不知道，但历史已经开始了。`,
+> 你是一个读书人${traitsDesc}，不知道历史已经开始了。`,
       
       landlord: `> 玉扳指在指节上转了三圈，这是你紧张时的习惯。
 > 窗外有火光，不是灯笼，是火把。
-> 你想起韦昌辉——那个被你排挤过的小地主，现在据说在会众里很有地位。`,
+> 你想起韦昌辉——那个被你排挤过的小地主，现在据说在会众里很有地位。
+> 你是金田村的地主${traitsDesc}，这一夜注定无眠。`,
       
       soldier: `> 刀鞘上的血还没擦干净，是上一个村子的。
 > 上峰说金田有会匪，格杀勿论。
-> 你舔了舔嘴唇，有点干。`,
+> 你舔了舔嘴唇，有点干。
+> 你是官府的士兵${traitsDesc}，不知道这一战能否活着回去。`,
       
       cultist: `> 十字架贴在胸口，已经温热了。
 > 密信上的字你背得出来："十一日，万寿起义。"
-> 还有三天。上帝会保护他的子民，但你也握紧了刀。`
+> 还有三天。上帝会保护他的子民，但你也握紧了刀。
+> 你是教会的受众${traitsDesc}，等待天国的降临。`
     };
     
     return openings[player.identityType] || openings.scholar;

@@ -1,6 +1,7 @@
 /**
  * 72Hours Game Server
  * 提供游戏API接口，连接 SiliconFlow
+ * API 文档: API.md
  */
 
 const express = require('express');
@@ -16,6 +17,10 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// 从环境变量获取配置
+const SERVER_API_KEY = process.env.SILICONFLOW_API_KEY;
+const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'Pro/MiniMaxAI/MiniMax-M2.1';
 
 // 限流配置
 const limiter = rateLimit({
@@ -46,47 +51,7 @@ app.use(helmet({
 // 中间件
 app.use(cors());
 app.use(bodyParser.json());
-app.use(limiter); // 应用限流
-app.use(express.static('public'));
-
-// 游戏实例存储
-const games = new Map();
-
-// 创建AI接口
-function createAIInterface(apiKey, model = 'Pro/MiniMaxAI/MiniMax-M2.1') {
-  return new SiliconFlowAI(apiKey, model);
-}
-
-// 根路径 - 返回游戏页面
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'game.html'));
-});
-
-/**
- * 72Hours Game Server
- * 提供游戏API接口，连接 SiliconFlow
- * API 文档: API.md
- */
-
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const path = require('path');
-const { Game72Hours } = require('./src/Game72Hours');
-const { SiliconFlowAI } = require('./src/narrative/SiliconFlowAI');
-
-require('dotenv').config();
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// 从环境变量获取配置
-const SERVER_API_KEY = process.env.SILICONFLOW_API_KEY;
-const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'Pro/MiniMaxAI/MiniMax-M2.1';
-
-// 中间件
-app.use(cors());
-app.use(bodyParser.json());
+app.use(limiter);
 app.use(express.static('public'));
 
 // 游戏实例存储
@@ -128,7 +93,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'game.html'));
 });
 
-// 获取服务器配置状态（用于前端判断是否显示 API Key 输入）
+// 获取服务器配置状态
 app.get('/api/config', (req, res) => {
   res.json(successResponse({
     hasApiKey: !!SERVER_API_KEY,
@@ -141,7 +106,7 @@ app.post('/api/game/create', async (req, res) => {
   try {
     const { identity = 'scholar', model = DEFAULT_MODEL } = req.body;
     
-    // 优先使用服务器配置的 API Key，如果没有则要求客户端提供
+    // 优先使用服务器配置的 API Key
     let apiKey = SERVER_API_KEY;
     if (!apiKey && req.body.apiKey) {
       apiKey = req.body.apiKey;
