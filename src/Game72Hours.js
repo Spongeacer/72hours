@@ -61,11 +61,40 @@ class Game72Hours {
     
     this.isRunning = true;
     
+    // 异步生成执念
+    this.generateObsessionAsync();
+    
     return {
       player: this.gameState.player,
       bondedNPCs: this.gameState.player.bondedNPCs,
       opening: this.generateOpening()
     };
+  }
+
+  /**
+   * 异步生成执念（不阻塞初始化）
+   */
+  async generateObsessionAsync() {
+    const { player } = this.gameState;
+    
+    // 生成执念数据
+    const obsessionData = player.generateObsession();
+    
+    // 如果有AI接口，调用AI生成具体执念文本
+    if (this.narrativeEngine && this.narrativeEngine.ai) {
+      try {
+        const obsessionText = await this.narrativeEngine.generateObsession(obsessionData);
+        player.obsession = obsessionText;
+        console.log(`[Game] 执念生成完成: ${obsessionText}`);
+      } catch (error) {
+        console.error('[Game] 生成执念失败:', error);
+        // 失败时使用基于特质的简单描述
+        player.obsession = `在${obsessionData.traitsDesc}的驱使下活下去`;
+      }
+    } else {
+      // 无AI时使用简单描述
+      player.obsession = `在${obsessionData.traitsDesc}的驱使下活下去`;
+    }
   }
 
   /**

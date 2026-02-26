@@ -101,6 +101,38 @@ class NarrativeEngine {
   }
 
   /**
+   * 生成执念
+   */
+  async generateObsession(obsessionData) {
+    if (this.ai) {
+      const prompt = `你是一个叙事游戏设计师。请为以下角色生成一个执念：
+
+角色身份：${obsessionData.identityName}
+性格特质：${obsessionData.traitsDesc}
+时代背景：1851年，金田村，太平天国起义前夕
+
+要求：
+1. 执念应该体现角色的身份和特质
+2. 与历史背景相关或有张力
+3. 简洁有力，15字以内
+4. 有文学性和记忆点
+
+请直接输出执念文本，不要解释。`;
+
+      try {
+        const result = await this.ai.generate(prompt);
+        return result.trim();
+      } catch (error) {
+        console.error('生成执念失败:', error);
+        return '在乱世中活下去';
+      }
+    }
+    
+    // 无AI时返回默认
+    return '在乱世中活下去';
+  }
+
+  /**
    * 构建选择生成Prompt
    */
   buildChoicesPrompt(context) {
