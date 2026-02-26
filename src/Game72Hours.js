@@ -37,32 +37,29 @@ class Game72Hours {
   }
 
   /**
-   * 初始化游戏
+   * 初始化游戏（并发优化版）
    */
-  init(identityType = 'scholar') {
+  async init(identityType = 'scholar') {
     // 创建玩家
     this.gameState.player = new Player(identityType);
     
-    // 生成玩家特质
+    // 步骤1: 同步生成特质（本地随机，不需要API）
     this.generatePlayerTraits();
     
-    // 生成玩家执念
-    this.gameState.player.generateObsession();
-    
-    // 创建关联NPC
+    // 创建关联NPC（此时NPC还没有特质和执念）
     this.createBondedNPCs();
     
-    // 创建精英NPC（未解锁）
+    // 创建精英NPC
     this.createEliteNPCs();
+    
+    // 步骤2: 并发生成所有角色的执念
+    await this.generateAllObsessionsConcurrently();
     
     // 初始化回合管理器
     this.turnManager = new TurnManager(this.gameState, this.narrativeEngine);
-    this.turnManager.currentContext = null; // 初始化上下文
+    this.turnManager.currentContext = null;
     
     this.isRunning = true;
-    
-    // 异步生成执念
-    this.generateObsessionAsync();
     
     return {
       player: this.gameState.player,
@@ -72,28 +69,76 @@ class Game72Hours {
   }
 
   /**
-   * 异步生成执念（不阻塞初始化）
+   * 并发生成所有角色的执念
    */
-  async generateObsessionAsync() {
+  async generateAllObsessionsConcurrently() {
     const { player } = this.gameState;
     
-    // 生成执念数据
-    const obsessionData = player.generateObsession();
+    // 为NPC生成特质
+    this.gameState.npcs.forEach(npc => {
+      if (npc.isBonded) {
+        this.generateNPCTraits(npc);
+      }
+    });
     
-    // 如果有AI接口，调用AI生成具体执念文本
+    // 准备所有需要生成执念的角色
+    const obsessionTasks = [];
+    
+    // 玩家执念任务
+    const playerObsessionData = player.generateObsession();
+    obsessionTasks.push({
+      type: 'player',
+      target: player,
+      data: playerObsessionData
+    });
+    
+    // NPC执念任务
+    this.gameState.npcs.forEach(npc => {
+      if (npc.isBonded) {
+        const npcObsessionData = npc.generateObsession();
+        obsessionTasks.push({
+          type: 'npc',
+          target: npc,
+          data: npcObsessionData
+        });
+      }
+    });
+    
+    console.log(`[Game] 开始并发生成${obsessionTasks.length}个角色的执念...`);
+    
+    // 并发执行所有执念生成
+    const results = await Promise.allSettled(
+      obsessionTasks.map(task => this.generateObsessionForCharacter(task))
+    );
+    
+    // 统计结果
+    const succeeded = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+    
+    console.log(`[Game] 执念生成完成: ${succeeded}成功, ${failed}失败`);
+  }
+
+  /**
+   * 为单个角色生成执念
+   */
+  async generateObsessionForCharacter(task) {
+    const { target, data } = task;
+    
     if (this.narrativeEngine && this.narrativeEngine.ai) {
       try {
-        const obsessionText = await this.narrativeEngine.generateObsession(obsessionData);
-        player.obsession = obsessionText;
-        console.log(`[Game] 执念生成完成: ${obsessionText}`);
+        const obsessionText = await this.narrativeEngine.generateObsession(data);
+        target.obsession = obsessionText;
+        console.log(`[Game] ${task.type === 'player' ? '玩家' : target.name}执念: ${obsessionText}`);
+        return obsessionText;
       } catch (error) {
-        console.error('[Game] 生成执念失败:', error);
-        // 失败时使用基于特质的简单描述
-        player.obsession = `在${obsessionData.traitsDesc}的驱使下活下去`;
+        console.error(`[Game] 生成${task.type === 'player' ? '玩家' : target.name}执念失败:`, error);
+        target.obsession = `在${data.traitsDesc}的驱使下活下去`;
+        throw error;
       }
     } else {
       // 无AI时使用简单描述
-      player.obsession = `在${obsessionData.traitsDesc}的驱使下活下去`;
+      target.obsession = `在${data.traitsDesc}的驱使下活下去`;
+      return target.obsession;
     }
   }
 
@@ -134,6 +179,29 @@ class Game72Hours {
     }
     
     console.log(`[Game] 玩家特质生成完成: ${selectedTraits.join(', ')}`);
+  }
+
+  /**
+   * 生成NPC特质
+   */
+  generateNPCTraits(npc) {
+    // NPC也从特质库随机抽取2-3个特质
+    const { MIN_TRAITS, MAX_TRAITS } = GAME_CONFIG.TRAIT_CONFIG;
+    const numTraits = Math.floor(Math.random() * (MAX_TRAITS - MIN_TRAITS + 1)) + MIN_TRAITS;
+    
+    const allTraits = Object.keys(GAME_CONFIG.PERSONALITY_TRAITS);
+    const selectedTraits = [];
+    
+    for (let i = 0; i < numTraits; i++) {
+      const availableTraits = allTraits.filter(t => !selectedTraits.includes(t));
+      if (availableTraits.length > 0) {
+        const randomTrait = availableTraits[Math.floor(Math.random() * availableTraits.length)];
+        selectedTraits.push(randomTrait);
+        npc.traits.push({ id: randomTrait, type: 'personality' });
+      }
+    }
+    
+    console.log(`[Game] NPC ${npc.name} 特质生成完成: ${selectedTraits.join(', ')}`);
   }
 
   /**

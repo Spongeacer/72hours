@@ -137,7 +137,8 @@ app.post('/api/game/create', async (req, res) => {
       }
     });
     
-    const initResult = game.init(identity);
+    // 异步初始化游戏（并发生成执念）
+    const initResult = await game.init(identity);
     
     games.set(gameId, {
       game,

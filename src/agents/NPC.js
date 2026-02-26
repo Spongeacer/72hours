@@ -26,6 +26,38 @@ class NPC extends Agent {
     
     // 初始K值（关联NPC）
     this.initialKnot = data.initialKnot || 0;
+    
+    // 执念
+    this.obsession = null;
+  }
+
+  /**
+   * 生成执念数据（供AI生成使用）
+   */
+  generateObsession() {
+    const personalityTraits = this.traits
+      .filter(t => t.type === 'personality')
+      .map(t => t.id || t);
+    
+    if (personalityTraits.length === 0) {
+      personalityTraits.push('calm');
+    }
+    
+    const traitsDesc = personalityTraits
+      .map(t => {
+        const traitInfo = GAME_CONFIG.PERSONALITY_TRAITS[t];
+        return traitInfo ? `${t}(${traitInfo.name})` : t;
+      })
+      .join('、');
+    
+    return {
+      type: 'npc',
+      identity: this.name,
+      identityName: this.name,
+      traits: personalityTraits,
+      traitsDesc: traitsDesc,
+      prompt: `生成一个NPC「${this.name}」的执念，该角色具有以下特质：${traitsDesc}。身份是${this.isBonded ? '玩家的关联NPC' : '普通村民'}，时代背景是1851年金田村。执念应该简洁有力（15字以内），体现角色特点。`
+    };
   }
 
   /**
