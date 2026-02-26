@@ -157,22 +157,23 @@ router.post('/:id/turns', (0, validateRequest_1.validateRequest)({ body: execute
         state.datetime = current.toISOString();
         // 压强增长 (1-20范围)
         state.pressure = Math.min(20, state.pressure + 0.16);
-        // Ω增长 (1-20范围) - 基础增长 + 用户选择的蝴蝶效应
-        let omegaIncrease = GameConfig_1.GAME_CONFIG.OMEGA_BASE_INCREASE;
-        // 用户选择的蝴蝶效应
+        // Ω增长 = 基础线性增长 + 玩家选择的蝴蝶效应加速
+        // 基础增长保证事件稳定触发，玩家选择可以加速进程
+        let omegaIncrease = GameConfig_1.BUTTERFLY_EFFECT_CONFIG.BASE_OMEGA_INCREASE;
+        // 玩家选择的蝴蝶效应：额外加速
         if (choice) {
             const butterflyEffect = Math.random();
-            if (butterflyEffect < GameConfig_1.BUTTERFLY_EFFECT_CONFIG.NO_EFFECT_CHANCE) {
-                omegaIncrease = GameConfig_1.BUTTERFLY_EFFECT_CONFIG.EFFECT_VALUES.NO_EFFECT;
+            if (butterflyEffect < GameConfig_1.BUTTERFLY_EFFECT_CONFIG.NO_BOOST_CHANCE) {
+                omegaIncrease += GameConfig_1.BUTTERFLY_EFFECT_CONFIG.BOOST_VALUES.NO_BOOST;
             }
-            else if (butterflyEffect < GameConfig_1.BUTTERFLY_EFFECT_CONFIG.NO_EFFECT_CHANCE + GameConfig_1.BUTTERFLY_EFFECT_CONFIG.MINOR_EFFECT_CHANCE) {
-                omegaIncrease = GameConfig_1.BUTTERFLY_EFFECT_CONFIG.EFFECT_VALUES.MINOR;
+            else if (butterflyEffect < GameConfig_1.BUTTERFLY_EFFECT_CONFIG.NO_BOOST_CHANCE + GameConfig_1.BUTTERFLY_EFFECT_CONFIG.MINOR_BOOST_CHANCE) {
+                omegaIncrease += GameConfig_1.BUTTERFLY_EFFECT_CONFIG.BOOST_VALUES.MINOR;
             }
             else {
-                omegaIncrease = GameConfig_1.BUTTERFLY_EFFECT_CONFIG.EFFECT_VALUES.SIGNIFICANT;
+                omegaIncrease += GameConfig_1.BUTTERFLY_EFFECT_CONFIG.BOOST_VALUES.SIGNIFICANT;
             }
         }
-        // 高压时 Ω 加速增长
+        // 高压时 Ω 额外加速
         if (state.pressure >= GameConfig_1.GAME_CONFIG.HIGH_PRESSURE_THRESHOLD) {
             state.omega = Math.min(GameConfig_1.GAME_CONFIG.MAX_OMEGA, state.omega * GameConfig_1.GAME_CONFIG.OMEGA_HIGH_PRESSURE_MULTIPLIER + omegaIncrease);
         }

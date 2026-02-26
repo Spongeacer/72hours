@@ -154,15 +154,18 @@ exports.PLAYER_CONFIG = {
 };
 // ==================== 蝴蝶效应配置 ====================
 exports.BUTTERFLY_EFFECT_CONFIG = {
-    // 无影响概率
-    NO_EFFECT_CHANCE: 0.3,
-    // 轻微影响概率
-    MINOR_EFFECT_CHANCE: 0.3,
-    // 显著影响概率（剩余部分）
-    SIGNIFICANT_EFFECT_CHANCE: 0.4,
-    // 影响值
-    EFFECT_VALUES: {
-        NO_EFFECT: 0,
+    // 基础线性增长（保证事件稳定触发）
+    BASE_OMEGA_INCREASE: 0.3, // 每回合固定增长
+    // 玩家选择的额外加速（随机加成）
+    // 无额外加速概率
+    NO_BOOST_CHANCE: 0.3,
+    // 轻微加速概率
+    MINOR_BOOST_CHANCE: 0.3,
+    // 显著加速概率（剩余部分）
+    SIGNIFICANT_BOOST_CHANCE: 0.4,
+    // 加速值
+    BOOST_VALUES: {
+        NO_BOOST: 0,
         MINOR: 0.1,
         SIGNIFICANT: 0.2
     }

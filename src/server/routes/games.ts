@@ -220,22 +220,23 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
     // 压强增长 (1-20范围)
     state.pressure = Math.min(20, state.pressure + 0.16);
     
-    // Ω增长 (1-20范围) - 基础增长 + 用户选择的蝴蝶效应
-    let omegaIncrease = GAME_CONFIG.OMEGA_BASE_INCREASE;
+    // Ω增长 = 基础线性增长 + 玩家选择的蝴蝶效应加速
+    // 基础增长保证事件稳定触发，玩家选择可以加速进程
+    let omegaIncrease = BUTTERFLY_EFFECT_CONFIG.BASE_OMEGA_INCREASE;
     
-    // 用户选择的蝴蝶效应
+    // 玩家选择的蝴蝶效应：额外加速
     if (choice) {
       const butterflyEffect = Math.random();
-      if (butterflyEffect < BUTTERFLY_EFFECT_CONFIG.NO_EFFECT_CHANCE) {
-        omegaIncrease = BUTTERFLY_EFFECT_CONFIG.EFFECT_VALUES.NO_EFFECT;
-      } else if (butterflyEffect < BUTTERFLY_EFFECT_CONFIG.NO_EFFECT_CHANCE + BUTTERFLY_EFFECT_CONFIG.MINOR_EFFECT_CHANCE) {
-        omegaIncrease = BUTTERFLY_EFFECT_CONFIG.EFFECT_VALUES.MINOR;
+      if (butterflyEffect < BUTTERFLY_EFFECT_CONFIG.NO_BOOST_CHANCE) {
+        omegaIncrease += BUTTERFLY_EFFECT_CONFIG.BOOST_VALUES.NO_BOOST;
+      } else if (butterflyEffect < BUTTERFLY_EFFECT_CONFIG.NO_BOOST_CHANCE + BUTTERFLY_EFFECT_CONFIG.MINOR_BOOST_CHANCE) {
+        omegaIncrease += BUTTERFLY_EFFECT_CONFIG.BOOST_VALUES.MINOR;
       } else {
-        omegaIncrease = BUTTERFLY_EFFECT_CONFIG.EFFECT_VALUES.SIGNIFICANT;
+        omegaIncrease += BUTTERFLY_EFFECT_CONFIG.BOOST_VALUES.SIGNIFICANT;
       }
     }
     
-    // 高压时 Ω 加速增长
+    // 高压时 Ω 额外加速
     if (state.pressure >= GAME_CONFIG.HIGH_PRESSURE_THRESHOLD) {
       state.omega = Math.min(GAME_CONFIG.MAX_OMEGA, state.omega * GAME_CONFIG.OMEGA_HIGH_PRESSURE_MULTIPLIER + omegaIncrease);
     } else {
