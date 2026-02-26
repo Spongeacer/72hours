@@ -8,7 +8,7 @@ const zod_1 = require("zod");
 const validateRequest_1 = require("../middleware/validateRequest");
 const apiResponse_1 = require("../utils/apiResponse");
 const GameConfig_1 = require("../../config/GameConfig");
-const ReactionGenerator_1 = require("../../core/ReactionGenerator");
+const AIReactionGenerator_1 = require("../../core/AIReactionGenerator");
 const router = (0, express_1.Router)();
 const games = new Map();
 // 生成请求ID
@@ -201,20 +201,23 @@ router.post('/:id/turns', (0, validateRequest_1.validateRequest)({ body: execute
         // 获取聚光灯NPC（已解锁NPC中第一个）
         const unlockedNPCs = state.npcs.filter((npc) => npc.isUnlocked);
         const spotlightNPC = unlockedNPCs.length > 0 ? unlockedNPCs[0] : null;
-        // 模拟NPC行为（从六类行为中根据情境选择）
-        const npcBehavior = {
-            type: ['抢夺', '冲突', '偷听', '聊天', '请求', '给予'][Math.floor(Math.random() * 6)],
-            description: 'NPC的行为描述',
-            intensity: Math.floor(Math.random() * 10) + 1
-        };
-        // 基于玩家特质/执念 + NPC行为 + 情境 → 生成玩家反应
+        // 基于玩家特质/执念 + NPC行为 + 情境 → 使用AI生成玩家反应
         const context = {
             pressure: state.pressure,
             omega: state.omega,
             weather: state.weather,
-            turn: state.turn
+            turn: state.turn,
+            narrative
         };
-        const reactions = (0, ReactionGenerator_1.generatePlayerReactions)(state.player, npcBehavior, context);
+        const npcBehavior = {
+            type: ['抢夺', '冲突', '偷听', '聊天', '请求', '给予'][Math.floor(Math.random() * 6)],
+            description: `${spotlightNPC ? spotlightNPC.name : '有人'}在${state.weather === 'night' ? '黑暗中' : '不远处'}`,
+            npcName: spotlightNPC?.name || '陌生人',
+            npcTraits: spotlightNPC?.traits?.map((t) => t.id) || [],
+            npcObsession: '活下去'
+        };
+        // 异步生成AI反应
+        const reactions = await (0, AIReactionGenerator_1.generatePlayerReactionsWithAI)(state.player, npcBehavior, context);
         // 转换为选择格式
         const choices = reactions.map((r, idx) => ({
             id: r.id,

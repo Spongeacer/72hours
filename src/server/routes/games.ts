@@ -17,7 +17,7 @@ import {
   BUTTERFLY_EFFECT_CONFIG,
   AI_CONFIG 
 } from '../../config/GameConfig';
-import { generatePlayerReactions } from '../../core/ReactionGenerator';
+import { generatePlayerReactionsWithAI } from '../../core/AIReactionGenerator';
 
 const router = Router();
 const games = new Map();
@@ -266,25 +266,28 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
     const unlockedNPCs = state.npcs.filter((npc: any) => npc.isUnlocked);
     const spotlightNPC = unlockedNPCs.length > 0 ? unlockedNPCs[0] : null;
     
-    // 模拟NPC行为（从六类行为中根据情境选择）
-    const npcBehavior = {
-      type: ['抢夺', '冲突', '偷听', '聊天', '请求', '给予'][Math.floor(Math.random() * 6)] as any,
-      description: 'NPC的行为描述',
-      intensity: Math.floor(Math.random() * 10) + 1
-    };
-    
-    // 基于玩家特质/执念 + NPC行为 + 情境 → 生成玩家反应
+    // 基于玩家特质/执念 + NPC行为 + 情境 → 使用AI生成玩家反应
     const context = {
       pressure: state.pressure,
       omega: state.omega,
       weather: state.weather,
-      turn: state.turn
+      turn: state.turn,
+      narrative
     };
     
-    const reactions = generatePlayerReactions(state.player, npcBehavior, context);
+    const npcBehavior = {
+      type: ['抢夺', '冲突', '偷听', '聊天', '请求', '给予'][Math.floor(Math.random() * 6)] as any,
+      description: `${spotlightNPC ? spotlightNPC.name : '有人'}在${state.weather === 'night' ? '黑暗中' : '不远处'}`,
+      npcName: spotlightNPC?.name || '陌生人',
+      npcTraits: spotlightNPC?.traits?.map((t: any) => t.id) || [],
+      npcObsession: '活下去'
+    };
+    
+    // 异步生成AI反应
+    const reactions = await generatePlayerReactionsWithAI(state.player, npcBehavior, context);
     
     // 转换为选择格式
-    const choices = reactions.map((r, idx) => ({
+    const choices = reactions.map((r: any, idx: number) => ({
       id: r.id,
       text: r.text,
       type: r.type,
