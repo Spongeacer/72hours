@@ -77,26 +77,79 @@ class NarrativeEngine {
 
   /**
    * 构建场景生成Prompt
+   * 纯叙事风格，通过文字体现状态变化
    */
   buildScenePrompt(context) {
-    return {
-      role: "你是《72Hours》的叙事导演。",
-      input: {
-        scene: context.scene,
-        spotlight: context.spotlight,
-        player: context.player,
-        event: context.event,
-        memories: context.memories
-      },
-      output: {
-        narrative: "100-150字的场景描述",
-        atmosphere: "氛围关键词"
-      },
-      style: {
-        tone: "粗粝、留白、时代感",
-        focus: ["动作细节", "环境渗透", "不解释心理"],
-        avoid: ["解释动机", "直白情感", "现代用语"]
+    const { player, npcs, pressure, weather, turn } = context;
+    
+    // 构建状态提示
+    let stateHints = [];
+    
+    // 压强体现
+    if (pressure > 70) {
+      stateHints.push("氛围极度紧张：空气凝重、声音刺耳、光线刺眼");
+    } else if (pressure > 50) {
+      stateHints.push("氛围紧张：细微声响都被放大、人心惶惶");
+    } else if (pressure > 30) {
+      stateHints.push("氛围压抑：沉默中暗藏不安");
+    }
+    
+    // 玩家状态体现
+    if (player.states) {
+      if (player.states.fear > 70) {
+        stateHints.push("玩家恐惧：手抖、呼吸急促、四处张望");
+      } else if (player.states.fear > 40) {
+        stateHints.push("玩家不安：警觉、防备姿态");
       }
+      
+      if (player.states.hunger > 70) {
+        stateHints.push("玩家饥饿：虚弱、头晕、胃部绞痛");
+      }
+      
+      if (player.states.aggression > 70) {
+        stateHints.push("玩家愤怒：紧握拳头、眼神凶狠");
+      }
+    }
+    
+    // 天气体现
+    const weatherDesc = {
+      'night': '深夜，黑暗笼罩',
+      'fog': '浓雾弥漫，能见度低',
+      'rain': '阴雨连绵，潮湿阴冷',
+      'clear': '天色阴沉，压抑沉闷'
+    };
+    stateHints.push(weatherDesc[weather] || '天色阴沉');
+    
+    return {
+      role: "你是《72Hours》的叙事导演。你的任务是通过文字让读者感受到角色的状态变化，而不是直接告诉读者数字。",
+      
+      context: {
+        time: `1851年1月${8 + Math.floor(turn/24)}日`,
+        location: "金田村",
+        pressure: pressure,
+        weather: weather,
+        playerIdentity: player.identity?.name || '读书人',
+        playerTraits: player.traits?.map(t => t.id).join('、'),
+        spotlight: context.spotlight?.name || '无'
+      },
+      
+      stateHints: stateHints,
+      
+      instructions: [
+        "通过动作、环境、细节体现角色状态，不要直接说'你很恐惧'",
+        "例如：恐惧时写'手指不受控制地颤抖'，而不是'你很害怕'",
+        "例如：关系改善时写'她第一次主动靠近你'，而不是'羁绊增加了'",
+        "压强高时，让环境也变得更紧张：风声像尖叫、影子像人形",
+        "每个场景都要体现玩家的身份特质",
+        "100-150字，粗粝、留白、时代感"
+      ],
+      
+      example: {
+        good: "煤油灯的火苗剧烈摇晃。母亲的手从你腕上滑落，指节发白。村口有火把在移动，橙红色的光。她把一枚铜钱塞进你手心，冰凉的，圆润的。然后她推了你一把，力道很轻。",
+        bad: "你很恐惧，压强是82。母亲很担心你。你们的关系变好了。"
+      },
+      
+      output: "场景描述（通过细节体现状态，不解释心理状态）"
     };
   }
 
@@ -158,20 +211,57 @@ class NarrativeEngine {
 
   /**
    * 构建结果生成Prompt
+   * 通过叙事体现选择后果
    */
   buildResultPrompt(context, choice) {
+    const { player, spotlight, stateChanges = {} } = context;
+    
+    // 构建变化提示（定性描述，不是数字）
+    let changeHints = [];
+    
+    if (stateChanges.fear) {
+      if (stateChanges.fear > 0) {
+        changeHints.push("恐惧增加：身体僵硬、呼吸急促、眼神游移");
+      } else {
+        changeHints.push("恐惧减少：肩膀放松、呼吸平稳");
+      }
+    }
+    
+    if (stateChanges.knot) {
+      if (stateChanges.knot > 0) {
+        changeHints.push("关系改善：对方主动靠近、眼神柔和、肢体放松");
+      } else {
+        changeHints.push("关系恶化：对方后退、眼神警惕、保持距离");
+      }
+    }
+    
+    if (stateChanges.hunger) {
+      if (stateChanges.hunger > 0) {
+        changeHints.push("饥饿加剧：胃部绞痛、头晕、虚弱");
+      } else {
+        changeHints.push("饥饿缓解：有了力气、胃部舒适");
+      }
+    }
+    
     return {
-      role: "你是《72Hours》的叙事导演。",
-      input: {
-        scene: context.scene,
-        spotlight: context.spotlight,
-        player: context.player,
-        choice: choice
-      },
-      output: {
-        result: "选择后的结果描述",
-        stateDelta: {},
-        knotDelta: 0
+      role: "你是《72Hours》的叙事导演。描述选择的结果，通过细节体现变化，不要直接说数字。",
+      
+      choice: choice.text,
+      spotlight: spotlight?.name,
+      
+      changeHints: changeHints,
+      
+      instructions: [
+        "通过动作、神态、环境变化体现后果",
+        "不要直接说'恐惧增加了10点'或'羁绊增加了'",
+        "例如：安慰后写'她第一次主动握住你的手'，而不是'羁绊+5'",
+        "例如：威胁后写'她后退一步，眼中的信任消失了'，而不是'关系恶化'",
+        "50-80字，简洁有力"
+      ],
+      
+      example: {
+        good: "她愣了一下，然后慢慢靠近你，头轻轻靠在你肩上。你感觉到她的颤抖渐渐平息。",
+        bad: "你安慰了她。她的恐惧减少了10点，你们的关系变好了。"
       }
     };
   }
