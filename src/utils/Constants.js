@@ -221,7 +221,19 @@ const GAME_CONFIG = {
     
     // 警惕类
     vigilant: { name: '警惕', description: '时刻保持警觉' },
-    paranoid: { name: '多疑', description: '怀疑一切' }
+    paranoid: { name: '多疑', description: '怀疑一切' },
+    
+    // 神秘/超自然类
+    mystical: { name: '神秘', description: '对超自然现象敏感' },
+    insane: { name: '精神错乱', description: '能看到常人看不到的东西' },
+    prophetic: { name: '预言', description: '偶尔能看到未来的碎片' },
+    cursed: { name: '诅咒', description: '身上带着某种诅咒' },
+    
+    // 特殊类
+    addicted: { name: '成瘾', description: '对某种物质或行为上瘾' },
+    amnesiac: { name: '失忆', description: '忘记了自己的过去' },
+    haunted: { name: '被附身', description: '体内有另一个存在' },
+    immortal: { name: '不死', description: '无法死亡，但会感受痛苦' }
   },
 
   // 特质数量配置

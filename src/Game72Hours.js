@@ -70,7 +70,7 @@ class Game72Hours {
 
   /**
    * 生成玩家特质
-   * 随机抽取性格特质，基于身份有倾向性
+   * 完全随机抽取性格特质，不限制身份
    */
   generatePlayerTraits() {
     const { player } = this.gameState;
@@ -86,33 +86,19 @@ class Game72Hours {
       });
     }
     
-    // 从特质库随机抽取性格特质
+    // 从特质库完全随机抽取性格特质
     const { MIN_TRAITS, MAX_TRAITS } = GAME_CONFIG.TRAIT_CONFIG;
     const numTraits = Math.floor(Math.random() * (MAX_TRAITS - MIN_TRAITS + 1)) + MIN_TRAITS;
     
-    // 获取适合该身份的特质列表
-    const suitableTraits = identity.suitableTraits || [];
     const allTraits = Object.keys(GAME_CONFIG.PERSONALITY_TRAITS);
-    
-    // 70%概率从适合特质中抽取，30%概率从所有特质中抽取
     const selectedTraits = [];
+    
     for (let i = 0; i < numTraits; i++) {
-      let traitPool;
-      if (Math.random() < 0.7 && suitableTraits.length > 0) {
-        // 从适合特质中抽取（排除已选的）
-        traitPool = suitableTraits.filter(t => !selectedTraits.includes(t));
-      } else {
-        // 从所有特质中抽取（排除已选的）
-        traitPool = allTraits.filter(t => !selectedTraits.includes(t));
-      }
+      // 从所有特质中随机抽取（排除已选的）
+      const availableTraits = allTraits.filter(t => !selectedTraits.includes(t));
       
-      // 如果池子空了，从所有特质中重新选
-      if (traitPool.length === 0) {
-        traitPool = allTraits.filter(t => !selectedTraits.includes(t));
-      }
-      
-      if (traitPool.length > 0) {
-        const randomTrait = traitPool[Math.floor(Math.random() * traitPool.length)];
+      if (availableTraits.length > 0) {
+        const randomTrait = availableTraits[Math.floor(Math.random() * availableTraits.length)];
         selectedTraits.push(randomTrait);
         player.traits.push({ id: randomTrait, type: 'personality' });
       }

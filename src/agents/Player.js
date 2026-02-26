@@ -69,6 +69,21 @@ class Player extends Agent {
         honest_compassionate: '保护无辜的村民',
         idealistic_hopeful: '重建读书人的理想',
         
+        // 神秘/超自然类
+        mystical_insane: '解读古籍中隐藏的禁忌知识',
+        insane_prophetic: '写下预见的未来，即使没人相信',
+        cursed_haunted: '破解缠绕家族的百年诅咒',
+        mystical_cursed: '用知识对抗不可名状的存在',
+        prophetic_cursed: '在疯狂中寻找真理',
+        insane_haunted: '与体内的古老灵魂对话',
+        
+        // 特殊类
+        addicted_insane: '在鸦片烟雾中看见真相',
+        amnesiac_haunted: '找回被遗忘的可怕过去',
+        immortal_cursed: '寻找终结不死的方法',
+        addicted_mystical: '用药物开启第三只眼',
+        amnesiac_prophetic: '在梦中拼凑失去的记忆',
+        
         // 默认
         default: '在乱世中活下去'
       },
@@ -90,6 +105,21 @@ class Player extends Agent {
         compassionate_family: '散尽家财保护村民',
         honest_worldly: '做个有良心的地主',
         
+        // 神秘/超自然类
+        mystical_insane: '发现祖宅地窖中的秘密',
+        insane_prophetic: '祖先托梦警告的灾难',
+        cursed_haunted: '解除祖上犯下的罪孽',
+        mystical_cursed: '用家族秘术对抗太平军',
+        prophetic_cursed: '改变家族灭亡的命运',
+        insane_haunted: '与祖灵沟通寻求庇护',
+        
+        // 特殊类
+        addicted_insane: '在烟雾中看见财富的幻象',
+        amnesiac_haunted: '找回祖上隐藏的秘密',
+        immortal_cursed: '承受永生看着家族兴衰',
+        addicted_mystical: '用秘方控制村民',
+        amnesiac_prophetic: '在失忆前写下的预言',
+        
         // 默认
         default: '保住祖宗留下的产业'
       },
@@ -110,6 +140,21 @@ class Player extends Agent {
         // 正义类
         just_brave: '在乱世中维持正义',
         disciplined_vigilant: '守护一方平安',
+        
+        // 神秘/超自然类
+        mystical_insane: '听到战场亡魂的低语',
+        insane_prophetic: '预见自己的死亡方式',
+        cursed_haunted: '被战死者的怨灵缠绕',
+        mystical_cursed: '用巫术增强战斗力',
+        prophetic_cursed: '改变必死的命运',
+        insane_haunted: '与死去战友的灵魂并肩作战',
+        
+        // 特殊类
+        addicted_insane: '用药物麻痹恐惧',
+        amnesiac_haunted: '找回战场失忆前的自己',
+        immortal_cursed: '在无尽的杀戮中寻求死亡',
+        addicted_mystical: '用秘药获得超凡力量',
+        amnesiac_prophetic: '在梦中看见未来的战场',
         
         // 默认
         default: '活着拿到军饷'
@@ -135,6 +180,21 @@ class Player extends Agent {
         // 善良类
         compassionate_family: '保护教友和家人',
         devoted_compassionate: '用爱传播信仰',
+        
+        // 神秘/超自然类
+        mystical_insane: '揭开金田村隐藏的古老秘密',
+        insane_prophetic: '阻止看到的可怕未来成真',
+        cursed_haunted: '摆脱附在身上的怨灵',
+        mystical_cursed: '寻找解除家族诅咒的方法',
+        prophetic_cursed: '改变被诅咒的命运',
+        insane_haunted: '与体内的另一个存在共存',
+        
+        // 特殊类
+        addicted_insane: '在幻觉中寻找真实的自我',
+        amnesiac_haunted: '找回失去的记忆，即使它们很可怕',
+        immortal_cursed: '寻找真正的死亡',
+        addicted_mystical: '用药物打开通往异世界的大门',
+        amnesiac_prophetic: '在碎片记忆中寻找真相',
         
         // 默认
         default: '等待天国的降临'
