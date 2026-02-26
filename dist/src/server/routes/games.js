@@ -77,33 +77,31 @@ router.post('/', (0, validateRequest_1.validateRequest)({ body: createGameSchema
             states: { ...identityConfig.initialStates },
             position: { x: 0, y: 0 }
         };
-        // 根据身份随机生成关联NPC
-        const npcPools = {
-            scholar: ['母亲', '教书先生', '同窗好友', '邻家少女'],
-            landlord: ['管家', '长工', '佃户', '账房先生'],
-            soldier: ['战友', '上司', '军医', '俘虏'],
-            cultist: ['教友', '传教士', '告密者', '异端']
-        };
-        const availableNPCs = npcPools[selectedIdentity] || ['母亲', '教书先生'];
-        const shuffledNPCs = [...availableNPCs].sort(() => 0.5 - Math.random());
-        const selectedNPCs = shuffledNPCs.slice(0, 2);
-        const bondedNPCs = selectedNPCs.map((name, index) => ({
+        // 生成10个NPC（初始全部锁定）
+        const allNPCNames = [
+            '母亲', '教书先生', '同窗好友', '邻家少女', '老猎人',
+            '货郎', '寡妇', '赌徒', '郎中', '乞丐'
+        ];
+        const shuffledNPCNames = [...allNPCNames].sort(() => 0.5 - Math.random());
+        const allNPCs = shuffledNPCNames.map((name, index) => ({
             id: `npc_${Date.now()}_${index + 1}`,
             name,
             traits: [],
-            isBonded: true,
-            isUnlocked: true
+            isBonded: index < 4, // 前4个是 bonded
+            isUnlocked: index < 4, // 前4个初始解锁
+            unlockStage: index < 4 ? 1 : index < 8 ? 2 : 3 // 1=初始, 2=第2事件, 3=第3事件
         }));
         const gameState = {
             turn: 0,
             datetime: new Date('1851-01-08T00:00:00').toISOString(),
-            pressure: 2, // 1-20范围，初始2
-            omega: 4, // 1-20范围，初始4
+            pressure: 2,
+            omega: 4,
             weather: 'night',
             player,
-            npcs: bondedNPCs,
+            npcs: allNPCs,
             history: [],
-            isGameOver: false
+            isGameOver: false,
+            storyEvent: 0 // 当前剧本事件阶段 (0-3)
         };
         games.set(gameId, { id: gameId, state: gameState, model: model || 'Pro/MiniMaxAI/MiniMax-M2.5', apiKey });
         const openings = {
@@ -124,7 +122,7 @@ router.post('/', (0, validateRequest_1.validateRequest)({ body: createGameSchema
                 states: player.states,
                 position: player.position
             },
-            bondedNPCs: bondedNPCs.map((npc) => ({
+            bondedNPCs: allNPCs.filter((npc) => npc.isUnlocked).map((npc) => ({
                 id: npc.id,
                 name: npc.name,
                 traits: npc.traits,
@@ -250,6 +248,51 @@ router.post('/:id/turns', (0, validateRequest_1.validateRequest)({ body: execute
                 timestamp: new Date().toISOString()
             });
         }
+        // 剧本事件解锁NPC机制
+        // 事件1: 回合1-18 (初始已解锁4个)
+        // 事件2: 回合19-36 (解锁第5-8个NPC)
+        // 事件3: 回合37-54 (解锁第9-10个NPC + 关键历史人物)
+        // 事件4: 回合55-72 (最后一个回合)
+        let unlockedNPCsThisTurn = [];
+        const previousStoryEvent = state.storyEvent || 0;
+        if (state.turn >= 55 && previousStoryEvent < 4) {
+            // 事件4: 最终阶段
+            state.storyEvent = 4;
+            unlockedNPCsThisTurn = ['洪秀全', '杨秀清', '萧朝贵']; // 关键历史人物
+            unlockedNPCsThisTurn.forEach((name) => {
+                state.npcs.push({
+                    id: `npc_${Date.now()}_${state.npcs.length + 1}`,
+                    name,
+                    traits: [],
+                    isBonded: true,
+                    isUnlocked: true,
+                    unlockStage: 4
+                });
+            });
+        }
+        else if (state.turn >= 37 && previousStoryEvent < 3) {
+            // 事件3: 解锁剩余NPC
+            state.storyEvent = 3;
+            state.npcs.forEach((npc) => {
+                if (npc.unlockStage === 3 && !npc.isUnlocked) {
+                    npc.isUnlocked = true;
+                    unlockedNPCsThisTurn.push(npc.name);
+                }
+            });
+        }
+        else if (state.turn >= 19 && previousStoryEvent < 2) {
+            // 事件2: 解锁第5-8个NPC
+            state.storyEvent = 2;
+            state.npcs.forEach((npc) => {
+                if (npc.unlockStage === 2 && !npc.isUnlocked) {
+                    npc.isUnlocked = true;
+                    unlockedNPCsThisTurn.push(npc.name);
+                }
+            });
+        }
+        if (unlockedNPCsThisTurn.length > 0) {
+            result += ` [新角色出现: ${unlockedNPCsThisTurn.join(', ')}]`;
+        }
         let gameOver = null;
         if (state.player.states.injury >= 20 || state.player.states.hunger >= 20) {
             gameOver = { type: 'death', reason: state.player.states.injury >= 20 ? '伤势过重' : '饥饿致死' };
@@ -297,8 +340,8 @@ router.get('/:id/ai-prompt', (req, res) => {
     }
     const state = game.state;
     const player = state.player;
-    const npcs = state.npcs || [];
-    const spotlightNPC = npcs.length > 0 ? npcs[0] : null;
+    const unlockedNPCs = (state.npcs || []).filter((npc) => npc.isUnlocked);
+    const spotlightNPC = unlockedNPCs.length > 0 ? unlockedNPCs[0] : null;
     // 构建 prompt（与 EmergentNarrativeEngine 一致）
     const prompt = `
 【时间】第${state.turn}/72回合，${new Date(state.datetime).toLocaleString('zh-CN')}
