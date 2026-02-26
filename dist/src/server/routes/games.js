@@ -209,12 +209,13 @@ router.post('/:id/turns', (0, validateRequest_1.validateRequest)({ body: execute
         if (choice) {
             switch (choice.id) {
                 case 'explore':
-                    state.player.states.hunger = Math.min(20, state.player.states.hunger + 1);
+                    // 探索不增加饥饿，让玩家能持续探索
                     result = '你在村子里走了一圈，发现了一些有趣的东西。';
                     break;
                 case 'rest':
                     state.player.states.fear = Math.max(1, state.player.states.fear - 2);
-                    state.player.states.hunger = Math.min(20, state.player.states.hunger + 2);
+                    // 休息恢复少量饥饿（吃东西/恢复体力）
+                    state.player.states.hunger = Math.max(1, state.player.states.hunger - 1);
                     result = '你休息了一会儿，感觉稍微平静了一些。';
                     break;
                 case 'observe':
@@ -223,6 +224,8 @@ router.post('/:id/turns', (0, validateRequest_1.validateRequest)({ body: execute
                 case 'flee':
                     state.player.position.x += 2;
                     state.player.states.fear = Math.max(1, state.player.states.fear - 4);
+                    // 逃跑消耗体力，增加饥饿
+                    state.player.states.hunger = Math.min(20, state.player.states.hunger + 2);
                     result = '你决定离开这个危险的地方。';
                     break;
                 default:
