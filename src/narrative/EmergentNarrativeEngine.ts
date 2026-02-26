@@ -431,62 +431,33 @@ export class EmergentNarrativeEngine {
    * 构建共振提示词
    */
   private buildResonancePrompt(context: ResonanceContext): string {
-    const { spotlightNPC, environmentalSignals, collectiveMood, player } = context;
+    const { spotlightNPC, player } = context;
     
-    let prompt = `你是一个涌现式叙事引擎。基于以下元素，生成一段200-400字的沉浸式叙事。
+    const prompt = `
+【时间】第${context.turn}/72回合，${new Date(context.datetime).toLocaleString('zh-CN')}
 
-【核心原则】
-- 不是描述场景，而是呈现"此刻的共振"
-- 让NPC的执念、记忆、情绪自然流露
-- 环境信号不只是背景，而是情绪的催化剂
-- 玩家的气场影响着周围，但不控制故事
+【场】
+压强：${Math.round(context.pressure)}/20
+历史必然感：${Math.round(context.omega)}/20
 
-【当前状态】
-- 回合: ${context.turn}/72
-- 时间: ${new Date(context.datetime).toLocaleString('zh-CN')}
-- 天气: ${context.weather}
-- 集体情绪: ${collectiveMood}
-- 压强: ${context.pressure.toFixed(1)}
-- Ω: ${context.omega.toFixed(2)}
+【你】
+恐惧：${player.states.fear}/20
+攻击性：${player.states.aggression}/20
+饥饿：${player.states.hunger}/20
+伤势：${player.states.injury}/20
+执念：${player.obsession}
 
-【玩家】
-- 身份: ${player.identity}
-- 特质: ${player.traits.join('、')}
-- 执念: ${player.obsession}
-- 气场: ${player.aura}
-- 状态: 恐惧${player.states.fear}/攻击${player.states.aggression}/饥饿${player.states.hunger}/伤势${player.states.injury}
+【在场者】${spotlightNPC ? spotlightNPC.name : '无'}
+${spotlightNPC ? `恐惧：${spotlightNPC.states.fear}/20
+攻击性：${spotlightNPC.states.aggression}/20
+与你的关系：${spotlightNPC.knotWithPlayer}/20
+执念：${spotlightNPC.obsession}` : ''}
+
+【约束】
+- 从视觉、听觉、嗅觉写环境，不解释"压强高"是什么意思
+- 让${spotlightNPC ? spotlightNPC.name : '环境'}的执念自然流露，不直接说"他想..."
+- 200字，第二人称，暗示而非说明
 `;
-
-    if (spotlightNPC) {
-      prompt += `
-【聚光灯NPC: ${spotlightNPC.name}】
-- 执念: ${spotlightNPC.obsession}
-- 特质: ${spotlightNPC.traits.join('、')}
-- 状态: 恐惧${spotlightNPC.states.fear}/攻击${spotlightNPC.states.aggression}/饥饿${spotlightNPC.states.hunger}
-- 与你的关系(K值): ${spotlightNPC.knotWithPlayer}
-- 距离: ${spotlightNPC.distance.toFixed(2)}
-- 引力: ${spotlightNPC.force.toFixed(2)}
-- 此刻涌现的行为: ${spotlightNPC.behavior}
-- 相关记忆: ${spotlightNPC.memories.length > 0 ? spotlightNPC.memories[0].content : '无'}
-`;
-    }
-
-    if (environmentalSignals.length > 0) {
-      prompt += `
-【环境信号】
-${environmentalSignals.map(s => `- ${s.description} (${s.emotionalTone}, 强度${s.intensity})`).join('\n')}
-`;
-    }
-
-    prompt += `
-【叙事要求】
-1. 使用第二人称"你"
-2. 不要解释，直接呈现画面和感受
-3. 让${spotlightNPC ? spotlightNPC.name : '环境'}的情绪自然流淌
-4. 暗示，而非说明
-5. 留白，给玩家想象空间
-
-请生成叙事：`;
 
     return prompt;
   }
