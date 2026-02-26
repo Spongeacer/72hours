@@ -23,20 +23,20 @@ export const GamePanel: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <!-- 状态栏 -->
+      {/* 状态栏 */}
       <StatusBar 
         gameState={gameState}
         player={player}
         npcs={npcs}
       />
 
-      <!-- 叙事面板 -->
+      {/* 叙事面板 */}
       <NarrativePanel 
         narrative={currentNarrative}
         result={currentResult}
       />
 
-      <!-- 选择面板 -->
+      {/* 选择面板 */}
       {currentChoices.length > 0 && (
         <ChoicePanel 
           choices={currentChoices}
@@ -44,7 +44,7 @@ export const GamePanel: React.FC = () => {
         />
       )}
 
-      <!-- 游戏结束 -->
+      {/* 游戏结束 */}
       {gameState.isGameOver && (
         <div className="game-panel text-center">
           <h3 className="text-2xl font-serif text-game-accent mb-4">
@@ -59,7 +59,7 @@ export const GamePanel: React.FC = () => {
         </div>
       )}
 
-      <!-- 操作按钮 -->
+      {/* 操作按钮 */}
       {!gameState.isGameOver && (
         <div className="flex gap-4">
           <button
@@ -78,7 +78,7 @@ export const GamePanel: React.FC = () => {
         </div>
       )}
 
-      <!-- 存档菜单 -->
+      {/* 存档菜单 */}
       {showSaveMenu && (
         <SaveMenu 
           onClose={() => setShowSaveMenu(false)}

@@ -1,11 +1,11 @@
-import React from 'react';
+import { FC } from 'react';
 import { useGameStore } from './stores/gameStore';
 import { SetupPanel } from './components/Setup/SetupPanel';
 import { GamePanel } from './components/Game/GamePanel';
 import { Loading } from './components/UI/Loading';
 import { ErrorMessage } from './components/UI/ErrorMessage';
 
-function App() {
+const App: FC = () => {
   const { gameState, isLoading, error, setError } = useGameStore();
 
   return (

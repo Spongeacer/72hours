@@ -40,7 +40,7 @@ export const SetupPanel: React.FC = () => {
         选择你的身份
       </h2>
 
-      <!-- 身份选择 -->
+      {/* 身份选择 */}
       <div className="mb-8">
         <label className="block text-game-muted mb-3">身份</label>
         <select
@@ -56,7 +56,7 @@ export const SetupPanel: React.FC = () => {
         </select>
       </div>
 
-      <!-- AI模型选择 -->
+      {/* AI模型选择 */}
       <div className="mb-8">
         <label className="block text-game-muted mb-3">AI 模型</label>
         <select
@@ -73,7 +73,7 @@ export const SetupPanel: React.FC = () => {
         </select>
       </div>
 
-      <!-- API Key -->
+      {/* API Key */}
       {!config.hasApiKey && (
         <div className="mb-8">
           <label className="block text-game-muted mb-3">
@@ -101,7 +101,7 @@ export const SetupPanel: React.FC = () => {
         </div>
       )}
 
-      <!-- 开始按钮 -->
+      {/* 开始按钮 */}
       <button
         onClick={handleStart}
         disabled={isLoading || (!config.hasApiKey && !apiKey)}

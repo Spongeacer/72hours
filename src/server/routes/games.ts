@@ -56,7 +56,7 @@ router.post('/', validateRequest({ body: createGameSchema }), async (req, res) =
       identity: identities[identity],
       traits: [{ id: 'calm', type: 'personality' }, { id: 'curious', type: 'personality' }],
       obsession: '在乱世中活下去',
-      states: { fear: 30, aggression: 20, hunger: 40, injury: 0 },
+      states: { fear: 6, aggression: 4, hunger: 8, injury: 1 },
       position: { x: 0, y: 0 }
     };
     

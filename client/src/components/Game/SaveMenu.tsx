@@ -7,13 +7,12 @@ interface SaveMenuProps {
 }
 
 export const SaveMenu: React.FC<SaveMenuProps> = ({ onClose }) => {
-  const { 
-    gameId, 
-    gameState, 
-    saves, 
-    loadSaves, 
-    createSave, 
-    loadSave 
+  const {
+    gameState,
+    saves,
+    loadSaves,
+    createSave,
+    loadSave
   } = useGameStore();
   
   const [saveName, setSaveName] = useState('');
@@ -53,7 +52,7 @@ export const SaveMenu: React.FC<SaveMenuProps> = ({ onClose }) => {
         </div>
 
         <div className="p-6">
-          <!-- 创建存档 -->
+          {/* 创建存档 */}
           <div className="mb-8">
             <h4 className="text-game-muted mb-3">创建新存档</h4>
             <div className="flex gap-3">
@@ -80,7 +79,7 @@ export const SaveMenu: React.FC<SaveMenuProps> = ({ onClose }) => {
             )}
           </div>
 
-          <!-- 存档列表 -->
+          {/* 存档列表 */}
           <div>
             <h4 className="text-game-muted mb-3">已有存档</h4>
             

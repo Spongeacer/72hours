@@ -3,8 +3,7 @@ import { devtools } from 'zustand/middleware';
 import { 
   GameState, 
   Player, 
-  NPC, 
-  TurnResult, 
+  NPC,
   Choice,
   SaveData 
 } from '../types';
@@ -25,7 +24,7 @@ interface GameStore {
   
   // 动作
   initGame: (identity: string, model: string, apiKey?: string) => Promise<void>;
-  makeChoice: (choice: Choice) => Promise<void>;
+  makeChoice: (choice?: Choice) => Promise<void>;
   loadSaves: () => Promise<void>;
   createSave: (name?: string) => Promise<void>;
   loadSave: (saveId: string) => Promise<void>;
@@ -82,7 +81,7 @@ export const useGameStore = create<GameStore>()(
       },
 
       // 做出选择
-      makeChoice: async (choice) => {
+      makeChoice: async (choice?) => {
         const { gameId, gameState } = get();
         
         if (!gameId || !gameState) return;

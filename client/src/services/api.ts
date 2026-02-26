@@ -22,7 +22,8 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response) {
-      return Promise.reject(error.response.data?.error || error.message);
+      const data = error.response.data as { error?: string };
+      return Promise.reject(data?.error || error.message);
     }
     return Promise.reject('网络错误');
   }
