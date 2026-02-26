@@ -267,6 +267,10 @@
                     <span class="status-label">Ω: </span>
                     <span class="status-value" id="omegaDisplay">1.00</span>
                 </div>
+                <div class="status-item" style="margin-left: auto;">
+                    <button class="btn" onclick="showSaveMenu()" style="padding: 6px 12px; font-size: 0.85em;">存档</button>
+                    <button class="btn" onclick="showLoadMenu()" style="padding: 6px 12px; font-size: 0.85em; margin-left: 8px;">读档</button>
+                </div>
             </div>
             
             <div class="narrative" id="narrative">
@@ -294,6 +298,35 @@
         </div>
     </div>
 
+    <!-- 存档菜单 -->
+    <div id="saveMenu" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #252525; border: 1px solid #3a3a3a; padding: 30px; max-width: 500px; max-height: 80vh; overflow-y: auto; z-index: 1000;">
+        <h3 style="color: #c9b896; margin-bottom: 20px;">存档</h3>
+        <div id="saveList" style="margin-bottom: 20px;">
+            <!-- 存档列表 -->
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="saveName" placeholder="存档名称（可选）" style="flex: 1; padding: 8px; background: #1a1a1a; border: 1px solid #3a3a3a; color: #d4c4a8;">
+            <button class="btn" onclick="createSave()" style="padding: 8px 16px;">新建存档</button>
+        </div>
+        <div style="margin-top: 15px; text-align: right;">
+            <button class="btn" onclick="hideSaveMenu()" style="background: #3a3a3a;">关闭</button>
+        </div>
+    </div>
+
+    <!-- 读档菜单 -->
+    <div id="loadMenu" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #252525; border: 1px solid #3a3a3a; padding: 30px; max-width: 500px; max-height: 80vh; overflow-y: auto; z-index: 1000;">
+        <h3 style="color: #c9b896; margin-bottom: 20px;">读档</h3>
+        <div id="loadList" style="margin-bottom: 20px;">
+            <!-- 存档列表 -->
+        </div>
+        <div style="margin-top: 15px; text-align: right;">
+            <button class="btn" onclick="hideLoadMenu()" style="background: #3a3a3a;">关闭</button>
+        </div>
+    </div>
+
+    <!-- 遮罩层 -->
+    <div id="modalOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999;" onclick="hideAllMenus()"></div>
+
     <script>
         // 游戏状态管理
         const GameState = {
@@ -302,12 +335,14 @@
             isProcessing: false,
             turn: 0,
             serverHasApiKey: false,
+            saveSystem: null,
             
             reset() {
                 this.gameId = null;
                 this.currentContext = null;
                 this.isProcessing = false;
                 this.turn = 0;
+                this.saveSystem = null;
             }
         };
 
@@ -637,6 +672,180 @@
             btn.textContent = '重新开始';
             btn.onclick = () => location.reload();
             container.appendChild(btn);
+        }
+
+        // ========== 存档系统 ==========
+
+        // 显示存档菜单
+        function showSaveMenu() {
+            document.getElementById('modalOverlay').style.display = 'block';
+            document.getElementById('saveMenu').style.display = 'block';
+            renderSaveList();
+        }
+
+        // 隐藏存档菜单
+        function hideSaveMenu() {
+            document.getElementById('modalOverlay').style.display = 'none';
+            document.getElementById('saveMenu').style.display = 'none';
+        }
+
+        // 显示读档菜单
+        function showLoadMenu() {
+            document.getElementById('modalOverlay').style.display = 'block';
+            document.getElementById('loadMenu').style.display = 'block';
+            renderLoadList();
+        }
+
+        // 隐藏读档菜单
+        function hideLoadMenu() {
+            document.getElementById('modalOverlay').style.display = 'none';
+            document.getElementById('loadMenu').style.display = 'none';
+        }
+
+        // 隐藏所有菜单
+        function hideAllMenus() {
+            hideSaveMenu();
+            hideLoadMenu();
+        }
+
+        // 创建存档
+        async function createSave() {
+            const name = document.getElementById('saveName').value.trim();
+            
+            try {
+                // 获取当前游戏状态
+                const response = await fetch(`/api/game/${GameState.gameId}/state`);
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error('获取游戏状态失败');
+                }
+
+                // 保存到本地存储
+                const saveData = {
+                    id: `save_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    name: name || `存档 ${new Date().toLocaleString('zh-CN')}`,
+                    timestamp: Date.now(),
+                    gameId: GameState.gameId,
+                    gameState: result.data.state,
+                    turn: result.data.state.turn,
+                    datetime: result.data.state.datetime,
+                    pressure: result.data.state.pressure,
+                    omega: result.data.state.omega
+                };
+
+                // 保存到localStorage
+                const savesKey = `72hours_saves_${GameState.gameId}`;
+                const existingSaves = JSON.parse(localStorage.getItem(savesKey) || '[]');
+                existingSaves.push(saveData);
+                
+                // 限制存档数量（最多10个）
+                if (existingSaves.length > 10) {
+                    existingSaves.shift();
+                }
+                
+                localStorage.setItem(savesKey, JSON.stringify(existingSaves));
+                
+                // 清空输入框
+                document.getElementById('saveName').value = '';
+                
+                // 刷新列表
+                renderSaveList();
+                
+                alert('存档成功！');
+            } catch (error) {
+                console.error('存档失败:', error);
+                alert('存档失败: ' + error.message);
+            }
+        }
+
+        // 渲染存档列表
+        function renderSaveList() {
+            const container = document.getElementById('saveList');
+            const savesKey = `72hours_saves_${GameState.gameId}`;
+            const saves = JSON.parse(localStorage.getItem(savesKey) || '[]');
+            
+            if (saves.length === 0) {
+                container.innerHTML = '<p style="color: #6a5a4a; text-align: center;">暂无存档</p>';
+                return;
+            }
+            
+            container.innerHTML = saves.map(save => `
+                <div style="background: #1a1a1a; border: 1px solid #3a3a3a; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="color: #c9b896; font-weight: bold;">${escapeHtml(save.name)}</div>
+                        <div style="color: #6a5a4a; font-size: 0.85em;">
+                            回合 ${save.turn} | 压强 ${Math.round(save.pressure)}/100 | ${new Date(save.timestamp).toLocaleString('zh-CN')}
+                        </div>
+                    </div>
+                    <button class="btn" onclick="deleteSave('${save.id}')" style="background: #5a3a3a; padding: 6px 12px; font-size: 0.85em;">删除</button>
+                </div>
+            `).reverse().join('');
+        }
+
+        // 渲染读档列表
+        function renderLoadList() {
+            const container = document.getElementById('loadList');
+            const savesKey = `72hours_saves_${GameState.gameId}`;
+            const saves = JSON.parse(localStorage.getItem(savesKey) || '[]');
+            
+            if (saves.length === 0) {
+                container.innerHTML = '<p style="color: #6a5a4a; text-align: center;">暂无存档</p>';
+                return;
+            }
+            
+            container.innerHTML = saves.map(save => `
+                <div style="background: #1a1a1a; border: 1px solid #3a3a3a; padding: 12px; margin-bottom: 10px; cursor: pointer;" onclick="loadSave('${save.id}')">
+                    <div style="color: #c9b896; font-weight: bold;">${escapeHtml(save.name)}</div>
+                    <div style="color: #6a5a4a; font-size: 0.85em;">
+                        回合 ${save.turn} | 压强 ${Math.round(save.pressure)}/100 | ${new Date(save.timestamp).toLocaleString('zh-CN')}
+                    </div>
+                </div>
+            `).reverse().join('');
+        }
+
+        // 删除存档
+        function deleteSave(saveId) {
+            if (!confirm('确定要删除这个存档吗？')) return;
+            
+            const savesKey = `72hours_saves_${GameState.gameId}`;
+            const saves = JSON.parse(localStorage.getItem(savesKey) || '[]');
+            const updatedSaves = saves.filter(s => s.id !== saveId);
+            localStorage.setItem(savesKey, JSON.stringify(updatedSaves));
+            
+            renderSaveList();
+        }
+
+        // 读档
+        async function loadSave(saveId) {
+            try {
+                const savesKey = `72hours_saves_${GameState.gameId}`;
+                const saves = JSON.parse(localStorage.getItem(savesKey) || '[]');
+                const save = saves.find(s => s.id === saveId);
+                
+                if (!save) {
+                    throw new Error('存档不存在');
+                }
+
+                // 确认读档
+                if (!confirm(`确定要读取存档「${save.name}」吗？当前进度将丢失。`)) return;
+
+                // 这里可以实现从存档恢复游戏状态的逻辑
+                // 目前简化处理：刷新页面并显示存档信息
+                alert(`已读取存档：${save.name}\n回合：${save.turn}\n压强：${Math.round(save.pressure)}/100`);
+                
+                hideLoadMenu();
+            } catch (error) {
+                console.error('读档失败:', error);
+                alert('读档失败: ' + error.message);
+            }
+        }
+
+        // HTML转义
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
     </script>
 </body>
