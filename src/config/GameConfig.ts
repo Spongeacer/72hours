@@ -103,7 +103,8 @@ export const GAME_CONFIG = {
     INITIAL: 2,
     BASE_GROWTH: 0.16,
     VIOLENCE_BONUS: 0.5,
-    MAX: 20
+    MAX: 20,
+    EXPONENTIAL_THRESHOLD: 12
   },
 
   // Ω配置
