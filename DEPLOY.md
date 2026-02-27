@@ -1,81 +1,87 @@
-# 72Hours - 金田起义前夜
+# 72Hours 部署指南
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Spongeacer/72hours)
+## 推荐平台：Railway（免费额度足够）
 
-## 部署到 Vercel
+### 1. 注册 Railway
+- 访问 https://railway.app
+- 使用 GitHub 账号登录
 
-### 步骤 1: 点击部署按钮
-点击上方的 "Deploy with Vercel" 按钮
+### 2. 部署步骤
 
-### 步骤 2: 配置环境变量
-在 Vercel 部署页面，添加以下环境变量：
+```bash
+# 1. 确保代码已推送到 GitHub
+git push origin main
+
+# 2. 在 Railway  dashboard 中：
+#    - 点击 "New Project"
+#    - 选择 "Deploy from GitHub repo"
+#    - 选择你的仓库
+
+# 3. 添加环境变量
+#    在 Railway 的 Variables 中添加：
+#    - PORT=3000
+#    - SILICONFLOW_API_KEY=你的API密钥
+
+# 4. 部署完成
+#    Railway 会自动检测 package.json 并部署
+```
+
+### 3. 前端部署（Vercel）
+
+```bash
+# 1. 进入前端目录
+cd client
+
+# 2. 构建前端
+npm run build
+
+# 3. 部署到 Vercel
+vercel --prod
+
+# 4. 设置环境变量
+#    在 Vercel 中添加：
+#    - VITE_API_URL=https://你的railway域名.up.railway.app/api
+```
+
+### 4. 其他可选平台
+
+| 平台 | 优点 | 缺点 |
+|------|------|------|
+| **Railway** | 免费额度充足，部署简单 | 需要信用卡验证 |
+| **Render** | 完全免费，无需信用卡 | 冷启动慢（30秒） |
+| **Fly.io** | 性能好，有免费额度 | 配置稍复杂 |
+| **Heroku** | 老牌平台，文档丰富 | 免费版已取消 |
+
+---
+
+## 当前项目结构
+
+```
+72hours/
+├── src/                 # 后端源码
+│   ├── server/         # Express 服务器
+│   ├── game/           # 游戏逻辑
+│   ├── narrative/      # 叙事引擎
+│   └── config/         # 配置文件
+├── shared/             # 前后端共享类型
+├── client/             # 前端 React 应用
+├── package.json        # 后端依赖
+└── railway.json        # Railway 配置
+```
+
+## 环境变量
 
 | 变量名 | 说明 | 必需 |
 |--------|------|------|
-| `SILICONFLOW_API_KEY` | 你的 SiliconFlow API Key | ✅ 必需 |
-| `DEFAULT_MODEL` | 默认使用的模型 | ❌ 可选 |
+| PORT | 服务器端口 | 否（默认3000） |
+| SILICONFLOW_API_KEY | AI API 密钥 | 是 |
+| CORS_ORIGIN | 允许的前端域名 | 否 |
 
-#### 获取 SiliconFlow API Key
-1. 访问 [SiliconFlow](https://siliconflow.cn)
-2. 注册/登录账号
-3. 进入 API 密钥页面创建新密钥
-4. 复制密钥（格式：sk-...）
+---
 
-#### 可选模型
-- `Pro/MiniMaxAI/MiniMax-M2.1`（默认，速度快）
-- `deepseek-ai/DeepSeek-V3.2`（质量好，较慢）
+## 注意事项
 
-### 步骤 3: 完成部署
-点击 "Deploy" 按钮，等待部署完成
-
-### 步骤 4: 访问你的游戏
-部署完成后，Vercel 会提供一个域名，例如：
-```
-https://72hours-xxx.vercel.app
-```
-
-## 本地开发
-
-```bash
-# 克隆仓库
-git clone https://github.com/Spongeacer/72hours.git
-cd 72hours
-
-# 安装依赖
-npm install
-
-# 配置环境变量
-cp .env.example .env
-# 编辑 .env 文件，添加你的 SILICONFLOW_API_KEY
-
-# 启动开发服务器
-npm run dev
-```
-
-## 环境变量说明
-
-### SILICONFLOW_API_KEY（必需）
-你的 SiliconFlow API 密钥，用于调用 AI 模型生成叙事。
-
-**注意：** 这个密钥只保存在服务器端，不会暴露给客户端。
-
-### DEFAULT_MODEL（可选）
-默认使用的 AI 模型，如果未设置则使用 `Pro/MiniMaxAI/MiniMax-M2.1`。
-
-## 游戏玩法
-
-1. 访问部署后的网站
-2. 选择身份（读书人、地主、士兵、教徒）
-3. 开始游戏，经历72回合的叙事
-4. 每个回合做出选择，影响故事走向
-5. 最终生成完整的故事记录
-
-## 技术栈
-
-- Node.js + Express
-- SiliconFlow API
-- 72Hours 叙事引擎
-
-## 许可证
-
-MIT
+1. **免费额度**：Railway 免费版每月有 $5 额度，足够个人使用
+2. **冷启动**：长时间无访问会休眠，首次访问需要 5-10 秒唤醒
+3. **数据持久化**：当前使用内存存储，重启后数据丢失
+4. **数据库**：如需持久化，可添加 PostgreSQL（Railway 有免费额度）
