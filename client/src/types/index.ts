@@ -1,95 +1,27 @@
-// 前端类型定义
-// 与后端 shared/types.ts 保持一致
+/**
+ * 前端类型定义
+ * 
+ * 原则：
+ * 1. 优先从 shared/types 导入共享类型
+ * 2. 前端专属类型在此定义
+ * 3. 保持与后端类型兼容
+ */
 
-export type IdentityType = 'scholar' | 'landlord' | 'soldier' | 'cultist';
-export type WeatherType = 'clear' | 'rain' | 'fog' | 'night';
+// 从共享类型重新导出
+export type {
+  IdentityType,
+  WeatherType,
+  Position,
+  Trait,
+  Player,
+  NPC,
+  GameState,
+  Choice,
+  TurnResult,
+  SaveData
+} from '../../../shared/types';
 
-export interface Position {
-  x: number;
-  y: number;
-}
-
-export interface Trait {
-  id: string;
-  type: 'identity' | 'personality';
-  name?: string;
-}
-
-export interface Identity {
-  name: string;
-  baseMass: number;
-  initialStates: {
-    fear: number;
-    aggression: number;
-    hunger: number;
-    injury: number;
-  };
-}
-
-export interface Player {
-  id: string;
-  name: string;
-  identityType: IdentityType;
-  identity: Identity;
-  traits: Trait[];
-  obsession: string;
-  states: {
-    fear: number;
-    aggression: number;
-    hunger: number;
-    injury: number;
-  };
-  position: Position;
-}
-
-export interface NPC {
-  id: string;
-  name: string;
-  traits: Trait[];
-  isBonded: boolean;
-  isUnlocked: boolean;
-}
-
-export interface Choice {
-  id: string;
-  text: string;
-  type?: 'normal' | 'hidden';
-  isHidden?: boolean;
-}
-
-export interface GameState {
-  turn: number;
-  datetime: string;
-  pressure: number;
-  omega: number;
-  weather: WeatherType;
-  isGameOver: boolean;
-}
-
-export interface TurnResult {
-  turn: number;
-  narrative: string;
-  choices: Choice[];
-  result?: string;
-  state: GameState;
-  gameOver?: {
-    type: 'death' | 'escape' | 'completed';
-    reason: string;
-  };
-  spotlightNPC?: NPC | null;
-  playerAura?: string;
-}
-
-export interface SaveData {
-  id: string;
-  name: string;
-  timestamp: number;
-  turn: number;
-  datetime: string;
-  pressure: number;
-  omega: number;
-}
-
+// 前端专属：API 响应
 export interface ApiResponse<T> {
   success: boolean;
   data: T | null;
@@ -103,6 +35,7 @@ export interface ApiResponse<T> {
   };
 }
 
+// 前端专属：游戏配置
 export interface GameConfig {
   hasApiKey: boolean;
   defaultModel: string;
@@ -121,4 +54,10 @@ export interface IdentityInfo {
   id: string;
   name: string;
   description: string;
+}
+
+// 前端专属：扩展的回合结果
+export interface FrontendTurnResult extends TurnResult {
+  spotlightNPC?: NPC | null;
+  playerAura?: string;
 }
