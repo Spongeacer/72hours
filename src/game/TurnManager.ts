@@ -2,9 +2,10 @@
  * TurnManager - 回合管理器（集成物理引擎）
  */
 
-import { GameState, TurnResult, Choice, NPC } from '../../shared/types';
-import { EmergentNarrativeEngine } from '../narrative/EmergentNarrativeEngine';
+import { GameState, TurnResult, Choice } from '../../shared/types';
+import { NPC } from '../game/NPC';
 import { Player } from '../game/Player';
+import { EmergentNarrativeEngine } from '../narrative/EmergentNarrativeEngine';
 import { GravityEngine } from '../core/GravityEngine';
 import type { MassObject } from '../core/GravityEngine';
 
