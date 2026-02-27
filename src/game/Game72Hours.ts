@@ -90,8 +90,8 @@ export class Game72Hours {
     // 设置玩家执念
     this.gameState.player.obsession = this.generateDefaultObsession(this.gameState.player);
 
-    // 创建初始NPC（10个，解锁4个）
-    this.createInitialNPCs();
+    // 创建初始NPC（10个，解锁4个）- 身份预设，特质随机，名字和执念通过API生成
+    await this.createInitialNPCs();
 
     // 创建关联NPC
     this.createBondedNPCs();
@@ -170,25 +170,133 @@ export class Game72Hours {
 
   /**
    * 创建初始NPC（10个，解锁4个）
+   * 身份预设，特质随机，名字和执念通过API生成
    */
-  private createInitialNPCs(): void {
-    const shuffledNames = [...NPC_CONFIG.NPC_NAME_POOL].sort(() => 0.5 - Math.random());
+  private async createInitialNPCs(): Promise<void> {
+    const templates = [...NPC_CONFIG.NPC_TEMPLATES];
+    const shuffledTemplates = templates.sort(() => 0.5 - Math.random());
 
-    shuffledNames.forEach((name, index) => {
-      const npc = NPC.create({
-        id: `npc_${Date.now()}_${index + 1}`,
-        name,
-        baseMass: 3,
-        traits: [],
+    // 创建10个NPC
+    for (let i = 0; i < 10; i++) {
+      const template = shuffledTemplates[i % shuffledTemplates.length];
+      
+      // 从特质库随机抽取2-4个特质
+      const numTraits = Math.floor(Math.random() * 3) + 2; // 2-4个
+      const allTraitIds = Object.keys(this.config.PERSONALITY_TRAITS || {});
+      const shuffledTraits = [...allTraitIds].sort(() => 0.5 - Math.random());
+      const selectedTraits = shuffledTraits.slice(0, numTraits);
+
+      // 生成NPC数据
+      const npcData = {
+        id: `npc_${Date.now()}_${i + 1}`,
+        name: template.role, // 临时使用角色名，后续通过API生成
+        baseMass: template.baseMass,
+        traits: selectedTraits.map(traitId => ({ id: traitId, type: 'personality' as const })),
         states: { fear: 5, aggression: 5, hunger: 5, injury: 1 },
         position: { x: Math.random() * 10 - 5, y: Math.random() * 10 - 5 },
         isBonded: false,
-        isUnlocked: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT
-      });
-      this.gameState.npcs.push(npc);
-    });
+        isUnlocked: i < NPC_CONFIG.INITIAL_UNLOCKED_COUNT,
+        // 存储模板信息用于后续API生成
+        template: {
+          role: template.role,
+          description: template.description
+        }
+      };
 
-    console.log(`[Game] 初始NPC创建完成: ${shuffledNames.length}个，解锁${NPC_CONFIG.INITIAL_UNLOCKED_COUNT}个`);
+      const npc = NPC.create(npcData);
+      this.gameState.npcs.push(npc);
+    }
+
+    console.log(`[Game] 初始NPC创建完成: 10个，解锁${NPC_CONFIG.INITIAL_UNLOCKED_COUNT}个`);
+
+    // 如果有AI接口，异步生成名字和执念
+    if (this.narrativeEngine?.ai) {
+      await this.generateNPCDetailsWithAI();
+    }
+  }
+
+  /**
+   * 使用AI生成NPC名字和执念
+   */
+  private async generateNPCDetailsWithAI(): Promise<void> {
+    console.log('[Game] 开始为NPC生成名字和执念...');
+
+    const unlockedNPCs = this.gameState.npcs.filter(npc => npc.isUnlocked);
+
+    for (const npc of unlockedNPCs) {
+      try {
+        // 生成名字
+        const namePrompt = `${NPC_CONFIG.NAME_GENERATION_PROMPT}\n角色: ${(npc as any).template?.role || '村民'}\n描述: ${(npc as any).template?.description || '普通村民'}`;
+        const generatedName = await this.callAIForText(namePrompt);
+        if (generatedName) {
+          npc.name = generatedName.trim();
+        }
+
+        // 生成执念
+        const obsessionPrompt = `${NPC_CONFIG.OBSESSION_GENERATION_PROMPT}\n角色: ${npc.name}\n描述: ${(npc as any).template?.description || '普通村民'}\n特质: ${npc.traits.map(t => t.id).join(', ')}`;
+        const generatedObsession = await this.callAIForText(obsessionPrompt);
+        if (generatedObsession) {
+          (npc as any).obsession = generatedObsession.trim();
+        }
+      } catch (error) {
+        console.error(`[Game] 为NPC ${npc.id} 生成详情失败:`, error);
+      }
+    }
+
+    console.log('[Game] NPC名字和执念生成完成');
+  }
+
+  /**
+   * 调用AI生成文本
+   */
+  private async callAIForText(prompt: string): Promise<string> {
+    try {
+      const { spawn } = require('child_process');
+      const apiKey = this.apiKey || process.env.SILICONFLOW_API_KEY || '';
+      
+      const requestBody = JSON.stringify({
+        model: this.model,
+        messages: [
+          { role: 'system', content: '你是一个NPC生成器，只返回简洁的文本，不要解释。' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.8,
+        max_tokens: 50
+      });
+
+      return new Promise((resolve, reject) => {
+        const curl = spawn('curl', [
+          '-s', '-X', 'POST',
+          'https://api.siliconflow.cn/v1/chat/completions',
+          '-H', `Authorization: Bearer ${apiKey}`,
+          '-H', 'Content-Type: application/json',
+          '-d', requestBody,
+          '--max-time', '10'
+        ]);
+
+        let stdout = '';
+        curl.stdout.on('data', (data: Buffer) => {
+          stdout += data.toString('utf-8');
+        });
+
+        curl.on('close', (code: number) => {
+          if (code !== 0) {
+            reject(new Error(`curl退出码: ${code}`));
+            return;
+          }
+          try {
+            const response = JSON.parse(stdout);
+            const text = response.choices?.[0]?.message?.content || '';
+            resolve(text.trim());
+          } catch (e) {
+            reject(e);
+          }
+        });
+      });
+    } catch (error) {
+      console.error('[Game] AI调用失败:', error);
+      return '';
+    }
   }
 
   /**

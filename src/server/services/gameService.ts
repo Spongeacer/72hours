@@ -8,7 +8,7 @@
  * 3. 物理驱动 - 引力、质量、压强、Ω
  */
 
-import { GAME_CONFIG, NPC_CONFIG, PLAYER_CONFIG } from '../../config/GameConfig';
+import { GAME_CONFIG, PLAYER_CONFIG } from '../../config/GameConfig';
 import { OPENINGS } from '../constants/openings';
 import type { Game72Hours as Game, GameState, Player } from '../../game';
 import type { IdentityType, Player as IPlayer } from '../../../shared/types/index';
@@ -83,21 +83,11 @@ export function createPlayer(identityType: string): Player {
 
 /**
  * 创建NPC列表
- * NPC有自己的执念和行为逻辑
+ * 注意：现在NPC由Game72Hours类直接创建，此函数保留用于兼容性
  */
 export function createNPCs(): NPC[] {
-  const shuffledNPCNames = [...NPC_CONFIG.NPC_NAME_POOL].sort(() => 0.5 - Math.random());
-
-  return shuffledNPCNames.map((name, index) => NPC.create({
-    id: `npc_${Date.now()}_${index + 1}`,
-    name,
-    baseMass: 3,
-    traits: [],
-    states: { fear: 5, aggression: 5, hunger: 5, injury: 1 },
-    position: { x: Math.random() * 10 - 5, y: Math.random() * 10 - 5 },
-    isBonded: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT,
-    isUnlocked: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT
-  }));
+  // 返回空数组，实际NPC在Game72Hours.init()中创建
+  return [];
 }
 
 /**

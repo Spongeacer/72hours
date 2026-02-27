@@ -172,11 +172,85 @@ export const NPC_CONFIG = {
   // 关键历史人物
   HISTORICAL_FIGURES: ['洪秀全', '杨秀清', '萧朝贵'],
 
-  // NPC名字池
-  NPC_NAME_POOL: [
-    '母亲', '教书先生', '同窗好友', '邻家少女', '老猎人',
-    '货郎', '寡妇', '赌徒', '郎中', '乞丐'
-  ]
+  // NPC预设模板（身份预设，特质随机）
+  NPC_TEMPLATES: [
+    {
+      id: 'village_elder',
+      role: '村中长老',
+      description: '金田村最有威望的老人，见证过太多风浪',
+      baseMass: 5,
+      suitableTraits: ['wise', 'cautious', 'worldly', 'proud']
+    },
+    {
+      id: 'tavern_keeper',
+      role: '酒馆老板',
+      description: '消息灵通，三教九流都要给他面子',
+      baseMass: 4,
+      suitableTraits: ['worldly', 'greedy', 'curious', 'deceitful']
+    },
+    {
+      id: 'wandering_monk',
+      role: '游方僧人',
+      description: '云游至此，似乎知道一些未来的事',
+      baseMass: 3,
+      suitableTraits: ['calm', 'mysterious', 'compassionate', 'honest']
+    },
+    {
+      id: 'refugee_woman',
+      role: '逃难妇人',
+      description: '从北方逃难而来，带着孩子',
+      baseMass: 2,
+      suitableTraits: ['fearful', 'desperate', 'protective', 'hopeful']
+    },
+    {
+      id: 'blacksmith',
+      role: '铁匠',
+      description: '村里唯一的铁匠，太平军想拉拢他',
+      baseMass: 6,
+      suitableTraits: ['brave', 'stubborn', 'loyal', 'pragmatic']
+    },
+    {
+      id: 'fortune_teller',
+      role: '算命先生',
+      description: '据说能看透人心，但没人知道他的来历',
+      baseMass: 3,
+      suitableTraits: ['mysterious', 'deceitful', 'observant', 'calm']
+    },
+    {
+      id: 'deserter_soldier',
+      role: '逃兵',
+      description: '从清军逃出来的，知道一些军情',
+      baseMass: 5,
+      suitableTraits: ['fearful', 'guilty', 'brave', 'cynical']
+    },
+    {
+      id: 'taiping_spy',
+      role: '太平军探子',
+      description: '潜伏在村里，等待起义的信号',
+      baseMass: 4,
+      suitableTraits: ['zealous', 'deceitful', 'brave', 'fanatical']
+    },
+    {
+      id: 'merchant_daughter',
+      role: '商人之女',
+      description: '家里做盐货生意，消息灵通',
+      baseMass: 3,
+      suitableTraits: ['curious', 'ambitious', 'worldly', 'proud']
+    },
+    {
+      id: 'village_idiot',
+      role: '村中痴儿',
+      description: '大家都说他傻，但他似乎知道一些秘密',
+      baseMass: 2,
+      suitableTraits: ['mysterious', 'calm', 'honest', 'simple']
+    }
+  ],
+
+  // NPC名字池（用于API生成名字）
+  NAME_GENERATION_PROMPT: '生成一个1851年中国农村NPC的名字，要求：1）符合当时的历史背景；2）体现人物身份特征；3）简洁有力；4）只返回名字，不要解释',
+
+  // NPC执念生成提示
+  OBSESSION_GENERATION_PROMPT: '生成一个NPC的执念，要求：1）体现人物性格和处境；2）与1851年金田起义的历史背景相关；3）简洁有力（15字以内）；4）只返回执念文本，不要解释'
 };
 
 // ==================== 玩家配置 ====================
