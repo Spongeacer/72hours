@@ -11,7 +11,7 @@
 import { GAME_CONFIG, NPC_CONFIG, PLAYER_CONFIG } from '../../config/GameConfig';
 import { OPENINGS } from '../constants/openings';
 import type { Game72Hours as Game, GameState, Player } from '../../game';
-import type { IdentityType } from '../../shared/types';
+import type { IdentityType, Player as IPlayer } from '../../../shared/types';
 import { NPC } from '../../game/NPC';
 import {
   selectSpotlightNPC,
@@ -111,7 +111,7 @@ export function createGameState(player: Player, npcs: NPC[]): GameState {
     pressure: GAME_CONFIG.INITIAL_PRESSURE,
     omega: GAME_CONFIG.INITIAL_OMEGA,
     weather: 'night',
-    player: player as unknown as import('../../shared/types').Player,
+    player: player as unknown as IPlayer,
     npcs,
     history: [],
     isGameOver: false,
