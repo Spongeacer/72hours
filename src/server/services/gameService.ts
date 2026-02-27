@@ -11,7 +11,7 @@
 import { GAME_CONFIG, NPC_CONFIG, PLAYER_CONFIG } from '../../config/GameConfig';
 import { OPENINGS } from '../constants/openings';
 import type { Game72Hours as Game, GameState, Player } from '../../game';
-import type { IdentityType, Player as IPlayer } from '../../../shared/types';
+import type { IdentityType, Player as IPlayer } from '../../../shared/types/index';
 import { NPC } from '../../game/NPC';
 import {
   selectSpotlightNPC,
