@@ -17,16 +17,6 @@ export interface TurnContext {
   player: Player;
 }
 
-// 辅助函数：将共享类型NPC转换为类实例
-function toNPCClass(npc: NPC): NPCClass {
-  return npc as unknown as NPCClass;
-}
-
-// 辅助函数：将共享类型Player转换为类实例
-function toPlayerClass(player: Player): PlayerClass {
-  return player as unknown as PlayerClass;
-}
-
 export class TurnManager {
   gameState: GameState;
   narrativeEngine: EmergentNarrativeEngine;
@@ -44,34 +34,34 @@ export class TurnManager {
    */
   async executeTurn(): Promise<TurnResult> {
     const { gameState } = this;
-    
+
     // 增加回合数
     gameState.turn++;
-    
+
     // 更新时间
     this.updateTime();
-    
+
     // 更新天气
     this.updateWeather();
-    
+
     // 更新物理引擎
     this.gravityEngine.updatePhysics(gameState.turn);
     const physicsState = this.gravityEngine.getPhysicsState();
     gameState.pressure = physicsState.pressure;
     gameState.omega = physicsState.omega;
-    
+
     // 解锁NPC
     this.unlockNPCs();
-    
+
     // 物理移动NPC（使用引力引擎）
     this.moveNPCsWithGravity();
-    
+
     // 生成涌现式叙事
     const narrative = await this.narrativeEngine.generateEmergentNarrative(gameState);
-    
+
     // 生成选择（考虑物理距离）
     const choices = await this.generateChoicesWithPhysics();
-    
+
     // 保存上下文
     this.currentContext = {
       turn: gameState.turn,
@@ -80,11 +70,12 @@ export class TurnManager {
       npcs: gameState.npcs,
       player: gameState.player
     };
-    
+
     return {
       turn: gameState.turn,
       narrative,
       choices,
+      context: this.currentContext,
       state: { ...gameState }
     };
   }
@@ -98,33 +89,32 @@ export class TurnManager {
     }
 
     const { gameState } = this;
-    
+
     // 执行选择结果（涌现式处理）
     const result = await this.processEmergentChoice(choice, context, gameState);
-    
+
     // 更新游戏状态
     if (result.stateChanges) {
       Object.assign(gameState, result.stateChanges);
     }
-    
+
     // 检查游戏结束
     const gameOver = this.checkGameOver();
-    
+
     // 记录历史
     gameState.history.push({
       turn: gameState.turn,
-      choice: choice.text,
-      result: result.narrative || result.result,
-      timestamp: new Date().toISOString()
+      narrative: result.narrative || '',
+      choice: choice,
+      result: result.result
     });
-    
+
     return {
       turn: gameState.turn,
       narrative: result.narrative || '',
       choices: [],
-      result: result.result,
-      state: { ...gameState },
-      gameOver
+      context: context,
+      state: { ...gameState }
     };
   }
 
@@ -142,7 +132,7 @@ export class TurnManager {
    */
   private updateWeather(): void {
     const hour = new Date(this.gameState.datetime).getHours();
-    
+
     if (hour >= 6 && hour < 18) {
       this.gameState.weather = 'clear';
     } else if (hour >= 20 || hour < 5) {
@@ -169,7 +159,7 @@ export class TurnManager {
   private moveNPCsWithGravity(): void {
     const { player, npcs } = this.gameState;
     const playerClass = player as unknown as PlayerClass;
-    
+
     // 构建玩家质量对象
     const playerMass: MassObject = {
       id: player.id,
@@ -182,9 +172,9 @@ export class TurnManager {
     // 为每个解锁的NPC计算引力移动
     npcs.forEach(npc => {
       if (!npc.isUnlocked) return;
-      
+
       const npcClass = npc as unknown as NPCClass;
-      
+
       // 构建NPC质量对象
       const npcMass: MassObject = {
         id: npc.id,
@@ -196,11 +186,11 @@ export class TurnManager {
 
       // 计算玩家对NPC的引力
       const force = this.gravityEngine.calculateForce(npcMass, playerMass);
-      
+
       // 获取K值和恐惧值
       const knot = npcClass.getKnotWith(player.id);
       const fear = npc.states.fear;
-      
+
       // 计算新位置
       const newPosition = this.gravityEngine.calculateMovement(
         npcMass,
@@ -208,10 +198,10 @@ export class TurnManager {
         fear,
         knot
       );
-      
+
       // 更新NPC位置
       npc.position = newPosition;
-      
+
       // 记录移动日志
       console.log(`[Gravity] ${npc.name} 受到引力 ${force.magnitude.toFixed(2)}，移动到 (${newPosition.x.toFixed(2)}, ${newPosition.y.toFixed(2)})`);
     });
@@ -222,7 +212,7 @@ export class TurnManager {
    */
   private async generateChoicesWithPhysics(): Promise<Choice[]> {
     const { player, npcs } = this.gameState;
-    
+
     // 基础选择
     const choices: Choice[] = [
       { id: 'explore', text: '探索周围环境' },
@@ -233,13 +223,13 @@ export class TurnManager {
     // 根据物理距离和K值添加NPC互动选择
     npcs.forEach(npc => {
       if (!npc.isUnlocked) return;
-      
+
       const distance = this.calculateDistance(player.position, npc.position);
-      const knot = player.getKnotWith(npc.id);
-      
+      const knot = (player as unknown as PlayerClass).getKnotWith(npc.id);
+
       // 距离近且K值高时更可能出现
       const appearanceProbability = this.calculateAppearanceProbability(distance, knot);
-      
+
       if (appearanceProbability > 0.3) {  // 30%阈值
         choices.push({
           id: `talk_${npc.id}`,
@@ -294,10 +284,10 @@ export class TurnManager {
   private calculateAppearanceProbability(distance: number, knot: number): number {
     // 距离因子：越近概率越高
     const distanceFactor = Math.max(0, 1 - distance / 5);
-    
+
     // K值因子：关系越好概率越高
     const knotFactor = (knot + 10) / 20;  // 归一化到0-1
-    
+
     // 综合概率
     return distanceFactor * 0.6 + knotFactor * 0.4;
   }
@@ -312,29 +302,29 @@ export class TurnManager {
     gameState: GameState
   ): Promise<{ narrative?: string; result?: string; stateChanges?: any }> {
     const { player } = gameState;
-    
+
     // 获取聚光灯NPC
-    const spotlightNPC = context.npcs.find(n => 
+    const spotlightNPC = context.npcs.find(n =>
       choice.id === `talk_${n.id}`
     );
-    
+
     // 基于选择类型和当前情境涌现结果
     switch (choice.id) {
       case 'explore':
         return this.emergeExploreResult(player, gameState);
-        
+
       case 'rest':
         return this.emergeRestResult(player, gameState);
-        
+
       case 'observe':
         return this.emergeObserveResult(player, gameState, context.npcs);
-        
+
       case 'flee':
         return this.emergeFleeResult(player, gameState);
-        
+
       case 'forage':
         return this.emergeForageResult(player, gameState);
-        
+
       default:
         if (choice.id.startsWith('talk_') && spotlightNPC) {
           return this.emergeTalkResult(player, spotlightNPC, gameState);
@@ -349,18 +339,18 @@ export class TurnManager {
   private emergeExploreResult(player: Player, gameState: GameState) {
     const discoveries: string[] = [];
     const stateChanges: any = { player };
-    
+
     // 基于压强和Ω涌现不同发现
     if (gameState.pressure > 50) {
       discoveries.push('远处有火光');
       player.states.fear += 5;
     }
-    
+
     if (gameState.omega > 2) {
       discoveries.push('空气中弥漫着紧张');
       player.states.fear += 3;
     }
-    
+
     // 随机发现
     const randomFinds = [
       '地上有一把生锈的刀',
@@ -368,15 +358,15 @@ export class TurnManager {
       '风带来陌生的口音',
       '一只乌鸦在屋顶注视着你'
     ];
-    
+
     if (Math.random() > 0.5) {
       discoveries.push(randomFinds[Math.floor(Math.random() * randomFinds.length)]);
     }
-    
+
     player.states.hunger += 5;
-    
+
     return {
-      result: discoveries.length > 0 
+      result: discoveries.length > 0
         ? `你在村子里走了一圈。${discoveries.join('，')}。`
         : '你在村子里走了一圈，什么也没发现。',
       stateChanges
@@ -388,7 +378,7 @@ export class TurnManager {
    */
   private emergeRestResult(player: Player, gameState: GameState) {
     const restQuality = Math.max(0, 100 - gameState.pressure - player.states.fear);
-    
+
     // eslint-disable-next-line no-useless-assignment
     let result = '';
     if (restQuality > 70) {
@@ -404,7 +394,7 @@ export class TurnManager {
       player.states.fear += 5;
       player.states.hunger += 15;
     }
-    
+
     return { result, stateChanges: { player } };
   }
 
@@ -413,12 +403,12 @@ export class TurnManager {
    */
   private emergeObserveResult(player: Player, gameState: GameState, npcs: NPC[]) {
     const observations: string[] = [];
-    
+
     // 观察NPC
     const unlockedNPCs = npcs.filter(n => n.isUnlocked);
     if (unlockedNPCs.length > 0) {
       const targetNPC = unlockedNPCs[Math.floor(Math.random() * unlockedNPCs.length)];
-      
+
       if (targetNPC.states.fear > 60) {
         observations.push(`${targetNPC.name}在发抖`);
       } else if (targetNPC.states.aggression > 60) {
@@ -427,12 +417,12 @@ export class TurnManager {
         observations.push(`${targetNPC.name}看起来很平静`);
       }
     }
-    
+
     // 环境观察
     if (gameState.pressure > 60) {
       observations.push('人们的脚步都很匆忙');
     }
-    
+
     return {
       result: observations.length > 0
         ? `你观察着周围。${observations.join('，')}。`
@@ -446,12 +436,12 @@ export class TurnManager {
    */
   private emergeFleeResult(player: Player, _gameState: GameState) {
     const fleeSuccess = player.states.fear > 80 && Math.random() > 0.3;
-    
+
     if (fleeSuccess) {
       player.position.x += 3;
       player.position.y += Math.random() * 2 - 1;
       player.states.fear = Math.max(0, player.states.fear - 25);
-      
+
       return {
         result: '你趁着夜色逃离了村子，心跳如鼓。回头看时，火光已经很远。',
         stateChanges: { player }
@@ -459,7 +449,7 @@ export class TurnManager {
     } else {
       player.position.x += 1;
       player.states.fear = Math.max(0, player.states.fear - 10);
-      
+
       return {
         result: '你试图离开，但每条路都让你犹豫。最后只在村子边缘转了一圈。',
         stateChanges: { player }
@@ -472,7 +462,7 @@ export class TurnManager {
    */
   private emergeForageResult(player: Player, gameState: GameState) {
     const forageQuality = Math.random() * 100 - gameState.pressure * 0.3;
-    
+
     if (forageQuality > 50) {
       player.states.hunger = Math.max(0, player.states.hunger - 30);
       return {
@@ -497,13 +487,15 @@ export class TurnManager {
   /**
    * 交谈的涌现结果
    */
-  private emergeTalkResult(player: Player, npc: NPC, gameState: GameState) {
-    const knot = player.getKnotWith(npc.id);
-    
+  private emergeTalkResult(player: Player, npc: NPC, _gameState: GameState) {
+    const playerClass = player as unknown as PlayerClass;
+    const npcClass = npc as unknown as NPCClass;
+    const knot = playerClass.getKnotWith(npc.id);
+
     // 增进关系
-    player.updateKnot(npc.id, 1);
-    npc.updateKnot(player.id, 1);
-    
+    playerClass.updateKnot(npc.id, 1);
+    npcClass.updateKnot(player.id, 1);
+
     // 基于NPC状态涌现对话内容
     // eslint-disable-next-line no-useless-assignment
     let dialogue = '';
@@ -524,7 +516,7 @@ export class TurnManager {
       ];
       dialogue = `你们聊起了${topics[Math.floor(Math.random() * topics.length)]}。`;
     }
-    
+
     return {
       result: dialogue,
       stateChanges: { player, npcs: gameState.npcs }
@@ -536,19 +528,20 @@ export class TurnManager {
    */
   private checkGameOver(): { type: 'death' | 'escape' | 'completed'; reason: string } | null {
     const { player, turn, config } = this.gameState;
-    
-    if (player.checkDeath()) {
+    const playerClass = player as unknown as PlayerClass;
+
+    if (playerClass.checkDeath()) {
       return { type: 'death', reason: player.states.injury >= 100 ? '伤势过重' : '饥饿致死' };
     }
-    
-    if (player.checkEscape()) {
+
+    if (playerClass.checkEscape()) {
       return { type: 'escape', reason: '成功逃离金田' };
     }
-    
+
     if (turn >= config.MAX_TURNS) {
       return { type: 'completed', reason: '金田起义爆发' };
     }
-    
+
     return null;
   }
 }
