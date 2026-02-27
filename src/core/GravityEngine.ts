@@ -66,8 +66,10 @@ export class GravityEngine {
     const baseForce = this.config.G * obj1.effectiveMass * obj2.effectiveMass / (safeDistance * safeDistance);
     
     // 压强调制: 高压下引力增强
-    const pressureModifier = 1 + this.omega * this.config.PRESSURE_MULTIPLIER;
-    const rawForce = baseForce * pressureModifier;
+    const pressureModifier = 1 + this.pressure * this.config.PRESSURE_MULTIPLIER;
+    // 全局因子调制
+    const omegaModifier = 1 + this.omega * 0.02;
+    const rawForce = baseForce * pressureModifier * omegaModifier;
     
     // 映射到1-20范围
     const normalizedForce = Math.min(20, Math.max(1, Math.round(rawForce * 2)));
