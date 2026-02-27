@@ -82,7 +82,7 @@ export class Game72Hours {
    */
   async init(identityType: IdentityType = 'scholar'): Promise<GameInitResult> {
     // 创建玩家
-    this.gameState.player = new Player(identityType);
+    this.gameState.player = new Player(identityType) as unknown as typeof this.gameState.player;
     
     // 生成玩家特质
     this.generatePlayerTraits();
@@ -124,7 +124,7 @@ export class Game72Hours {
   /**
    * 生成默认执念
    */
-  private generateDefaultObsession(player: Player): string {
+  private generateDefaultObsession(player: typeof this.gameState.player): string {
     const identity = PLAYER_CONFIG.IDENTITIES[player.identityType];
     const suitableTraits = identity.suitableTraits || [];
     const traitDesc = suitableTraits.slice(0, 2).join('、') || '求生';
@@ -221,7 +221,7 @@ export class Game72Hours {
         id: 'hong_xiuquan',
         name: '洪秀全',
         baseMass: 10,
-        traits: [{ id: 'zealous', type: 'personality' }, { id: 'ambitious', type: 'personality' }],
+        traits: [{ id: 'zealous', type: 'personality' as const }, { id: 'ambitious', type: 'personality' as const }],
         isElite: true,
         isUnlocked: false
       },
@@ -229,7 +229,7 @@ export class Game72Hours {
         id: 'yang_xiuqing',
         name: '杨秀清',
         baseMass: 9,
-        traits: [{ id: 'deceitful', type: 'personality' }, { id: 'ambitious', type: 'personality' }],
+        traits: [{ id: 'deceitful', type: 'personality' as const }, { id: 'ambitious', type: 'personality' as const }],
         isElite: true,
         isUnlocked: false
       },
@@ -237,7 +237,7 @@ export class Game72Hours {
         id: 'feng_yunshan',
         name: '冯云山',
         baseMass: 7,
-        traits: [{ id: 'pious', type: 'personality' }, { id: 'diligent', type: 'personality' }],
+        traits: [{ id: 'pious', type: 'personality' as const }, { id: 'diligent', type: 'personality' as const }],
         isElite: true,
         isUnlocked: false
       },
@@ -245,7 +245,7 @@ export class Game72Hours {
         id: 'wei_changhui',
         name: '韦昌辉',
         baseMass: 8,
-        traits: [{ id: 'greedy', type: 'personality' }, { id: 'vengeful', type: 'personality' }],
+        traits: [{ id: 'greedy', type: 'personality' as const }, { id: 'vengeful', type: 'personality' as const }],
         isElite: true,
         isUnlocked: false
       },
@@ -253,7 +253,7 @@ export class Game72Hours {
         id: 'shi_dakai',
         name: '石达开',
         baseMass: 8,
-        traits: [{ id: 'brave', type: 'personality' }, { id: 'generous', type: 'personality' }],
+        traits: [{ id: 'brave', type: 'personality' as const }, { id: 'generous', type: 'personality' as const }],
         isElite: true,
         isUnlocked: false
       }
@@ -357,7 +357,7 @@ export class Game72Hours {
     }
     
     // 处理玩家选择
-    const result = await this.turnManager.processChoice(choice);
+    const result = await this.turnManager.processChoice(choice, this.turnManager.currentContext);
     
     // 添加历史记录
     this.gameState.history.push({

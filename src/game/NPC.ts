@@ -50,19 +50,19 @@ export class NPC extends Agent {
   isElite: boolean;
   isBonded: boolean;
   isUnlocked: boolean;
-  
+
   // 解锁条件
   unlockCondition: UnlockCondition | null;
-  
+
   // 行为库
   behaviors: string[];
-  
+
   // 存在时间（普通NPC）
   ttl: number | null;
-  
+
   // 初始K值
   initialKnot: number;
-  
+
   // 执念
   obsession: string = '';
 
@@ -75,7 +75,7 @@ export class NPC extends Agent {
       states: data.states,
       position: data.position
     });
-    
+
     this.isElite = data.isElite || false;
     this.isBonded = data.isBonded || false;
     this.isUnlocked = data.isUnlocked || false;
@@ -92,18 +92,18 @@ export class NPC extends Agent {
     const personalityTraits = this.traits
       .filter((t: Trait) => t.type === 'personality')
       .map((t: Trait) => t.id);
-    
+
     if (personalityTraits.length === 0) {
       personalityTraits.push('calm');
     }
-    
+
     const traitsDesc = personalityTraits
       .map(t => {
-        const traitInfo = GAME_CONFIG.PERSONALITY_TRAITS[t];
+        const traitInfo = GAME_CONFIG.PERSONALITY_TRAITS[t as keyof typeof GAME_CONFIG.PERSONALITY_TRAITS];
         return traitInfo ? `${t}(${traitInfo.name})` : t;
       })
       .join('、');
-    
+
     return {
       type: 'npc',
       identity: this.name,
@@ -130,34 +130,35 @@ export class NPC extends Agent {
       this.isUnlocked = true;
       return true;
     }
-    
+
     const condition = this.unlockCondition;
-    
+
     // 回合条件
     if (condition.minTurn && _gameState.turn < condition.minTurn) return false;
-    
+
     // 压强条件
     if (condition.minPressure && _gameState.pressure < condition.minPressure) return false;
-    
+
     // 玩家特质条件
     if (condition.playerTrait && !_gameState.player.traits.some((t: Trait) => t.id === condition.playerTrait)) {
       return false;
     }
-    
+
     // 玩家道具条件
     if (condition.playerItem) {
-      const hasItem = _gameState.player.inventory.some((i: Item) => 
-        i.tags?.includes(condition.playerItem || '')
+      const itemName = condition.playerItem;
+      const hasItem = _gameState.player.inventory.some((i: Item) =>
+        i.tags?.includes(itemName)
       );
       if (!hasItem) return false;
     }
-    
+
     // 其他NPC解锁条件
     if (condition.requireNPC) {
       const requiredNPC = _gameState.npcs.find((n: NPC) => n.id === condition.requireNPC);
       if (!requiredNPC?.isUnlocked) return false;
     }
-    
+
     this.isUnlocked = true;
     return true;
   }
@@ -213,19 +214,19 @@ export class NPC extends Agent {
         base: 0.05
       }
     };
-    
+
     const behaviorWeights = weights[behaviorType];
     if (!behaviorWeights) return 0;
-    
+
     let tendency = 0;
-    
+
     // 特质权重
     for (const [trait, weight] of Object.entries(behaviorWeights)) {
       if (this.hasTrait(trait)) {
         tendency += weight;
       }
     }
-    
+
     // 状态权重
     if (behaviorWeights.highFear && this.states.fear > 60) {
       tendency += behaviorWeights.highFear;
@@ -236,18 +237,18 @@ export class NPC extends Agent {
     if (behaviorWeights.highAggression && this.states.aggression > 70) {
       tendency += behaviorWeights.highAggression;
     }
-    
+
     // 关系权重
     if (behaviorWeights.existingKnot) {
       const knot = this.getKnotWith(player.id);
       if (knot > 0) tendency += behaviorWeights.existingKnot * (knot / 10);
     }
-    
+
     if (behaviorWeights.deepKnot) {
       const knot = this.getKnotWith(player.id);
       if (knot >= 5) tendency += behaviorWeights.deepKnot;
     }
-    
+
     return tendency;
   }
 
@@ -259,7 +260,7 @@ export class NPC extends Agent {
     if (this.states.aggression > 70) return '压抑的愤怒';
     if (this.states.hunger > 70) return '饥饿的虚弱';
     if (this.states.injury > 50) return '带伤的疲惫';
-    
+
     return '沉默的警惕';
   }
 

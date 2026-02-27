@@ -76,7 +76,7 @@ export class Player extends Agent {
     
     const traitsDesc = personalityTraits
       .map(t => {
-        const traitInfo = GAME_CONFIG.PERSONALITY_TRAITS[t];
+        const traitInfo = GAME_CONFIG.PERSONALITY_TRAITS[t as keyof typeof GAME_CONFIG.PERSONALITY_TRAITS];
         return traitInfo ? `${t}(${traitInfo.name})` : t;
       })
       .join('、');
@@ -107,7 +107,7 @@ export class Player extends Agent {
     return this.traits
       .filter(t => t.type === 'personality')
       .map(t => {
-        const traitInfo = GAME_CONFIG.PERSONALITY_TRAITS[t.id];
+        const traitInfo = GAME_CONFIG.PERSONALITY_TRAITS[t.id as keyof typeof GAME_CONFIG.PERSONALITY_TRAITS];
         return traitInfo ? traitInfo.name : t.id;
       });
   }
@@ -212,7 +212,7 @@ export class Player extends Agent {
     if (data.obsession) player.obsession = data.obsession;
     if (data.states) player.states = { ...player.states, ...data.states };
     if (data.position) player.position = data.position;
-    if (data.inventory) player.inventory = data.inventory;
+    if (data.inventory) player.inventory = data.inventory as unknown as typeof player.inventory;
     if (data.memories) player.memories = data.memories;
     
     return player;
