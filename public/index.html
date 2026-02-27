@@ -624,8 +624,8 @@
     <script>
         let selectedIdentity = null;
         const API_BASE = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000/api/game'
-            : `${window.location.origin}/api/game`;
+            ? 'http://localhost:3000/api'
+            : `${window.location.origin}/api`;
         
         // 开始游戏 - 显示剧本介绍
         function startGame() {
@@ -777,7 +777,7 @@
             
             // 创建游戏会话
             try {
-                const response = await fetch(`${API_BASE}/create`, {
+                const response = await fetch(`${API_BASE}/games`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
@@ -789,8 +789,8 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // 保存会话ID到sessionStorage
-                    sessionStorage.setItem('72hours_sessionId', data.sessionId);
+                    // 保存游戏ID到sessionStorage
+                    sessionStorage.setItem('72hours_gameId', data.data.gameId);
                     sessionStorage.setItem('72hours_identity', selectedIdentity);
                     sessionStorage.setItem('72hours_traits', JSON.stringify(selectedTraits));
                     sessionStorage.setItem('72hours_gameData', JSON.stringify(data.data));

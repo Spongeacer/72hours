@@ -232,6 +232,134 @@
 }
 ```
 
+---
+
+### 4. 获取历史记录
+
+获取游戏的完整历史记录。
+
+**Endpoint**: `GET /api/games/:gameId/history`
+
+**路径参数**:
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `gameId` | string | 游戏ID |
+
+**成功响应**:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "turn": 1,
+      "choice": "你压低声音问...",
+      "result": "教书先生没有回答...",
+      "timestamp": "2026-02-27T12:00:00.000Z"
+    }
+  ],
+  "meta": { "timestamp": "...", "requestId": "..." }
+}
+```
+
+**错误响应** (404):
+
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "GAME_NOT_FOUND",
+    "message": "游戏不存在或已结束"
+  },
+  "meta": { "timestamp": "...", "requestId": "..." }
+}
+```
+
+---
+
+### 5. 获取 AI Prompt
+
+获取用于前端直连AI的Prompt（用于调试或自定义AI调用）。
+
+**Endpoint**: `GET /api/games/:gameId/ai-prompt`
+
+**路径参数**:
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `gameId` | string | 游戏ID |
+
+**成功响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "prompt": "【时间】第1/36回合...",
+    "context": {
+      "turn": 1,
+      "pressure": 2.16,
+      "omega": 2.4
+    }
+  },
+  "meta": { "timestamp": "...", "requestId": "..." }
+}
+```
+
+**错误响应** (404):
+
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "GAME_NOT_FOUND",
+    "message": "游戏不存在或已结束"
+  },
+  "meta": { "timestamp": "...", "requestId": "..." }
+}
+```
+
+---
+
+### 6. 结束游戏
+
+删除游戏实例。
+
+**Endpoint**: `DELETE /api/games/:gameId`
+
+**路径参数**:
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `gameId` | string | 游戏ID |
+
+**成功响应**:
+
+```json
+{
+  "success": true,
+  "data": null,
+  "meta": { "timestamp": "...", "requestId": "..." }
+}
+```
+
+**错误响应** (404):
+
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "GAME_NOT_FOUND",
+    "message": "游戏不存在"
+  },
+  "meta": { "timestamp": "...", "requestId": "..." }
+}
+```
+
 **错误响应**:
 
 ```json

@@ -398,7 +398,7 @@
 
             try {
                 debugLog('正在创建游戏...');
-                const response = await fetch('/api/game/create', {
+                const response = await fetch('/api/games', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ apiKey, identity, model })
@@ -449,7 +449,7 @@
             clearChoices();
 
             try {
-                const response = await fetch(`/api/game/${GameState.gameId}/turn`, {
+                const response = await fetch(`/api/games/${GameState.gameId}/turns`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
@@ -521,7 +521,7 @@
             showLoading(true);
 
             try {
-                const response = await fetch(`/api/game/${GameState.gameId}/turn`, {
+                const response = await fetch(`/api/games/${GameState.gameId}/turns`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ choice })
@@ -714,7 +714,7 @@
             
             try {
                 // 获取当前游戏状态
-                const response = await fetch(`/api/game/${GameState.gameId}/state`);
+                const response = await fetch(`/api/games/${GameState.gameId}/state`);
                 const result = await response.json();
                 
                 if (!result.success) {
