@@ -3,11 +3,6 @@
  * 基于玩家特质/执念 + NPC行为 + 情境 → 生成玩家可能的反应
  */
 
-import { 
-  PLAYER_CONFIG,
-  GAME_CONFIG 
-} from '../config/GameConfig';
-
 // 玩家反应类型
 export interface PlayerReaction {
   id: string;
@@ -37,14 +32,25 @@ export interface Context {
   turn: number;
 }
 
+// 玩家类型
+interface Player {
+  obsession: string;
+  traits: Array<{ id: string }>;
+  states: {
+    fear: number;
+    aggression: number;
+    hunger: number;
+  };
+}
+
 /**
  * 生成玩家反应
  * 基于：玩家特质/执念 + NPC行为 + 情境
  */
 export function generatePlayerReactions(
-  player: any,
+  player: Player,
   npcBehavior: NPCBehavior,
-  context: Context
+  _context: Context
 ): PlayerReaction[] {
   const reactions: PlayerReaction[] = [];
   

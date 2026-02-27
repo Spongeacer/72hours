@@ -5,6 +5,19 @@
 
 import { AI_CONFIG } from '../config/GameConfig';
 
+// 玩家类型定义
+interface Player {
+  identity: { name: string };
+  obsession: string;
+  traits: Array<{ id: string }>;
+  states: {
+    fear: number;
+    aggression: number;
+    hunger: number;
+  };
+  identityType?: string;
+}
+
 export interface PlayerReaction {
   id: string;
   text: string;
@@ -34,24 +47,27 @@ export interface Context {
   narrative: string;
 }
 
+// 全局fetch声明（Node.js 18+）
+declare const fetch: typeof globalThis.fetch;
+
 /**
  * 使用 AI API 生成玩家反应
  */
 export async function generatePlayerReactionsWithAI(
-  player: any,
-  npcBehavior: NPCBehavior,
+  player: Player,
+  _npcBehavior: NPCBehavior,
   context: Context
 ): Promise<PlayerReaction[]> {
   const provider = AI_CONFIG.DEFAULT_PROVIDER;
   const config = AI_CONFIG.PROVIDERS[provider];
   
-  const prompt = buildPrompt(player, npcBehavior, context);
+  const prompt = buildPrompt(player, _npcBehavior, context);
   
   try {
     const response = await fetch(config.apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer sk-loulnfpbpzkhwtkfzjeysrgkoflcagblvinuncxyajtiypbn`,
+        'Authorization': `Bearer ${process.env.SILICONFLOW_API_KEY || ''}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -77,14 +93,16 @@ export async function generatePlayerReactionsWithAI(
   } catch (error) {
     console.error('AI generation failed:', error);
     // 降级到本地生成
-    return generateFallbackReactions(player, npcBehavior, context);
+    return generateFallbackReactions(player);
   }
 }
 
 /**
  * 构建 AI Prompt
  */
-export function buildPrompt(player: any, npcBehavior: NPCBehavior, context: Context): string {
+export function buildPrompt(player: Player, npcBehavior: NPCBehavior, context: Context): string {
+  const traitIds = player.traits.map(t => t.id).join('、');
+  
   return `
 【情境】
 第${context.turn}/36回合，${context.weather === 'night' ? '深夜' : context.weather === 'fog' ? '雾中' : '白天'}
@@ -93,7 +111,7 @@ export function buildPrompt(player: any, npcBehavior: NPCBehavior, context: Cont
 【玩家】
 身份：${player.identity.name}
 执念：${player.obsession}
-特质：${player.traits.map((t: any) => t.id).join('、')}
+特质：${traitIds}
 当前状态：恐惧${player.states.fear}/攻击${player.states.aggression}/饥饿${player.states.hunger}
 
 【聚光灯NPC】
@@ -136,7 +154,7 @@ ${context.narrative}
 /**
  * 解析 AI 响应
  */
-export function parseAIResponse(content: string, player: any): PlayerReaction[] {
+export function parseAIResponse(content: string, player: Player): PlayerReaction[] {
   try {
     // 尝试提取 JSON
     const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -144,16 +162,19 @@ export function parseAIResponse(content: string, player: any): PlayerReaction[] 
       throw new Error('No JSON found in response');
     }
     
-    const parsed = JSON.parse(jsonMatch[0]);
-    const reactions = parsed.reactions || parsed;
+    const parsed = JSON.parse(jsonMatch[0]) as { reactions?: unknown[] };
+    const reactions = parsed.reactions || [];
     
-    return reactions.map((r: any, idx: number) => ({
-      id: `ai_${player.identityType}_${idx}_${Date.now()}`,
-      text: r.text,
-      type: r.type || 'context',
-      drive: r.drive || 'AI生成',
-      effect: r.effect || {}
-    }));
+    return reactions.map((r: unknown, idx: number) => {
+      const reaction = r as { text?: string; type?: string; drive?: string; effect?: Record<string, number> };
+      return {
+        id: `ai_${player.identityType || 'unknown'}_${idx}_${Date.now()}`,
+        text: reaction.text || '你做出了反应',
+        type: (reaction.type as PlayerReaction['type']) || 'context',
+        drive: reaction.drive || 'AI生成',
+        effect: reaction.effect || {}
+      };
+    });
     
   } catch (error) {
     console.error('Parse error:', error);
@@ -165,20 +186,24 @@ export function parseAIResponse(content: string, player: any): PlayerReaction[] 
 /**
  * 文本解析（降级方案）
  */
-function parseTextResponse(content: string, player: any): PlayerReaction[] {
+function parseTextResponse(content: string, player: Player): PlayerReaction[] {
   const lines = content.split('\n').filter(l => l.trim());
   const reactions: PlayerReaction[] = [];
+  
+  const types: PlayerReaction['type'][] = ['obsession', 'trait', 'instinct'];
   
   for (let i = 0; i < lines.length && reactions.length < 3; i++) {
     const line = lines[i].trim();
     // 匹配 "1. " 或 "反应1：" 等格式
-    if (/^\d+[\.\、]/.test(line) || line.includes('：') || line.includes('反应')) {
-      const text = line.replace(/^\d+[\.\、]\s*/, '').replace(/^反应\d+[：:]\s*/, '');
+    // eslint-disable-next-line no-useless-escape
+    if (/^\d+[.．]/.test(line) || line.includes('：') || line.includes('反应')) {
+      // eslint-disable-next-line no-useless-escape
+      const text = line.replace(/^\d+[.．]\s*/, '').replace(/^反应\d+[：:]\s*/, '');
       if (text.length > 10) {
         reactions.push({
-          id: `text_${player.identityType}_${reactions.length}_${Date.now()}`,
+          id: `text_${player.identityType || 'unknown'}_${reactions.length}_${Date.now()}`,
           text: text,
-          type: ['obsession', 'trait', 'instinct'][reactions.length] as any,
+          type: types[reactions.length] || 'instinct',
           drive: 'AI生成（文本解析）',
           effect: {}
         });
@@ -192,12 +217,7 @@ function parseTextResponse(content: string, player: any): PlayerReaction[] {
 /**
  * 本地降级生成（AI失败时使用）
  */
-export function generateFallbackReactions(
-  player: any,
-  npcBehavior: NPCBehavior,
-  context: Context
-): PlayerReaction[] {
-  // 简化的本地生成逻辑
+export function generateFallbackReactions(player: Player): PlayerReaction[] {
   const reactions: PlayerReaction[] = [];
   
   // 基于执念
