@@ -10,7 +10,8 @@
 
 import { GAME_CONFIG, NPC_CONFIG, PLAYER_CONFIG } from '../../config/GameConfig';
 import { OPENINGS } from '../constants/openings';
-import type { Game72Hours as Game, GameState, Player, NPC } from '../../game';
+import type { Game72Hours as Game, GameState, Player } from '../../game';
+import { NPC } from '../../game/NPC';
 import { 
   selectSpotlightNPC, 
   updatePhysics,
@@ -77,10 +78,13 @@ export function createPlayer(identityType: string): Player {
 export function createNPCs(): NPC[] {
   const shuffledNPCNames = [...NPC_CONFIG.NPC_NAME_POOL].sort(() => 0.5 - Math.random());
   
-  return shuffledNPCNames.map((name, index) => ({
+  return shuffledNPCNames.map((name, index) => NPC.create({
     id: `npc_${Date.now()}_${index + 1}`,
     name,
+    baseMass: 3,
     traits: [],
+    states: { fear: 5, aggression: 5, hunger: 5, injury: 1 },
+    position: { x: Math.random() * 10 - 5, y: Math.random() * 10 - 5 },
     isBonded: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT,
     isUnlocked: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT,
     unlockStage: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT ? 1 : index < 8 ? 2 : 3
