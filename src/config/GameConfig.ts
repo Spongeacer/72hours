@@ -150,7 +150,58 @@ export const GAME_CONFIG = {
     fanatical: { name: '极端', description: '为信仰不惜一切' },
     hopeful: { name: '希望', description: '相信未来会更好' },
     fearful: { name: '恐惧', description: '对危险敏感' },
-    devoted: { name: '奉献', description: '愿意为信仰牺牲' }
+    devoted: { name: '奉献', description: '愿意为信仰牺牲' },
+    // 新增特质
+    wise: { name: '智慧', description: '拥有丰富的人生经验' },
+    patient: { name: '耐心', description: '能够等待最佳时机' },
+    respected: { name: '受尊敬', description: '获得他人敬重' },
+    traditional: { name: '传统', description: '坚守旧有规矩' },
+    authoritative: { name: '权威', description: '具有领导气质' },
+    experienced: { name: '老练', description: '经历丰富，处事圆滑' },
+    sociable: { name: '善交际', description: '善于与人打交道' },
+    shrewd: { name: '精明', description: '善于判断形势' },
+    tolerant: { name: '宽容', description: '能够包容他人' },
+    observant: { name: '善于观察', description: '留意细节' },
+    hospitable: { name: '好客', description: '热情招待客人' },
+    enlightened: { name: '开悟', description: '拥有超脱的智慧' },
+    ascetic: { name: '苦行', description: '能够忍受艰苦' },
+    prophetic: { name: '预言', description: '似乎能预见未来' },
+    serene: { name: '宁静', description: '内心平和' },
+    spiritual: { name: '灵性', description: '与精神世界连接' },
+    detached: { name: '超脱', description: '不被世俗牵绊' },
+    desperate: { name: '绝望', description: '处于绝境之中' },
+    protective: { name: '保护欲', description: '想要保护他人' },
+    resilient: { name: '坚韧', description: '能够承受打击' },
+    loving: { name: '慈爱', description: '充满爱心' },
+    determined: { name: '坚定', description: '意志坚强' },
+    vulnerable: { name: '脆弱', description: '容易受伤' },
+    stubborn: { name: '固执', description: '坚持己见' },
+    strong: { name: '强壮', description: '身体强健' },
+    hardworking: { name: '勤劳', description: '努力工作' },
+    principled: { name: '有原则', description: '坚守底线' },
+    independent: { name: '独立', description: '不依赖他人' },
+    skilled: { name: '熟练', description: '技艺精湛' },
+    intuitive: { name: '直觉', description: '凭直觉行事' },
+    eloquent: { name: '口才', description: '善于言辞' },
+    enigmatic: { name: '莫测', description: '难以捉摸' },
+    perceptive: { name: '敏锐', description: '洞察力强' },
+    cunning: { name: '狡猾', description: '善于谋略' },
+    guilty: { name: '内疚', description: '心怀愧疚' },
+    wary: { name: '谨慎', description: '小心翼翼' },
+    secretive: { name: '隐秘', description: '保守秘密' },
+    traumatized: { name: '创伤', description: '受过心理创伤' },
+    committed: { name: '坚定', description: '忠于信念' },
+    ruthless: { name: '无情', description: '不择手段' },
+    intelligent: { name: '聪明', description: '智力出众' },
+    charming: { name: '迷人', description: '具有魅力' },
+    adaptable: { name: '适应', description: '善于适应环境' },
+    resourceful: { name: '机智', description: '善于应变' },
+    innocent: { name: '天真', description: '纯真无邪' },
+    childlike: { name: '童真', description: '保持童心' },
+    content: { name: '满足', description: '知足常乐' },
+    unpredictable: { name: '难以预测', description: '行为不定' },
+    pure: { name: '纯洁', description: '心灵纯净' },
+    mysterious: { name: '神秘', description: '充满谜团' }
   }
 };
 
@@ -179,70 +230,70 @@ export const NPC_CONFIG = {
       role: '村中长老',
       description: '金田村最有威望的老人，见证过太多风浪',
       baseMass: 5,
-      suitableTraits: ['wise', 'cautious', 'worldly', 'proud']
+      suitableTraits: ['wise', 'cautious', 'worldly', 'proud', 'patient', 'respected', 'traditional', 'authoritative', 'experienced', 'calm']
     },
     {
       id: 'tavern_keeper',
       role: '酒馆老板',
       description: '消息灵通，三教九流都要给他面子',
       baseMass: 4,
-      suitableTraits: ['worldly', 'greedy', 'curious', 'deceitful']
+      suitableTraits: ['worldly', 'greedy', 'curious', 'deceitful', 'sociable', 'shrewd', 'tolerant', 'observant', 'calculating', 'hospitable']
     },
     {
       id: 'wandering_monk',
       role: '游方僧人',
       description: '云游至此，似乎知道一些未来的事',
       baseMass: 3,
-      suitableTraits: ['calm', 'mysterious', 'compassionate', 'honest']
+      suitableTraits: ['calm', 'mysterious', 'compassionate', 'honest', 'enlightened', 'ascetic', 'prophetic', 'serene', 'spiritual', 'detached']
     },
     {
       id: 'refugee_woman',
       role: '逃难妇人',
       description: '从北方逃难而来，带着孩子',
       baseMass: 2,
-      suitableTraits: ['fearful', 'desperate', 'protective', 'hopeful']
+      suitableTraits: ['fearful', 'desperate', 'protective', 'hopeful', 'resilient', 'cautious', 'loving', 'determined', 'vulnerable', 'brave']
     },
     {
       id: 'blacksmith',
       role: '铁匠',
       description: '村里唯一的铁匠，太平军想拉拢他',
       baseMass: 6,
-      suitableTraits: ['brave', 'stubborn', 'loyal', 'pragmatic']
+      suitableTraits: ['brave', 'stubborn', 'loyal', 'pragmatic', 'strong', 'honest', 'hardworking', 'principled', 'independent', 'skilled']
     },
     {
       id: 'fortune_teller',
       role: '算命先生',
       description: '据说能看透人心，但没人知道他的来历',
       baseMass: 3,
-      suitableTraits: ['mysterious', 'deceitful', 'observant', 'calm']
+      suitableTraits: ['mysterious', 'deceitful', 'observant', 'calm', 'intuitive', 'eloquent', 'enigmatic', 'perceptive', 'cunning', 'wise']
     },
     {
       id: 'deserter_soldier',
       role: '逃兵',
       description: '从清军逃出来的，知道一些军情',
       baseMass: 5,
-      suitableTraits: ['fearful', 'guilty', 'brave', 'cynical']
+      suitableTraits: ['fearful', 'guilty', 'brave', 'cynical', 'wary', 'secretive', 'traumatized', 'pragmatic', 'loyal', 'desperate']
     },
     {
       id: 'taiping_spy',
       role: '太平军探子',
       description: '潜伏在村里，等待起义的信号',
       baseMass: 4,
-      suitableTraits: ['zealous', 'deceitful', 'brave', 'fanatical']
+      suitableTraits: ['zealous', 'deceitful', 'brave', 'fanatical', 'disciplined', 'secretive', 'committed', 'observant', 'ruthless', 'determined']
     },
     {
       id: 'merchant_daughter',
       role: '商人之女',
       description: '家里做盐货生意，消息灵通',
       baseMass: 3,
-      suitableTraits: ['curious', 'ambitious', 'worldly', 'proud']
+      suitableTraits: ['curious', 'ambitious', 'worldly', 'proud', 'intelligent', 'independent', 'charming', 'calculating', 'adaptable', 'resourceful']
     },
     {
       id: 'village_idiot',
       role: '村中痴儿',
       description: '大家都说他傻，但他似乎知道一些秘密',
       baseMass: 2,
-      suitableTraits: ['mysterious', 'calm', 'honest', 'simple']
+      suitableTraits: ['mysterious', 'calm', 'honest', 'simple', 'innocent', 'perceptive', 'childlike', 'content', 'unpredictable', 'pure']
     }
   ],
 
