@@ -42,8 +42,8 @@ export class Game72Hours {
     this.gameState = {
       turn: 0,
       datetime: new Date(this.config.START_DATE).toISOString(),
-      pressure: 10,
-      omega: 1.0,
+      pressure: this.config.PRESSURE.INITIAL,
+      omega: this.config.OMEGA.INITIAL,
       weather: 'night' as WeatherType,
       player: null as any,
       npcs: [],

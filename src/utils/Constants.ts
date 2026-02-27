@@ -28,8 +28,8 @@ export const GAME_CONFIG = {
   
   // 全局因子 Ω (1-20范围)
   OMEGA: {
-    INITIAL: 4,
-    LINEAR_GROWTH: 0.08,
+    INITIAL: 2,
+    LINEAR_GROWTH: 0.4,
     EXPONENTIAL_THRESHOLD: 12,
     EXPONENTIAL_BASE: 1.02,
     MAX: 20

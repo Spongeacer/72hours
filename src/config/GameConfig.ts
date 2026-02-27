@@ -78,13 +78,13 @@ export const GAME_CONFIG = {
   INITIAL_PRESSURE: 2,
   
   // 初始Ω值 (1-20范围)
-  INITIAL_OMEGA: 4,
+  INITIAL_OMEGA: 2,
   
   // 压强每回合增长
   PRESSURE_INCREASE: 0.16,
   
   // Ω基础增长
-  OMEGA_BASE_INCREASE: 0.08,
+  OMEGA_BASE_INCREASE: 0.4,
   
   // 高压阈值（超过则Ω加速）
   HIGH_PRESSURE_THRESHOLD: 12,
@@ -186,7 +186,7 @@ export const PLAYER_CONFIG = {
 // ==================== 蝴蝶效应配置 ====================
 export const BUTTERFLY_EFFECT_CONFIG = {
   // 基础线性增长（保证事件稳定触发）
-  BASE_OMEGA_INCREASE: 0.3,  // 每回合固定增长
+  BASE_OMEGA_INCREASE: 0.4,  // 每回合固定增长
   
   // 玩家选择的额外加速（随机加成）
   // 无额外加速概率

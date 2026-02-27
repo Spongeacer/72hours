@@ -219,7 +219,7 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
     state.datetime = current.toISOString();
     
     // 压强增长 (1-20范围)
-    state.pressure = Math.min(20, state.pressure + 0.16);
+    state.pressure = Math.min(GAME_CONFIG.MAX_PRESSURE, state.pressure + GAME_CONFIG.PRESSURE_INCREASE);
     
     // Ω增长 = 基础线性增长 + 玩家选择的蝴蝶效应加速
     // 基础增长保证事件稳定触发，玩家选择可以加速进程

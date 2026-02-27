@@ -4,6 +4,7 @@
  */
 
 import { Position } from '../../shared/types';
+import { GAME_CONFIG } from '../utils/Constants';
 
 export interface GravityConfig {
   G: number;                    // 引力常数
@@ -40,8 +41,8 @@ export class GravityEngine {
   omega: number;
 
   constructor(
-    pressure: number = 10,
-    omega: number = 1.0,
+    pressure: number = GAME_CONFIG.PRESSURE.INITIAL,
+    omega: number = GAME_CONFIG.OMEGA.INITIAL,
     config: Partial<GravityConfig> = {}
   ) {
     this.pressure = pressure;
@@ -163,14 +164,18 @@ export class GravityEngine {
    * 更新压强和Ω
    */
   updatePhysics(turn: number, violenceEvents: number = 0): void {
-    // 基础压强增长
-    this.pressure += 0.8 + violenceEvents * 2;
+    // 基础压强增长 (使用配置值)
+    this.pressure += GAME_CONFIG.PRESSURE.BASE_GROWTH + violenceEvents * GAME_CONFIG.PRESSURE.VIOLENCE_BONUS;
+    this.pressure = Math.min(this.pressure, GAME_CONFIG.PRESSURE.MAX);
     
-    // Ω 增长
-    if (this.pressure >= 60) {
-      this.omega = Math.min(5.0, this.omega * 1.05);
+    // Ω 增长 (使用配置值)
+    if (this.omega >= GAME_CONFIG.OMEGA.EXPONENTIAL_THRESHOLD) {
+      // 超过阈值后指数增长
+      this.omega = Math.min(GAME_CONFIG.OMEGA.MAX, this.omega * GAME_CONFIG.OMEGA.EXPONENTIAL_BASE);
     } else {
-      this.omega += 0.02;
+      // 线性增长
+      this.omega += GAME_CONFIG.OMEGA.LINEAR_GROWTH;
+      this.omega = Math.min(this.omega, GAME_CONFIG.OMEGA.MAX);
     }
   }
 

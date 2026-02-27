@@ -5,6 +5,7 @@
 import { GameState, Choice, TurnContext } from '../../shared/types';
 import { Player } from '../game/Player';
 import { NPC } from '../game/NPC';
+import { GAME_CONFIG } from '../config/GameConfig';
 
 export class NarrativeEngine {
   ai: any;
@@ -162,7 +163,7 @@ export class NarrativeEngine {
       case 'violence':
         player.updateState('aggression', -10);
         player.updateState('injury', 10);
-        gameState.pressure += 5;
+        gameState.pressure = Math.min(GAME_CONFIG.MAX_PRESSURE, gameState.pressure + 5);
         return {
           result: '你的暴力行为让局势更加紧张。',
           stateChanges: { player, pressure: gameState.pressure }
