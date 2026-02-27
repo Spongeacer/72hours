@@ -291,7 +291,7 @@ export class TurnManager {
    */
   private async processEmergentChoice(
     choice: Choice,
-    context: TurnContext,
+    _context: TurnContext,
     gameState: GameState
   ): Promise<{ narrative?: string; result?: string; stateChanges?: any }> {
     const { player, npcs } = gameState;
@@ -514,28 +514,6 @@ export class TurnManager {
       result: dialogue,
       stateChanges: { player, npcs: gameState.npcs }
     };
-  }
-
-  /**
-   * 检查游戏结束
-   */
-  private checkGameOver(): { type: 'death' | 'escape' | 'completed'; reason: string } | null {
-    const { player, turn, config } = this.gameState;
-    const playerClass = player as unknown as PlayerClass;
-
-    if (playerClass.checkDeath()) {
-      return { type: 'death', reason: player.states.injury >= 100 ? '伤势过重' : '饥饿致死' };
-    }
-
-    if (playerClass.checkEscape()) {
-      return { type: 'escape', reason: '成功逃离金田' };
-    }
-
-    if (turn >= config.MAX_TURNS) {
-      return { type: 'completed', reason: '金田起义爆发' };
-    }
-
-    return null;
   }
 }
 
