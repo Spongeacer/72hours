@@ -165,7 +165,7 @@ export class GravityEngine {
   /**
    * 更新压强和Ω
    */
-  updatePhysics(turn: number, violenceEvents: number = 0): void {
+  updatePhysics(_turn: number, violenceEvents: number = 0): void {
     // 基础压强增长 (使用配置值)
     this.pressure += GAME_CONFIG.PRESSURE.BASE_GROWTH + violenceEvents * GAME_CONFIG.PRESSURE.VIOLENCE_BONUS;
     this.pressure = Math.min(this.pressure, GAME_CONFIG.PRESSURE.MAX);

@@ -58,7 +58,7 @@ export async function generatePlayerReactionsWithAI(
   _npcBehavior: NPCBehavior,
   context: Context
 ): Promise<PlayerReaction[]> {
-  const provider = AI_CONFIG.DEFAULT_PROVIDER;
+  const provider = AI_CONFIG.DEFAULT_PROVIDER as keyof typeof AI_CONFIG.PROVIDERS;
   const config = AI_CONFIG.PROVIDERS[provider];
   
   const prompt = buildPrompt(player, _npcBehavior, context);

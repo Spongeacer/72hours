@@ -156,7 +156,7 @@ export class NPC extends Agent {
     // 其他NPC解锁条件
     if (condition.requireNPC) {
       const requiredNPCId = condition.requireNPC;
-      const requiredNPC = _gameState.npcs.find((n: NPC) => n.id === requiredNPCId);
+      const requiredNPC = _gameState.npcs.find(n => n.id === requiredNPCId);
       if (!requiredNPC?.isUnlocked) return false;
     }
 
