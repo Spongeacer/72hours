@@ -88,7 +88,7 @@ export class BackgroundManager {
   /**
    * 验证背景接口
    */
-  private validateBackground(bg: any): bg is IStoryBackground {
+  private validateBackground(bg: Record<string, unknown>): bg is IStoryBackground {
     const required = ['id', 'name', 'description', 'startDate', 'totalTurns'];
     for (const key of required) {
       if (!(key in bg)) {

@@ -3,7 +3,7 @@
  * 1851年1月8日 - 1月10日，36个时辰
  */
 
-import { IStoryBackground, FixedEvent, EventEffect } from '../interfaces/IStoryBackground';
+import { IStoryBackground, FixedEvent } from '../interfaces/IStoryBackground';
 import { NPC, Player } from '../../../shared/types';
 
 export class TaipingBackground implements IStoryBackground {
@@ -171,7 +171,7 @@ export class TaipingBackground implements IStoryBackground {
     ];
   }
   
-  contextualizeBehavior(behavior: string, actor: NPC, target: Player): string {
+  contextualizeBehavior(behavior: string, actor: NPC, _target: Player): string {
     // 根据背景语境化行为
     const contexts: Record<string, string> = {
       seizure: `${actor.name}的手伸向你的腰间，那里藏着最后一点干粮。

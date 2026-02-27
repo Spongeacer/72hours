@@ -9,10 +9,10 @@
  */
 
 import { spawn } from 'child_process';
-import { GameState, NPC as INPC, Memory } from '../../shared/types';
+import { GameState, Memory } from '../../shared/types';
 import { Player } from '../game/Player';
 import { NPC } from '../game/NPC';
-import { GravityEngine, MassObject } from '../core/GravityEngine';
+import { GravityEngine } from '../core/GravityEngine';
 
 export interface ResonanceContext {
   turn: number;
@@ -118,13 +118,13 @@ export class EmergentNarrativeEngine {
    * 基于引力大小，但加入随机扰动（无因之果）
    */
   private selectSpotlightNPC(gameState: GameState): SpotlightNPC | null {
-    const { player, npcs, pressure, omega } = gameState;
+    const { player, npcs } = gameState;
     
     const unlockedNPCs = npcs.filter(n => n.isUnlocked);
     if (unlockedNPCs.length === 0) return null;
 
     // 构建质量对象
-    const playerMass: MassObject = {
+    const playerMass = {
       id: player.id,
       mass: this.calculateTotalMass(player),
       effectiveMass: this.calculateEffectiveMass(player),
@@ -133,7 +133,7 @@ export class EmergentNarrativeEngine {
 
     // 计算每个NPC的引力
     const npcForces = unlockedNPCs.map(npc => {
-      const npcMass: MassObject = {
+      const npcMass = {
         id: npc.id,
         mass: this.calculateTotalMass(npc),
         effectiveMass: this.calculateEffectiveMass(npc),
@@ -425,7 +425,7 @@ export class EmergentNarrativeEngine {
   private async generateAIResonance(context: ResonanceContext): Promise<string> {
     const prompt = this.buildResonancePrompt(context);
     
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       try {
         const apiKey = process.env.SILICONFLOW_API_KEY || '';
         const requestBody = JSON.stringify({
@@ -454,7 +454,7 @@ export class EmergentNarrativeEngine {
         
         let stdout = '';
         let stderr = '';
-        let timeoutId: NodeJS.Timeout;
+        let timeoutId: ReturnType<typeof setTimeout>;
 
         // 设置超时处理（65秒，比 curl 的 --max-time 稍长）
         const TIMEOUT_MS = 65000;
