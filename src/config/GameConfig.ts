@@ -7,28 +7,28 @@
 export const GRAVITY_CONFIG = {
   // 引力常数
   G: 0.8,
-  
+
   // 压强调制系数
   PRESSURE_MULTIPLIER: 0.05,
-  
+
   // 最小距离（防止除以0）
   MIN_DISTANCE: 0.1,
-  
+
   // 最大引力限制
   MAX_FORCE: 10.0,
-  
+
   // 移动缩放因子
   MOVEMENT_SCALE: 0.1,
-  
+
   // 恐惧阈值（1-20范围，超过则逃离）
   FEAR_ESCAPE_THRESHOLD: 14,
-  
+
   // 恐惧逃离速度倍率
   FEAR_ESCAPE_MULTIPLIER: 2.0,
-  
+
   // K值跟随阈值（超过则更倾向跟随）
   KNOT_FOLLOW_THRESHOLD: 10,
-  
+
   // K值跟随速度倍率
   KNOT_FOLLOW_MULTIPLIER: 1.5
 };
@@ -37,7 +37,7 @@ export const GRAVITY_CONFIG = {
 export const AI_CONFIG = {
   // 默认提供商
   DEFAULT_PROVIDER: 'siliconflow',
-  
+
   // 提供商配置
   PROVIDERS: {
     siliconflow: {
@@ -53,7 +53,7 @@ export const AI_CONFIG = {
       defaultApiKey: ''
     }
   },
-  
+
   // 默认模型参数
   DEFAULT_PARAMS: {
     model: 'Pro/MiniMaxAI/MiniMax-M2.5',
@@ -67,56 +67,110 @@ export const AI_CONFIG = {
 export const GAME_CONFIG = {
   // 总回合数
   MAX_TURNS: 36,
-  
+
   // 每回合小时数
   HOURS_PER_TURN: 2,
-  
+
   // 初始时间
   START_DATE: '1851-01-08T00:00:00',
-  
+
   // 初始压强 (1-20范围)
   INITIAL_PRESSURE: 2,
-  
+
   // 初始Ω值 (1-20范围)
   INITIAL_OMEGA: 2,
-  
+
   // 压强每回合增长
   PRESSURE_INCREASE: 0.16,
-  
+
   // Ω基础增长
   OMEGA_BASE_INCREASE: 0.4,
-  
+
   // 高压阈值（超过则Ω加速）
   HIGH_PRESSURE_THRESHOLD: 12,
-  
+
   // 高压时Ω增长倍率
   OMEGA_HIGH_PRESSURE_MULTIPLIER: 1.02,
-  
+
   // 压强上限
   MAX_PRESSURE: 20,
-  
+
   // Ω上限
-  MAX_OMEGA: 20
+  MAX_OMEGA: 20,
+
+  // 压强配置
+  PRESSURE: {
+    INITIAL: 2,
+    BASE_GROWTH: 0.16,
+    VIOLENCE_BONUS: 0.5,
+    MAX: 20
+  },
+
+  // Ω配置
+  OMEGA: {
+    INITIAL: 2,
+    LINEAR_GROWTH: 0.4,
+    EXPONENTIAL_THRESHOLD: 12,
+    EXPONENTIAL_BASE: 1.02,
+    MAX: 20
+  },
+
+  // 网格配置
+  GRID_SIZE: 10,
+
+  // 特质配置
+  TRAIT_CONFIG: {
+    MIN_TRAITS: 2,
+    MAX_TRAITS: 4
+  },
+
+  // 性格特质库
+  PERSONALITY_TRAITS: {
+    calm: { name: '冷静', description: '在压力下保持清醒' },
+    curious: { name: '好奇', description: '对未知充满探索欲' },
+    honest: { name: '诚实', description: '不愿欺骗他人' },
+    analytical: { name: '分析', description: '善于逻辑思考' },
+    reserved: { name: '内敛', description: '不轻易表露情感' },
+    idealistic: { name: '理想主义', description: '相信美好的可能' },
+    greedy: { name: '贪婪', description: '追求物质利益' },
+    ambitious: { name: '野心', description: '渴望权力地位' },
+    calculating: { name: '算计', description: '精于利益权衡' },
+    worldly: { name: '世故', description: '懂得人情冷暖' },
+    proud: { name: '骄傲', description: '自尊心强' },
+    pragmatic: { name: '务实', description: '注重实际效果' },
+    brave: { name: '勇敢', description: '敢于面对危险' },
+    brutal: { name: '残忍', description: '对敌人毫不留情' },
+    loyal: { name: '忠诚', description: '坚守承诺' },
+    disciplined: { name: '纪律', description: '严格遵守规则' },
+    callous: { name: '冷酷', description: '不被情感左右' },
+    vigilant: { name: '警惕', description: '时刻保持警觉' },
+    zealous: { name: '狂热', description: '对信仰极度虔诚' },
+    pious: { name: '虔诚', description: '敬畏神灵' },
+    fanatical: { name: '极端', description: '为信仰不惜一切' },
+    hopeful: { name: '希望', description: '相信未来会更好' },
+    fearful: { name: '恐惧', description: '对危险敏感' },
+    devoted: { name: '奉献', description: '愿意为信仰牺牲' }
+  }
 };
 
 // ==================== NPC配置 ====================
 export const NPC_CONFIG = {
   // 初始NPC总数
   TOTAL_NPC_COUNT: 10,
-  
+
   // 初始解锁NPC数
   INITIAL_UNLOCKED_COUNT: 4,
-  
+
   // 剧本事件解锁阈值（Ω值）
   STORY_EVENT_THRESHOLDS: {
     EVENT_2: 5,   // 解锁第5-8个NPC
     EVENT_3: 10,  // 解锁第9-10个NPC + 历史人物
     EVENT_4: 15   // 最终阶段
   },
-  
+
   // 关键历史人物
   HISTORICAL_FIGURES: ['洪秀全', '杨秀清', '萧朝贵'],
-  
+
   // NPC名字池
   NPC_NAME_POOL: [
     '母亲', '教书先生', '同窗好友', '邻家少女', '老猎人',
@@ -157,7 +211,7 @@ export const PLAYER_CONFIG = {
       suitableTraits: ['zealous', 'pious', 'fanatical', 'hopeful', 'fearful', 'devoted']
     }
   },
-  
+
   // 执念池
   OBSESSIONS: [
     '但求苟全于乱世',
@@ -169,7 +223,7 @@ export const PLAYER_CONFIG = {
     '驱除鞑虏，恢复中华，新造共和',
     '全世界无产者和被压迫民族联合起来'
   ],
-  
+
   // 特质池
   TRAITS: [
     { id: 'calm', type: 'personality' },
@@ -181,11 +235,11 @@ export const PLAYER_CONFIG = {
     { id: 'honest', type: 'personality' },
     { id: 'fearful', type: 'personality' }
   ],
-  
+
   // 特质数量范围
   MIN_TRAITS: 2,
   MAX_TRAITS: 3,
-  
+
   // 状态上限
   MAX_STATE_VALUE: 20,
   MIN_STATE_VALUE: 1
@@ -195,17 +249,17 @@ export const PLAYER_CONFIG = {
 export const BUTTERFLY_EFFECT_CONFIG = {
   // 基础线性增长（保证事件稳定触发）
   BASE_OMEGA_INCREASE: 0.4,  // 每回合固定增长
-  
+
   // 玩家选择的额外加速（随机加成）
   // 无额外加速概率
   NO_BOOST_CHANCE: 0.3,
-  
+
   // 轻微加速概率
   MINOR_BOOST_CHANCE: 0.3,
-  
+
   // 显著加速概率（剩余部分）
   SIGNIFICANT_BOOST_CHANCE: 0.4,
-  
+
   // 加速值
   BOOST_VALUES: {
     NO_BOOST: 0,

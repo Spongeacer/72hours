@@ -8,7 +8,8 @@
     "start": "node dist/src/server/index.js",
     "dev": "ts-node src/server/index.ts",
     "lint": "eslint src/ --ext .ts",
-    "lint:fix": "eslint src/ --ext .ts --fix"
+    "lint:fix": "eslint src/ --ext .ts --fix",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "axios": "^1.6.0",

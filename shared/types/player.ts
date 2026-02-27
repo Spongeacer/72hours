@@ -4,6 +4,16 @@
 
 import type { Trait, Position, IdentityType } from './base';
 
+// 执念数据
+export interface ObsessionData {
+  type: 'dynamic';
+  identity: IdentityType;
+  identityName: string;
+  traits: string[];
+  traitsDesc: string;
+  prompt: string;
+}
+
 // 玩家状态
 export interface PlayerStates {
   fear: number;
@@ -20,6 +30,9 @@ export interface Identity {
   pressureModifier: number;
   initialStates: PlayerStates;
   suitableTraits?: string[];
+  // 身份特质（旧版本兼容）
+  trait?: string;
+  traits?: string[];
 }
 
 // 玩家
@@ -29,7 +42,7 @@ export interface Player {
   identityType: IdentityType;
   identity: Identity;
   traits: Trait[];
-  obsession: string;
+  obsession: string | ObsessionData;
   states: PlayerStates;
   position: Position;
   bondedNPCs: string[];
