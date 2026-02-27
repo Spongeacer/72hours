@@ -26,4 +26,12 @@ export interface NPC {
   isElite: boolean;
   isUnlocked: boolean;
   initialKnot?: number;
+  // 运行时属性
+  isNPC?: boolean;
+  unlockCondition?: {
+    minTurn?: number;
+    minPressure?: number;
+  } | null;
+  behaviors?: string[];
+  ttl?: number | null;
 }

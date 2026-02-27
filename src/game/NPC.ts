@@ -3,20 +3,8 @@
  */
 
 import { Agent, AgentStates } from './Agent';
-import { GameState } from '../../shared/types';
-import { NPC as INPC } from '../../shared/types';
+import { GameState, Trait, Item } from '../../shared/types';
 import { GAME_CONFIG } from '../config/GameConfig';
-
-// 特质类型
-interface Trait {
-  id: string;
-  type: string;
-}
-
-// 道具类型
-interface Item {
-  tags?: string[];
-}
 
 export interface NPCData {
   id?: string;
@@ -278,7 +266,7 @@ export class NPC extends Agent {
   /**
    * 序列化
    */
-  serialize(): INPC {
+  serialize(): Record<string, unknown> {
     return {
       id: this.id,
       name: this.name,
@@ -289,7 +277,11 @@ export class NPC extends Agent {
       position: this.position,
       isBonded: this.isBonded,
       isElite: this.isElite,
-      isUnlocked: this.isUnlocked
+      isUnlocked: this.isUnlocked,
+      isNPC: this.isNPC,
+      unlockCondition: this.unlockCondition,
+      behaviors: this.behaviors,
+      ttl: this.ttl
     };
   }
 

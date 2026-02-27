@@ -28,15 +28,28 @@ export class Player extends Agent {
   // 执念
   obsession: string | ObsessionData = '在乱世中活下去';
   
-  // 关联NPC
-  bondedNPCs: NPC[] = [];
+  // 关联NPC (存储ID列表，与共享类型兼容)
+  bondedNPCs: string[] = [];
+  
+  // 关联NPC对象缓存（运行时临时使用）
+  private _bondedNPCObjects: NPC[] = [];
   
   // 游戏状态
   escaped: boolean = false;
   captured: boolean = false;
 
   constructor(identityType: IdentityType = 'scholar') {
-    const identity = PLAYER_CONFIG.IDENTITIES[identityType];
+    const identityConfig = PLAYER_CONFIG.IDENTITIES[identityType];
+    
+    // 构建完整的 Identity 对象
+    const identity: Identity = {
+      id: identityType,
+      name: identityConfig.name,
+      baseMass: identityConfig.baseMass,
+      pressureModifier: identityConfig.pressureModifier,
+      initialStates: identityConfig.initialStates,
+      suitableTraits: identityConfig.suitableTraits
+    };
     
     super({
       name: '你',
@@ -111,17 +124,20 @@ export class Player extends Agent {
    * 添加关联NPC
    */
   addBondedNPC(npc: NPC): void {
-    this.bondedNPCs.push(npc);
+    if (!this.bondedNPCs.includes(npc.id)) {
+      this.bondedNPCs.push(npc.id);
+      this._bondedNPCObjects.push(npc);
+    }
     // 设置初始K值
-    this.updateKnot(npc.id, npc.initialKnot || 2);
-    npc.updateKnot(this.id, npc.initialKnot || 2);
+    this.updateKnot(npc.id, (npc as any).initialKnot || 2);
+    npc.updateKnot(this.id, (npc as any).initialKnot || 2);
   }
 
   /**
    * 获取关联NPC
    */
   getBondedNPCs(): NPC[] {
-    return this.bondedNPCs;
+    return this._bondedNPCObjects;
   }
 
   /**
@@ -163,7 +179,7 @@ export class Player extends Agent {
   /**
    * 序列化
    */
-  serialize(): IPlayer {
+  serialize(): Record<string, unknown> {
     return {
       id: this.id,
       name: this.name,
@@ -173,8 +189,13 @@ export class Player extends Agent {
       obsession: typeof this.obsession === 'string' ? this.obsession : this.obsession.prompt,
       states: this.states,
       position: this.position,
-      bondedNPCs: this.bondedNPCs.map(npc => npc.id),
-      inventory: this.inventory,
+      bondedNPCs: this.bondedNPCs,
+      inventory: this.inventory.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.tags?.join(', ') || '',
+        tags: item.tags || []
+      })),
       memories: this.memories
     };
   }
