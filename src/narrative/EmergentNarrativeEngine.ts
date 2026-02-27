@@ -202,11 +202,11 @@ export class EmergentNarrativeEngine {
     if (force > 10) feelings.push({ type: 'attraction', intensity: force, theory: '社会引力' });
     
     // 特质驱动的社会角色行为
-    const hasGreedy = npc.traits.some(t => t.id === 'greedy');
-    const hasCompassionate = npc.traits.some(t => t.id === 'compassionate');
-    const hasCurious = npc.traits.some(t => t.id === 'curious');
-    const hasBrave = npc.traits.some(t => t.id === 'brave');
-    const hasDeceitful = npc.traits.some(t => t.id === 'deceitful');
+    const hasGreedy = npc.traits.some((t: { id: string }) => t.id === 'greedy');
+    const hasCompassionate = npc.traits.some((t: { id: string }) => t.id === 'compassionate');
+    const hasCurious = npc.traits.some((t: { id: string }) => t.id === 'curious');
+    const hasBrave = npc.traits.some((t: { id: string }) => t.id === 'brave');
+    const hasDeceitful = npc.traits.some((t: { id: string }) => t.id === 'deceitful');
     
     // 社会交换理论：贪婪+恐惧 = 资源抢占（1-20范围，8对应原40）
     if (hasGreedy && fear > 8) {
@@ -403,7 +403,7 @@ export class EmergentNarrativeEngine {
     if (injury > 50) return '带伤的疲惫';
     
     // 根据特质
-    const traits = player.traits.map(t => t.id);
+    const traits = player.traits.map((t: { id: string }) => t.id);
     if (traits.includes('calm')) return '沉默的警惕';
     if (traits.includes('curious')) return '探究的目光';
     if (traits.includes('brave')) return '坚定的姿态';
@@ -652,7 +652,7 @@ ${spotlightNPC ? `恐惧：${spotlightNPC.states.fear}/20
       // 记忆触发（心理学：情绪记忆）
       if (spotlightNPC.memories.length > 0 && Math.random() > 0.7) {
         const memory = spotlightNPC.memories[0];
-        narrative += `这一刻让你想起${memory.content} /* 情绪记忆 */
+        narrative += `这一刻让你想起${memory.description} /* 情绪记忆 */
 > `;
       }
     }

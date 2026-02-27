@@ -88,10 +88,11 @@ export class BackgroundManager {
   /**
    * 验证背景接口
    */
-  private validateBackground(bg: Record<string, unknown>): bg is IStoryBackground {
+  private validateBackground(bg: unknown): bg is IStoryBackground {
     const required = ['id', 'name', 'description', 'startDate', 'totalTurns'];
+    const bgRecord = bg as Record<string, unknown>;
     for (const key of required) {
-      if (!(key in bg)) {
+      if (!(key in bgRecord)) {
         console.error(`[BackgroundManager] 背景缺少必需属性: ${key}`);
         return false;
       }
