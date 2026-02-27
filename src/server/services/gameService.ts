@@ -11,6 +11,7 @@
 import { GAME_CONFIG, NPC_CONFIG, PLAYER_CONFIG } from '../../config/GameConfig';
 import { OPENINGS } from '../constants/openings';
 import type { Game72Hours as Game, GameState, Player } from '../../game';
+import type { IdentityType } from '../../shared/types';
 import { NPC } from '../../game/NPC';
 import {
   selectSpotlightNPC,
@@ -68,7 +69,7 @@ export function createPlayer(identityType: string): Player {
   return {
     id: `player_${Date.now()}`,
     name: '你',
-    identityType: selectedIdentity as import('../../shared/types').IdentityType,
+    identityType: selectedIdentity as IdentityType,
     identity,
     traits: selectedTraits,
     obsession: randomObsession,
@@ -110,7 +111,7 @@ export function createGameState(player: Player, npcs: NPC[]): GameState {
     pressure: GAME_CONFIG.INITIAL_PRESSURE,
     omega: GAME_CONFIG.INITIAL_OMEGA,
     weather: 'night',
-    player,
+    player: player as unknown as import('../../shared/types').Player,
     npcs,
     history: [],
     isGameOver: false,
@@ -150,16 +151,17 @@ export function executeTurn(game: Game): {
   updatePhysics(state);
 
   // 2. 选择聚光灯NPC（基于引力 + 随机扰动）
-  const spotlightNPC = selectSpotlightNPC(state.player, state.npcs, state);
+  const playerClass = state.player as unknown as import('../../game/Player').Player;
+  const spotlightNPC = selectSpotlightNPC(playerClass, state.npcs as unknown as import('../../game/NPC').NPC[], state);
 
   // 3. 计算玩家气场
-  const playerAura = calculatePlayerAura(state.player);
+  const playerAura = calculatePlayerAura(playerClass);
 
   // 4. 生成共振式叙事
-  const narrative = generateResonanceNarrative(state, spotlightNPC, state.player);
+  const narrative = generateResonanceNarrative(state, spotlightNPC, playerClass);
 
   // 5. 生成涌现式选择
-  const choices = generateEmergentChoices(state.player, spotlightNPC, state);
+  const choices = generateEmergentChoices(playerClass, spotlightNPC, state);
 
   return { narrative, choices, spotlightNPC, playerAura };
 }
