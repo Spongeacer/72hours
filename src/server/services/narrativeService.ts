@@ -224,8 +224,8 @@ function generateTraitDrivenChoice(
 
   const baseChoice = traitChoices[traitId] || '你凭着自己的性格做出反应';
 
-  if (_spotlightNPC) {
-    return `${baseChoice}，同时留意着${_spotlightNPC.name}的动向。`;
+  if (spotlightNPC) {
+    return `${baseChoice}，同时留意着${spotlightNPC.name}的动向。`;
   }
 
   return baseChoice + '。';
@@ -250,8 +250,8 @@ function generateInstinctDrivenChoice(
 
   const dominantState = states.sort((a, b) => b.value - a.value)[0];
 
-  if (_spotlightNPC) {
-    return `${dominantState.action}，因为${_spotlightNPC.name}让你感到${dominantState.name}。`;
+  if (spotlightNPC) {
+    return `${dominantState.action}，因为${spotlightNPC.name}让你感到${dominantState.name}。`;
   }
 
   return `${dominantState.action}，${dominantState.name}驱使着你。`;
