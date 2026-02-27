@@ -272,4 +272,33 @@ router.delete('/:id', (req, res) => {
   res.json(createSuccessResponse(null, requestId));
 });
 
+/**
+ * 获取AI提示词
+ * GET /api/games/:id/ai-prompt
+ */
+router.get('/:id/ai-prompt', (req, res) => {
+  const requestId = generateRequestId();
+  const game = games.get(req.params.id);
+
+  if (!game) {
+    return res.status(404).json(createErrorResponse(
+      'GAME_NOT_FOUND',
+      '游戏不存在',
+      undefined,
+      requestId
+    ));
+  }
+
+  // 构建AI提示词
+  const { player, turn, pressure, omega } = game.state;
+  const prompt = `当前回合: ${turn}\n玩家身份: ${player.identity.name}\n玩家特质: ${player.traits.map((t: any) => t.id).join(', ')}\n玩家状态: 恐惧${player.states.fear}, 攻击性${player.states.aggression}, 饥饿${player.states.hunger}, 伤势${player.states.injury}\n环境: 压强${pressure}, Ω值${omega}\n\n请基于以上情境生成一段叙事。`;
+
+  res.json(createSuccessResponse({
+    prompt,
+    model: game.model || 'Pro/MiniMaxAI/MiniMax-M2.5',
+    apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
+    provider: 'siliconflow'
+  }, requestId));
+});
+
 export default router;
