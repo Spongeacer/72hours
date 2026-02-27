@@ -56,8 +56,5 @@ export interface IdentityInfo {
   description: string;
 }
 
-// 前端专属：扩展的回合结果
-export interface FrontendTurnResult extends TurnResult {
-  spotlightNPC?: NPC | null;
-  playerAura?: string;
-}
+// 前端专属：扩展的回合结果（现在与共享类型一致）
+export type FrontendTurnResult = TurnResult;

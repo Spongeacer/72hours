@@ -82,6 +82,9 @@ export interface TurnResult {
   choices: Choice[];
   context: TurnContext;
   state: GameState;
+  // 前端扩展字段
+  spotlightNPC?: NPC | null;
+  playerAura?: string;
 }
 
 // 选择结果
