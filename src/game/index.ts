@@ -31,16 +31,15 @@ export type {
   TraitType,
   Position,
   Trait,
-  
+
   // 玩家
   PlayerStates,
   Identity,
-  Item,
   Memory,
-  
+
   // NPC
   NPCStates,
-  
+
   // 游戏
   GameConfig,
   GameState,
@@ -49,13 +48,12 @@ export type {
   ChoiceCondition,
   Scene,
   GameEvent,
-  TurnContext,
   TurnResult,
   ChoiceResult,
   StateChanges,
   GameOverInfo,
   GameInitResult,
-  
+
   // 存档
   SaveData,
   SaveSummary

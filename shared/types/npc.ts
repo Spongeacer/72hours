@@ -3,7 +3,6 @@
  */
 
 import type { Trait, Position } from './base';
-import type { PlayerStates } from './player';
 
 // NPC 状态
 export interface NPCStates {
