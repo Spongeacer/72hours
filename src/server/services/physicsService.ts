@@ -9,7 +9,7 @@
  */
 
 import { GAME_CONFIG } from '../../config/GameConfig';
-import type { Player, NPC, GameState } from '../types/game.types';
+import type { Player, NPC, GameState } from '../../game';
 
 // 引力常数
 const G = 0.8;

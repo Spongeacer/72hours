@@ -9,7 +9,7 @@
  * 4. 故事自然流淌
  */
 
-import type { GameState, Player, NPC } from '../types/game.types';
+import type { GameState, Player, NPC } from '../../game';
 import { calculatePlayerAura, emergeBehavior } from './physicsService';
 
 // 环境信号接口

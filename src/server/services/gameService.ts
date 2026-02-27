@@ -10,7 +10,7 @@
 
 import { GAME_CONFIG, NPC_CONFIG, PLAYER_CONFIG } from '../../config/GameConfig';
 import { OPENINGS } from '../constants/openings';
-import type { Game, GameState, Player, NPC } from '../types/game.types';
+import type { Game72Hours as Game, GameState, Player, NPC } from '../../game';
 import { 
   selectSpotlightNPC, 
   updatePhysics,
