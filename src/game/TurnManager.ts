@@ -3,9 +3,9 @@
  */
 
 import { GameState, TurnResult, Choice, NPC } from '../../shared/types';
-import { EmergentNarrativeEngine, EmergentChoice } from '../narrative/EmergentNarrativeEngine';
+import { EmergentNarrativeEngine } from '../narrative/EmergentNarrativeEngine';
 import { Player } from '../game/Player';
-import { GravityEngine, MassObject } from '../core/GravityEngine';
+import { GravityEngine } from '../core/GravityEngine';
 
 export interface TurnContext {
   turn: number;
@@ -483,7 +483,6 @@ export class TurnManager {
    */
   private emergeTalkResult(player: Player, npc: NPC, gameState: GameState) {
     const knot = player.getKnotWith(npc.id);
-    const npcKnot = npc.getKnotWith(player.id);
     
     // 增进关系
     player.updateKnot(npc.id, 1);

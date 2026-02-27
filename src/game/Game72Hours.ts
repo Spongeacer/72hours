@@ -6,7 +6,7 @@ import { Player } from './Player';
 import { NPC } from './NPC';
 import { TurnManager } from './TurnManager';
 import { EmergentNarrativeEngine } from '../narrative/EmergentNarrativeEngine';
-import { GAME_CONFIG, IDENTITIES } from '../utils/Constants';
+import { GAME_CONFIG } from '../utils/Constants';
 import { 
   GameState, 
   GameInitResult, 
@@ -392,9 +392,7 @@ export class Game72Hours {
   /**
    * 生成结局
    */
-  private async generateEpilogue(gameOver: any): Promise<string> {
-    const { player } = this.gameState;
-    
+  private async generateEpilogue(gameOver: { type: string }): Promise<string> {
     if (gameOver.type === 'death') {
       return '你死了。历史继续，太平天国将在36个时辰后爆发。';
     }
