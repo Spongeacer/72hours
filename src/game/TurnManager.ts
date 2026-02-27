@@ -2,9 +2,9 @@
  * TurnManager - 回合管理器（集成物理引擎）
  */
 
-import { GameState, TurnResult, Choice } from '../../shared/types';
-import { NPC } from '../game/NPC';
-import { Player } from '../game/Player';
+import { GameState, TurnResult, Choice, NPC, Player } from '../../shared/types';
+import { NPC as NPCClass } from '../game/NPC';
+import { Player as PlayerClass } from '../game/Player';
 import { EmergentNarrativeEngine } from '../narrative/EmergentNarrativeEngine';
 import { GravityEngine } from '../core/GravityEngine';
 import type { MassObject } from '../core/GravityEngine';
@@ -15,6 +15,16 @@ export interface TurnContext {
   choices: Choice[];
   npcs: NPC[];
   player: Player;
+}
+
+// 辅助函数：将共享类型NPC转换为类实例
+function toNPCClass(npc: NPC): NPCClass {
+  return npc as unknown as NPCClass;
+}
+
+// 辅助函数：将共享类型Player转换为类实例
+function toPlayerClass(player: Player): PlayerClass {
+  return player as unknown as PlayerClass;
 }
 
 export class TurnManager {
@@ -148,7 +158,7 @@ export class TurnManager {
   private unlockNPCs(): void {
     this.gameState.npcs.forEach(npc => {
       if (!npc.isUnlocked) {
-        npc.checkUnlock(this.gameState);
+        (npc as unknown as NPCClass).checkUnlock(this.gameState);
       }
     });
   }
@@ -158,34 +168,37 @@ export class TurnManager {
    */
   private moveNPCsWithGravity(): void {
     const { player, npcs } = this.gameState;
+    const playerClass = player as unknown as PlayerClass;
     
     // 构建玩家质量对象
     const playerMass: MassObject = {
       id: player.id,
-      mass: player.getTotalMass(),
-      effectiveMass: player.getEffectiveMass(),
+      mass: playerClass.getTotalMass(),
+      effectiveMass: playerClass.getEffectiveMass(),
       position: player.position,
-      trapConstant: player.trapConstant
+      trapConstant: playerClass.trapConstant
     };
 
     // 为每个解锁的NPC计算引力移动
     npcs.forEach(npc => {
       if (!npc.isUnlocked) return;
       
+      const npcClass = npc as unknown as NPCClass;
+      
       // 构建NPC质量对象
       const npcMass: MassObject = {
         id: npc.id,
-        mass: npc.getTotalMass(),
-        effectiveMass: npc.getEffectiveMass(),
+        mass: npcClass.getTotalMass(),
+        effectiveMass: npcClass.getEffectiveMass(),
         position: npc.position,
-        trapConstant: npc.trapConstant
+        trapConstant: npcClass.trapConstant
       };
 
       // 计算玩家对NPC的引力
       const force = this.gravityEngine.calculateForce(npcMass, playerMass);
       
       // 获取K值和恐惧值
-      const knot = npc.getKnotWith(player.id);
+      const knot = npcClass.getKnotWith(player.id);
       const fear = npc.states.fear;
       
       // 计算新位置
