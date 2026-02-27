@@ -12,7 +12,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { validateRequest } from '../middleware/validateRequest';
 import { createSuccessResponse, createErrorResponse } from '../utils/apiResponse';
-import type { Game72Hours as Game, NPC } from '../../game';
+import type { Game72Hours as Game } from '../../game';
 import {
   generateGameId,
   generateRequestId,

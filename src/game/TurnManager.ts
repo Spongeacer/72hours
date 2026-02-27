@@ -6,6 +6,7 @@ import { GameState, TurnResult, Choice, NPC } from '../../shared/types';
 import { EmergentNarrativeEngine } from '../narrative/EmergentNarrativeEngine';
 import { Player } from '../game/Player';
 import { GravityEngine } from '../core/GravityEngine';
+import type { MassObject } from '../core/GravityEngine';
 
 export interface TurnContext {
   turn: number;
@@ -374,6 +375,7 @@ export class TurnManager {
   private emergeRestResult(player: Player, gameState: GameState) {
     const restQuality = Math.max(0, 100 - gameState.pressure - player.states.fear);
     
+    // eslint-disable-next-line no-useless-assignment
     let result = '';
     if (restQuality > 70) {
       result = '你找了个安静的角落，睡得很沉。醒来时精神好了许多。';
@@ -428,7 +430,7 @@ export class TurnManager {
   /**
    * 逃跑的涌现结果
    */
-  private emergeFleeResult(player: Player, gameState: GameState) {
+  private emergeFleeResult(player: Player, _gameState: GameState) {
     const fleeSuccess = player.states.fear > 80 && Math.random() > 0.3;
     
     if (fleeSuccess) {
@@ -489,6 +491,7 @@ export class TurnManager {
     npc.updateKnot(player.id, 1);
     
     // 基于NPC状态涌现对话内容
+    // eslint-disable-next-line no-useless-assignment
     let dialogue = '';
     if (npc.states.fear > 60) {
       dialogue = `${npc.name}低声说："我怕。"`;

@@ -184,32 +184,8 @@ export interface IdentityInfo {
 }
 
 // ==================== 游戏相关类型（简化版） ====================
+// 注意：这些类型仅用于 API 响应，不与共享类型冲突
 
-interface Player {
-  id: string;
-  identity: string;
-  traits: Trait[];
-  obsession: string;
-}
-
-interface Trait {
-  id: string;
-  type: string;
-}
-
-interface NPC {
-  id: string;
-  name: string;
-  traits: Trait[];
-  isBonded: boolean;
-}
-
-interface GameState {
-  turn: number;
-  datetime: string;
-  pressure: number;
-  omega: number;
-  weather: string;
-  player: Player;
-  npcs: NPC[];
-}
+// Player 类型在 shared/types 中定义
+// NPC 类型在 shared/types 中定义
+// GameState 类型在 shared/types 中定义

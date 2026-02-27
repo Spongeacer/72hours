@@ -3,7 +3,7 @@
  * 可拔插的背景模块，定义特定历史/虚构背景的叙事规则
  */
 
-import { GameState, NPC, Player } from '../../../shared/types';
+import { NPC, Player } from '../../../shared/types';
 
 export interface IStoryBackground {
   id: string;

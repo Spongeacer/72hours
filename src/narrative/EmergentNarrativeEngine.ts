@@ -10,8 +10,6 @@
 
 import { spawn } from 'child_process';
 import { GameState, Memory } from '../../shared/types';
-import { Player } from '../game/Player';
-import { NPC } from '../game/NPC';
 import { GravityEngine } from '../core/GravityEngine';
 
 export interface ResonanceContext {
@@ -450,14 +448,14 @@ export class EmergentNarrativeEngine {
           '--connect-timeout', '10'
         ];
 
+        // 设置超时处理（65秒，比 curl 的 --max-time 稍长）
+        const TIMEOUT_MS = 65000;
+
         const curl = spawn('curl', curlArgs);
         
         let stdout = '';
         let stderr = '';
-        let timeoutId: ReturnType<typeof setTimeout>;
-
-        // 设置超时处理（65秒，比 curl 的 --max-time 稍长）
-        const TIMEOUT_MS = 65000;
+        let timeoutId: ReturnType<typeof setTimeout> | null = null;
         
         const cleanup = () => {
           if (timeoutId) clearTimeout(timeoutId);
