@@ -4,6 +4,14 @@
 
 import { Position, Trait, Memory } from '../../shared/types';
 
+// 道具类型
+export interface Item {
+  id: string;
+  name: string;
+  tags?: string[];
+  [key: string]: unknown;
+}
+
 export interface AgentStates {
   fear: number;
   aggression: number;
@@ -31,7 +39,7 @@ export abstract class Agent {
   memories: Memory[] = [];
   
   // 物品
-  inventory: any[] = [];
+  inventory: Item[] = [];
   
   constructor(data: {
     id?: string;
@@ -159,7 +167,7 @@ export abstract class Agent {
   /**
    * 序列化
    */
-  serialize(): any {
+  serialize(): Record<string, unknown> {
     return {
       id: this.id,
       name: this.name,
@@ -179,7 +187,7 @@ export abstract class Agent {
   /**
    * 反序列化
    */
-  static deserialize(data: any): Agent {
+  static deserialize(_data: Record<string, unknown>): Agent {
     throw new Error('子类必须实现反序列化方法');
   }
 }

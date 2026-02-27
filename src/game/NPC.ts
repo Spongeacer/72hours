@@ -5,12 +5,24 @@
 import { Agent, AgentStates } from './Agent';
 import { GameState } from '../../shared/types';
 import { NPC as INPC } from '../../shared/types';
+import { GAME_CONFIG } from '../utils/Constants';
+
+// 特质类型
+interface Trait {
+  id: string;
+  type: string;
+}
+
+// 道具类型
+interface Item {
+  tags?: string[];
+}
 
 export interface NPCData {
   id?: string;
   name: string;
   baseMass: number;
-  traits?: any[];
+  traits?: Trait[];
   states?: Partial<AgentStates>;
   position?: { x: number; y: number };
   isBonded?: boolean;
@@ -28,6 +40,21 @@ export interface UnlockCondition {
   playerTrait?: string;
   playerItem?: string;
   requireNPC?: string;
+}
+
+// 执念数据类型
+interface ObsessionData {
+  type: string;
+  identity: string;
+  identityName: string;
+  traits: string[];
+  traitsDesc: string;
+  prompt: string;
+}
+
+// 行为权重类型
+interface BehaviorWeights {
+  [key: string]: number;
 }
 
 export class NPC extends Agent {
@@ -73,10 +100,10 @@ export class NPC extends Agent {
   /**
    * 生成执念数据
    */
-  generateObsession(): any {
+  generateObsession(): ObsessionData {
     const personalityTraits = this.traits
-      .filter(t => t.type === 'personality')
-      .map(t => t.id);
+      .filter((t: Trait) => t.type === 'personality')
+      .map((t: Trait) => t.id);
     
     if (personalityTraits.length === 0) {
       personalityTraits.push('calm');
@@ -84,7 +111,7 @@ export class NPC extends Agent {
     
     const traitsDesc = personalityTraits
       .map(t => {
-        const traitInfo = require('../utils/Constants').GAME_CONFIG.PERSONALITY_TRAITS[t];
+        const traitInfo = GAME_CONFIG.PERSONALITY_TRAITS[t];
         return traitInfo ? `${t}(${traitInfo.name})` : t;
       })
       .join('、');
@@ -109,38 +136,37 @@ export class NPC extends Agent {
   /**
    * 检查解锁条件
    */
-  checkUnlock(gameState: GameState): boolean {
+  checkUnlock(_gameState: GameState): boolean {
     if (this.isUnlocked) return true;
     if (!this.unlockCondition) {
       this.isUnlocked = true;
       return true;
     }
     
-    const { turn, pressure, player, npcs } = gameState;
     const condition = this.unlockCondition;
     
     // 回合条件
-    if (condition.minTurn && turn < condition.minTurn) return false;
+    if (condition.minTurn && _gameState.turn < condition.minTurn) return false;
     
     // 压强条件
-    if (condition.minPressure && pressure < condition.minPressure) return false;
+    if (condition.minPressure && _gameState.pressure < condition.minPressure) return false;
     
     // 玩家特质条件
-    if (condition.playerTrait && !player.traits.some(t => t.id === condition.playerTrait)) {
+    if (condition.playerTrait && !_gameState.player.traits.some((t: Trait) => t.id === condition.playerTrait)) {
       return false;
     }
     
     // 玩家道具条件
     if (condition.playerItem) {
-      const hasItem = player.inventory.some((i: any) => 
-        i.tags?.includes(condition.playerItem)
+      const hasItem = _gameState.player.inventory.some((i: Item) => 
+        i.tags?.includes(condition.playerItem || '')
       );
       if (!hasItem) return false;
     }
     
     // 其他NPC解锁条件
     if (condition.requireNPC) {
-      const requiredNPC = npcs.find((n: NPC) => n.id === condition.requireNPC);
+      const requiredNPC = _gameState.npcs.find((n: NPC) => n.id === condition.requireNPC);
       if (!requiredNPC?.isUnlocked) return false;
     }
     
@@ -151,8 +177,8 @@ export class NPC extends Agent {
   /**
    * 计算行为倾向
    */
-  calculateBehaviorTendency(behaviorType: string, player: Agent, env: any): number {
-    const weights: any = {
+  calculateBehaviorTendency(behaviorType: string, player: Agent): number {
+    const weights: Record<string, BehaviorWeights> = {
       seizure: {
         greed: 0.4,
         fear: 0.2,
@@ -208,7 +234,7 @@ export class NPC extends Agent {
     // 特质权重
     for (const [trait, weight] of Object.entries(behaviorWeights)) {
       if (this.hasTrait(trait)) {
-        tendency += weight as number;
+        tendency += weight;
       }
     }
     

@@ -2,13 +2,11 @@
  * Player 玩家类
  */
 
-import { Agent, AgentStates } from './Agent';
+import { Agent } from './Agent';
 import { NPC } from './NPC';
 import { 
   IdentityType, 
-  Identity, 
-  Trait, 
-  Position,
+  Identity,
   Player as IPlayer 
 } from '../../shared/types';
 import { GAME_CONFIG } from '../utils/Constants';
