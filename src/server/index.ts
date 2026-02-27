@@ -40,7 +40,7 @@ const limiter = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req, res) => {
+  handler: (_req, res) => {
     res.status(429).json({
       success: false,
       data: null,
@@ -67,7 +67,7 @@ app.use(express.static('dist/client'));
 
 app.use('/api', routes);
 
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({
     success: true,
     data: {
@@ -83,7 +83,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.sendFile('dist/client/index.html', { root: '.' });
 });
 

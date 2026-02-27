@@ -12,13 +12,11 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { validateRequest } from '../middleware/validateRequest';
 import { createSuccessResponse, createErrorResponse } from '../utils/apiResponse';
+import { Game72Hours } from '../../game/Game72Hours';
 import type { Game72Hours as Game } from '../../game';
 import {
   generateGameId,
   generateRequestId,
-  createPlayer,
-  createNPCs,
-  createGameState,
   formatGameResponse,
   executeTurn
 } from '../services/gameService';
@@ -53,16 +51,14 @@ router.post('/', validateRequest({ body: createGameSchema }), async (req, res) =
     const { identity, model, apiKey } = req.body;
     
     const gameId = generateGameId();
-    const player = createPlayer(identity);
-    const npcs = createNPCs();
-    const gameState = createGameState(player, npcs);
-    
-    const game: Game = {
+    const game = new Game72Hours({
       id: gameId,
-      state: gameState,
       model: model || 'Pro/MiniMaxAI/MiniMax-M2.5',
       apiKey
-    };
+    });
+    
+    // 初始化游戏
+    await game.init(identity);
     
     games.set(gameId, game);
     
@@ -175,8 +171,9 @@ function processChoice(
   // 更新历史记录
   state.history.push({
     turn: state.turn,
-    choice: choice.text,
-    timestamp: new Date().toISOString()
+    narrative: '玩家选择: ' + choice.text,
+    choice: { id: choice.id, text: choice.text },
+    result: '你的选择已被记录，故事继续流淌...'
   });
   
   // 返回结果

@@ -22,9 +22,11 @@ export interface GameOptions {
 }
 
 export class Game72Hours {
+  id: string;
   config: typeof GAME_CONFIG;
   aiInterface: any;
   model: string;
+  apiKey?: string;
   
   gameState: GameState;
   narrativeEngine: EmergentNarrativeEngine;
@@ -33,12 +35,12 @@ export class Game72Hours {
   isRunning: boolean = false;
   isGameOver: boolean = false;
 
-  constructor(options: GameOptions = {}) {
+  constructor(options: GameOptions & { id?: string; apiKey?: string } = {}) {
+    this.id = options.id || '';
     this.config = { ...GAME_CONFIG, ...options.config };
     this.aiInterface = options.aiInterface || null;
-    this.model = options.model || 'Pro/MiniMaxAI/MiniMax-M2.5';
-    
-    // 初始化游戏状态
+    this.model = options.model || 'Pro/MiniFlowAPI/MiniMax-M2.5';
+    this.apiKey = options.apiKey;
     this.gameState = {
       turn: 0,
       datetime: new Date(this.config.START_DATE).toISOString(),
@@ -53,6 +55,13 @@ export class Game72Hours {
     };
     
     this.narrativeEngine = new EmergentNarrativeEngine(this.aiInterface, this.model);
+  }
+
+  /**
+   * 获取游戏状态（兼容路由中的 state 访问）
+   */
+  get state(): GameState {
+    return this.gameState;
   }
 
   /**
