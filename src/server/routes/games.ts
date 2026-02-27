@@ -1,35 +1,30 @@
 /**
- * 统一响应格式的 games 路由
+ * 游戏路由 - 重构版
+ * 使用服务层处理业务逻辑
  */
 
 import { Router } from 'express';
 import { z } from 'zod';
 import { validateRequest } from '../middleware/validateRequest';
-import { 
-  createSuccessResponse, 
-  createErrorResponse,
-  validateChoice
-} from '../utils/apiResponse';
-import { 
-  GAME_CONFIG, 
-  NPC_CONFIG, 
-  PLAYER_CONFIG, 
-  BUTTERFLY_EFFECT_CONFIG,
-  AI_CONFIG 
-} from '../../config/GameConfig';
+import { createSuccessResponse, createErrorResponse } from '../utils/apiResponse';
+import { GAME_CONFIG, AI_CONFIG } from '../../config/GameConfig';
 import { generatePlayerReactionsWithAI } from '../../core/AIReactionGenerator';
+import type { Game, GameState, NPC } from '../types/game';
+import {
+  generateGameId,
+  generateRequestId,
+  createPlayer,
+  createNPCs,
+  createGameState,
+  formatGameResponse
+} from '../services/gameService';
 
 const router = Router();
-const games = new Map();
+const games = new Map<string, Game>();
 
-// 生成请求ID
-function generateRequestId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-}
-
-// Schemas
+// 请求验证Schema
 const createGameSchema = z.object({
-  identity: z.enum(['scholar', 'landlord', 'soldier', 'cultist']),
+  identity: z.enum(['scholar', 'landlord', 'soldier', 'cultist']).optional(),
   model: z.string().optional(),
   apiKey: z.string().optional()
 });
@@ -41,114 +36,49 @@ const executeTurnSchema = z.object({
   }).optional()
 });
 
-// 创建游戏
+/**
+ * 创建游戏
+ * POST /api/games
+ */
 router.post('/', validateRequest({ body: createGameSchema }), async (req, res) => {
   const requestId = generateRequestId();
   
   try {
     const { identity, model, apiKey } = req.body;
     
-    const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const gameId = generateGameId();
+    const player = createPlayer(identity);
+    const npcs = createNPCs();
+    const gameState = createGameState(player, npcs);
     
-    // 随机选择身份（如果未指定）
-    const availableIdentities = Object.keys(PLAYER_CONFIG.IDENTITIES);
-    const selectedIdentity = identity || availableIdentities[Math.floor(Math.random() * availableIdentities.length)];
-    
-    const identityConfig = PLAYER_CONFIG.IDENTITIES[selectedIdentity];
-    
-    // 随机执念
-    const randomObsession = PLAYER_CONFIG.OBSESSIONS[Math.floor(Math.random() * PLAYER_CONFIG.OBSESSIONS.length)];
-    
-    // 随机特质
-    const numTraits = PLAYER_CONFIG.MIN_TRAITS + Math.floor(Math.random() * (PLAYER_CONFIG.MAX_TRAITS - PLAYER_CONFIG.MIN_TRAITS + 1));
-    const shuffledTraits = [...PLAYER_CONFIG.TRAITS].sort(() => 0.5 - Math.random());
-    const selectedTraits = shuffledTraits.slice(0, numTraits);
-    
-    const player = {
-      id: `player_${Date.now()}`,
-      name: '你',
-      identityType: selectedIdentity,
-      identity: identityConfig,
-      traits: selectedTraits,
-      obsession: randomObsession,
-      states: { ...identityConfig.initialStates },
-      position: { x: 0, y: 0 }
+    const game: Game = {
+      id: gameId,
+      state: gameState,
+      model: model || AI_CONFIG.DEFAULT_PARAMS.model,
+      apiKey
     };
     
-    // 生成10个NPC（初始全部锁定）
-    const shuffledNPCNames = [...NPC_CONFIG.NPC_NAME_POOL].sort(() => 0.5 - Math.random());
+    games.set(gameId, game);
     
-    const allNPCs = shuffledNPCNames.map((name: string, index: number) => ({
-      id: `npc_${Date.now()}_${index + 1}`,
-      name,
-      traits: [],
-      isBonded: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT,
-      isUnlocked: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT,
-      unlockStage: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT ? 1 : index < 8 ? 2 : 3
-    }));
-    
-    const gameState = {
-      turn: 0,
-      datetime: new Date(GAME_CONFIG.START_DATE).toISOString(),
-      pressure: GAME_CONFIG.INITIAL_PRESSURE,
-      omega: GAME_CONFIG.INITIAL_OMEGA,
-      weather: 'night',
-      player,
-      npcs: allNPCs,
-      history: [],
-      isGameOver: false,
-      storyEvent: 0
-    };
-    
-    games.set(gameId, { id: gameId, state: gameState, model: model || AI_CONFIG.DEFAULT_PARAMS.model, apiKey });
-    
-    const openings: any = {
-      scholar: `> 你被一阵奇怪的声音惊醒。\n> 不是鸡鸣，是人在低语，很多声音叠在一起，像潮水。\n> 你走到窗边，看到远处有火光，不是灯笼的颜色。\n> 这是金田村，1851年1月8日，凌晨。\n> 你是一个读书人，不知道历史已经开始了。`,
-      landlord: `> 玉扳指在指节上转了三圈，这是你紧张时的习惯。\n> 窗外有火光，不是灯笼，是火把。\n> 你想起韦昌辉——那个被你排挤过的小地主，现在据说在会众里很有地位。`,
-      soldier: `> 刀鞘上的血还没擦干净，是上一个村子的。\n> 上峰说金田有会匪，格杀勿论。\n> 你舔了舔嘴唇，有点干。`,
-      cultist: `> 十字架贴在胸口，已经温热了。\n> 密信上的字你背得出来："十一日，万寿起义。"\n> 还有三天。上帝会保护他的子民，但你也握紧了刀。`
-    };
-    
-    res.status(201).json(createSuccessResponse({
-      gameId,
-      player: {
-        id: player.id,
-        name: player.name,
-        identityType: player.identityType,
-        identity: player.identity,
-        traits: player.traits,
-        obsession: player.obsession,
-        states: player.states,
-        position: player.position
-      },
-      bondedNPCs: allNPCs.filter((npc: any) => npc.isUnlocked).map((npc: any) => ({
-        id: npc.id,
-        name: npc.name,
-        traits: npc.traits,
-        isBonded: npc.isBonded,
-        isUnlocked: npc.isUnlocked
-      })),
-      opening: openings[identity] || openings.scholar,
-      state: {
-        turn: gameState.turn,
-        datetime: gameState.datetime,
-        pressure: gameState.pressure,
-        omega: gameState.omega,
-        weather: gameState.weather,
-        isGameOver: gameState.isGameOver
-      }
-    }, requestId));
-  } catch (error: any) {
+    res.status(201).json(createSuccessResponse(
+      formatGameResponse(game),
+      requestId
+    ));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '创建游戏失败';
     res.status(500).json(createErrorResponse(
       'GAME_INIT_FAILED',
-      error.message || '创建游戏失败',
+      message,
       undefined,
       requestId
     ));
   }
 });
 
-// 获取游戏状态
+/**
+ * 获取游戏状态
+ * GET /api/games/:id/state
+ */
 router.get('/:id/state', (req, res) => {
   const requestId = generateRequestId();
   const game = games.get(req.params.id);
@@ -172,7 +102,10 @@ router.get('/:id/state', (req, res) => {
   }, requestId));
 });
 
-// 执行回合
+/**
+ * 执行回合
+ * POST /api/games/:id/turns
+ */
 router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (req, res) => {
   const requestId = generateRequestId();
   const game = games.get(req.params.id);
@@ -197,224 +130,230 @@ router.post('/:id/turns', validateRequest({ body: executeTurnSchema }), async (r
   
   try {
     const { choice } = req.body;
-    const state = game.state;
-    
-    // 验证选择
-    if (choice) {
-      const validation = validateChoice(choice);
-      if (!validation.valid) {
-        return res.status(400).json(createErrorResponse(
-          'INVALID_CHOICE',
-          validation.error || '无效的选择',
-          undefined,
-          requestId
-        ));
-      }
-    }
-    
-    state.turn++;
-    
-    const current = new Date(state.datetime);
-    current.setHours(current.getHours() + 2);  // 每2小时一个回合
-    state.datetime = current.toISOString();
-    
-    // 压强增长 (1-20范围)
-    state.pressure = Math.min(GAME_CONFIG.MAX_PRESSURE, state.pressure + GAME_CONFIG.PRESSURE_INCREASE);
-    
-    // Ω增长 = 基础线性增长 + 玩家选择的蝴蝶效应加速
-    // 基础增长保证事件稳定触发，玩家选择可以加速进程
-    let omegaIncrease = BUTTERFLY_EFFECT_CONFIG.BASE_OMEGA_INCREASE;
-    
-    // 玩家选择的蝴蝶效应：额外加速
-    if (choice) {
-      const butterflyEffect = Math.random();
-      if (butterflyEffect < BUTTERFLY_EFFECT_CONFIG.NO_BOOST_CHANCE) {
-        omegaIncrease += BUTTERFLY_EFFECT_CONFIG.BOOST_VALUES.NO_BOOST;
-      } else if (butterflyEffect < BUTTERFLY_EFFECT_CONFIG.NO_BOOST_CHANCE + BUTTERFLY_EFFECT_CONFIG.MINOR_BOOST_CHANCE) {
-        omegaIncrease += BUTTERFLY_EFFECT_CONFIG.BOOST_VALUES.MINOR;
-      } else {
-        omegaIncrease += BUTTERFLY_EFFECT_CONFIG.BOOST_VALUES.SIGNIFICANT;
-      }
-    }
-    
-    // 高压时 Ω 额外加速
-    if (state.pressure >= GAME_CONFIG.HIGH_PRESSURE_THRESHOLD) {
-      state.omega = Math.min(GAME_CONFIG.MAX_OMEGA, state.omega * GAME_CONFIG.OMEGA_HIGH_PRESSURE_MULTIPLIER + omegaIncrease);
-    } else {
-      state.omega = Math.min(GAME_CONFIG.MAX_OMEGA, state.omega + omegaIncrease);
-    }
-    
-    const hour = current.getHours();
-    if (hour >= 6 && hour < 18) {
-      state.weather = 'clear';
-    } else if (hour >= 20 || hour < 5) {
-      state.weather = 'night';
-    } else {
-      state.weather = 'fog';
-    }
-    
-    const narratives = [
-      `> 第${state.turn}回合。你站在村子里，空气中弥漫着紧张的气氛。\n> 远处传来人声，不知道是谁在说话。`,
-      `> 夜色更深了。你感到一种莫名的恐惧在蔓延。\n> 有人在暗处看着你。`,
-      `> 风吹过村子，带来一股烟味。不是炊烟，是别的什么。\n> 你握紧了拳头。`,
-      `> 时间一分一秒地过去，你知道历史正在发生。\n> 但你不知道自己的位置在哪里。`
-    ];
-    
-    const narrative = narratives[Math.floor(Math.random() * narratives.length)];
-    
-    // 获取聚光灯NPC（已解锁NPC中第一个）
-    const unlockedNPCs = state.npcs.filter((npc: any) => npc.isUnlocked);
-    const spotlightNPC = unlockedNPCs.length > 0 ? unlockedNPCs[0] : null;
-    
-    // 基于玩家特质/执念 + NPC行为 + 情境 → 使用AI生成玩家反应
-    const context = {
-      pressure: state.pressure,
-      omega: state.omega,
-      weather: state.weather,
-      turn: state.turn,
-      narrative
-    };
-    
-    const npcBehavior = {
-      type: ['抢夺', '冲突', '偷听', '聊天', '请求', '给予'][Math.floor(Math.random() * 6)] as any,
-      description: `${spotlightNPC ? spotlightNPC.name : '有人'}在${state.weather === 'night' ? '黑暗中' : '不远处'}`,
-      npcName: spotlightNPC?.name || '陌生人',
-      npcTraits: spotlightNPC?.traits?.map((t: any) => t.id) || [],
-      npcObsession: '活下去'
-    };
-    
-    // 异步生成AI反应
-    const reactions = await generatePlayerReactionsWithAI(state.player, npcBehavior, context);
-    
-    // 转换为选择格式
-    const choices = reactions.map((r: any, idx: number) => ({
-      id: r.id,
-      text: r.text,
-      type: r.type,
-      drive: r.drive
-    }));
-    
-    let result = '';
-    if (choice) {
-      // 找到选中的反应
-      const selectedReaction = reactions.find(r => r.id === choice.id);
-      
-      if (selectedReaction) {
-        // 应用效果
-        if (selectedReaction.effect.fear) {
-          state.player.states.fear = Math.max(1, Math.min(20, 
-            state.player.states.fear + selectedReaction.effect.fear));
-        }
-        if (selectedReaction.effect.aggression) {
-          state.player.states.aggression = Math.max(1, Math.min(20, 
-            state.player.states.aggression + selectedReaction.effect.aggression));
-        }
-        if (selectedReaction.effect.hunger) {
-          state.player.states.hunger = Math.max(1, Math.min(20, 
-            state.player.states.hunger + selectedReaction.effect.hunger));
-        }
-        if (selectedReaction.effect.injury) {
-          state.player.states.injury = Math.max(1, Math.min(20, 
-            state.player.states.injury + selectedReaction.effect.injury));
-        }
-        
-        result = `你${selectedReaction.text}。`;
-      } else {
-        result = '你做出了选择，等待结果...';
-      }
-      
-      state.history.push({
-        turn: state.turn,
-        choice: choice.text,
-        result,
-        timestamp: new Date().toISOString()
-      });
-    }
-    
-    // 剧本事件解锁NPC机制 - 基于Ω（历史必然感）
-    let unlockedNPCsThisTurn: string[] = [];
-    const currentOmega = state.omega;
-    const previousStoryEvent = state.storyEvent || 0;
-    
-    if (currentOmega >= NPC_CONFIG.STORY_EVENT_THRESHOLDS.EVENT_4 && previousStoryEvent < 4) {
-      // 事件4: 最终阶段（高潮/结局）
-      state.storyEvent = 4;
-      
-    } else if (currentOmega >= NPC_CONFIG.STORY_EVENT_THRESHOLDS.EVENT_3 && previousStoryEvent < 3) {
-      // 事件3: 解锁剩余NPC + 关键历史人物
-      state.storyEvent = 3;
-      
-      // 解锁第9-10个NPC
-      state.npcs.forEach((npc: any) => {
-        if (npc.unlockStage === 3 && !npc.isUnlocked) {
-          npc.isUnlocked = true;
-          unlockedNPCsThisTurn.push(npc.name);
-        }
-      });
-      
-      // 添加关键历史人物
-      NPC_CONFIG.HISTORICAL_FIGURES.forEach((name: string) => {
-        state.npcs.push({
-          id: `npc_${Date.now()}_${state.npcs.length + 1}`,
-          name,
-          traits: [],
-          isBonded: true,
-          isUnlocked: true,
-          unlockStage: 3
-        });
-        unlockedNPCsThisTurn.push(name);
-      });
-      
-    } else if (currentOmega >= NPC_CONFIG.STORY_EVENT_THRESHOLDS.EVENT_2 && previousStoryEvent < 2) {
-      // 事件2: 解锁第5-8个NPC
-      state.storyEvent = 2;
-      state.npcs.forEach((npc: any) => {
-        if (npc.unlockStage === 2 && !npc.isUnlocked) {
-          npc.isUnlocked = true;
-          unlockedNPCsThisTurn.push(npc.name);
-        }
-      });
-    }
-    
-    if (unlockedNPCsThisTurn.length > 0) {
-      result += ` [新角色出现: ${unlockedNPCsThisTurn.join(', ')}]`;
-    }
-    
-    let gameOver = null;
-    if (state.player.states.injury >= 20 || state.player.states.hunger >= 20) {
-      gameOver = { type: 'death', reason: state.player.states.injury >= 20 ? '伤势过重' : '饥饿致死' };
-      state.isGameOver = true;
-    } else if (state.turn >= GAME_CONFIG.MAX_TURNS) {
-      gameOver = { type: 'completed', reason: '金田起义爆发' };
-      state.isGameOver = true;
-    }
-    
-    res.json(createSuccessResponse({
-      turn: state.turn,
-      narrative,
-      choices,
-      result,
-      state: {
-        turn: state.turn,
-        datetime: state.datetime,
-        pressure: state.pressure,
-        omega: state.omega,
-        weather: state.weather,
-        isGameOver: state.isGameOver
-      },
-      gameOver
-    }, requestId));
-  } catch (error: any) {
+    const result = await executeTurn(game, choice, requestId);
+    res.json(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '执行回合失败';
     res.status(500).json(createErrorResponse(
       'TURN_EXECUTION_FAILED',
-      error.message || '执行回合失败',
+      message,
       undefined,
       requestId
     ));
   }
 });
 
-// 获取历史记录
+/**
+ * 执行回合逻辑
+ */
+async function executeTurn(game: Game, choice: { id: string; text: string } | undefined, requestId: string) {
+  const { state } = game;
+  
+  // 如果提供了选择，先处理选择结果
+  if (choice) {
+    return processChoice(state, choice, requestId);
+  }
+  
+  // 否则生成新回合
+  return generateNewTurn(game, requestId);
+}
+
+/**
+ * 处理玩家选择
+ */
+function processChoice(state: GameState, choice: { id: string; text: string }, requestId: string) {
+  // 更新历史记录
+  state.history.push({
+    turn: state.turn,
+    choice: choice.text,
+    timestamp: new Date().toISOString()
+  });
+  
+  // 返回结果
+  return createSuccessResponse({
+    turn: state.turn,
+    result: '你的选择已被记录',
+    state: {
+      turn: state.turn,
+      datetime: state.datetime,
+      pressure: state.pressure,
+      omega: state.omega,
+      weather: state.weather,
+      isGameOver: state.isGameOver
+    }
+  }, requestId);
+}
+
+/**
+ * 生成新回合
+ */
+async function generateNewTurn(game: Game, requestId: string) {
+  const { state, model, apiKey } = game;
+  
+  // 增加回合数
+  state.turn++;
+  
+  // 更新时间（每回合2小时）
+  const current = new Date(state.datetime);
+  current.setHours(current.getHours() + 2);
+  state.datetime = current.toISOString();
+  
+  // 更新压强和Ω
+  updatePhysics(state);
+  
+  // 解锁NPC
+  unlockNPCs(state);
+  
+  // 获取解锁的NPC
+  const unlockedNPCs = state.npcs.filter((npc: NPC) => npc.isUnlocked);
+  const spotlightNPC = unlockedNPCs.length > 0 ? unlockedNPCs[0] : null;
+  
+  // 生成AI选择
+  const choices = await generateChoices(state, spotlightNPC, model, apiKey);
+  
+  // 生成叙事
+  const narrative = generateNarrative(state, spotlightNPC);
+  
+  return createSuccessResponse({
+    turn: state.turn,
+    narrative,
+    choices,
+    state: {
+      turn: state.turn,
+      datetime: state.datetime,
+      pressure: state.pressure,
+      omega: state.omega,
+      weather: state.weather,
+      isGameOver: state.isGameOver
+    }
+  }, requestId);
+}
+
+/**
+ * 更新物理状态（压强和Ω）
+ */
+function updatePhysics(state: GameState) {
+  // 压强增长
+  state.pressure = Math.min(
+    GAME_CONFIG.MAX_PRESSURE,
+    state.pressure + GAME_CONFIG.PRESSURE_INCREASE
+  );
+  
+  // Ω增长
+  let omegaIncrease = GAME_CONFIG.OMEGA_BASE_INCREASE;
+  
+  // 蝴蝶效应随机加成
+  const butterflyEffect = Math.random();
+  if (butterflyEffect < 0.3) {
+    omegaIncrease += 0;
+  } else if (butterflyEffect < 0.6) {
+    omegaIncrease += 0.1;
+  } else {
+    omegaIncrease += 0.2;
+  }
+  
+  // 高压时额外加速
+  if (state.pressure >= GAME_CONFIG.HIGH_PRESSURE_THRESHOLD) {
+    state.omega = Math.min(
+      GAME_CONFIG.MAX_OMEGA,
+      state.omega * GAME_CONFIG.OMEGA_HIGH_PRESSURE_MULTIPLIER + omegaIncrease
+    );
+  } else {
+    state.omega = Math.min(GAME_CONFIG.MAX_OMEGA, state.omega + omegaIncrease);
+  }
+}
+
+/**
+ * 解锁NPC
+ */
+function unlockNPCs(state: GameState) {
+  state.npcs.forEach(npc => {
+    if (!npc.isUnlocked) {
+      // 根据Ω值解锁不同阶段
+      if (npc.unlockStage === 2 && state.omega >= 6) {
+        npc.isUnlocked = true;
+      } else if (npc.unlockStage === 3 && state.omega >= 12) {
+        npc.isUnlocked = true;
+      }
+    }
+  });
+}
+
+/**
+ * 生成AI选择
+ */
+async function generateChoices(
+  state: GameState,
+  spotlightNPC: NPC | null,
+  model: string,
+  apiKey?: string
+) {
+  try {
+    const npcBehavior = spotlightNPC ? {
+      type: ['抢夺', '冲突', '偷听', '聊天', '请求', '给予'][Math.floor(Math.random() * 6)] as string,
+      description: `${spotlightNPC.name}正在附近`,
+      npcName: spotlightNPC.name,
+      npcTraits: spotlightNPC.traits,
+      npcObsession: '在乱世中活下去'
+    } : null;
+    
+    const reactions = await generatePlayerReactionsWithAI(
+      state.player,
+      npcBehavior || {
+        type: '聊天',
+        description: '周围一片寂静',
+        npcName: '环境',
+        npcTraits: [],
+        npcObsession: '无'
+      },
+      {
+        pressure: state.pressure,
+        omega: state.omega,
+        weather: state.weather,
+        turn: state.turn,
+        narrative: ''
+      }
+    );
+    
+    return reactions.map((r, idx) => ({
+      id: `choice_${idx}_${Date.now()}`,
+      text: r.text,
+      type: r.type
+    }));
+  } catch (error) {
+    // AI失败时返回默认选择
+    return [
+      { id: 'choice_1', text: '你决定探索周围环境', type: 'instinct' as const },
+      { id: 'choice_2', text: '你保持警惕，观察四周', type: 'trait' as const },
+      { id: 'choice_3', text: '你想起自己的执念，做出选择', type: 'obsession' as const }
+    ];
+  }
+}
+
+/**
+ * 生成叙事
+ */
+function generateNarrative(state: GameState, spotlightNPC: NPC | null): string {
+  const narratives = [
+    `第${state.turn}回合。你站在村子里，空气中弥漫着紧张的气氛。`,
+    `时间一分一秒地过去，你知道历史正在发生。`,
+    `夜色更深了。你感到一种莫名的恐惧在蔓延。`,
+    `风吹过村子，带来一股烟味。不是炊烟，是别的什么。`
+  ];
+  
+  let narrative = narratives[Math.floor(Math.random() * narratives.length)];
+  
+  if (spotlightNPC) {
+    narrative += `\n> ${spotlightNPC.name}在附近，似乎有所图谋。`;
+  }
+  
+  return narrative;
+}
+
+/**
+ * 获取历史记录
+ * GET /api/games/:id/history
+ */
 router.get('/:id/history', (req, res) => {
   const requestId = generateRequestId();
   const game = games.get(req.params.id);
@@ -431,7 +370,10 @@ router.get('/:id/history', (req, res) => {
   res.json(createSuccessResponse(game.state.history, requestId));
 });
 
-// 获取 AI Prompt（前端直连 AI 使用）
+/**
+ * 获取AI Prompt
+ * GET /api/games/:id/ai-prompt
+ */
 router.get('/:id/ai-prompt', (req, res) => {
   const requestId = generateRequestId();
   const game = games.get(req.params.id);
@@ -445,51 +387,42 @@ router.get('/:id/ai-prompt', (req, res) => {
     ));
   }
   
-  const state = game.state;
+  const { state } = game;
   const player = state.player;
-  const unlockedNPCs = (state.npcs || []).filter((npc: any) => npc.isUnlocked);
+  const unlockedNPCs = state.npcs.filter(npc => npc.isUnlocked);
   const spotlightNPC = unlockedNPCs.length > 0 ? unlockedNPCs[0] : null;
   
-  // 构建 prompt（与 EmergentNarrativeEngine 一致）
   const prompt = `
-【时间】第${state.turn}/${GAME_CONFIG.MAX_TURNS}回合，${new Date(state.datetime).toLocaleString('zh-CN')}
+【时间】第${state.turn}/${GAME_CONFIG.MAX_TURNS}回合
 
 【场】
 压强：${Math.round(state.pressure)}/20
 历史必然感：${Math.round(state.omega)}/20
 
 【你】
-恐惧：${player.states.fear}/20
-攻击性：${player.states.aggression}/20
-饥饿：${player.states.hunger}/20
-伤势：${player.states.injury}/20
+身份：${player.identity.name}
 执念：${player.obsession}
+特质：${player.traits.map(t => t.id).join('、')}
+状态：恐惧${player.states.fear}/攻击${player.states.aggression}/饥饿${player.states.hunger}
 
 【在场者】${spotlightNPC ? spotlightNPC.name : '无'}
-${spotlightNPC ? `恐惧：${spotlightNPC.states?.fear || 6}/20
-攻击性：${spotlightNPC.states?.aggression || 4}/20
-与你的关系：${spotlightNPC.knot || 6}/20
-执念：${spotlightNPC.obsession || '活下去'}` : ''}
-
-【约束】
-- 从视觉、听觉、嗅觉写环境，不解释"压强高"是什么意思
-- 让${spotlightNPC ? spotlightNPC.name : '环境'}的执念自然流露，不直接说"他想..."
-- 200字，第二人称，暗示而非说明
+${spotlightNPC ? `执念：在乱世中活下去` : ''}
 `;
-
-  // AI 提供商配置 - 使用统一配置
-  const defaultProvider = AI_CONFIG.DEFAULT_PROVIDER;
-  const provider = AI_CONFIG.PROVIDERS[defaultProvider];
-
+  
   res.json(createSuccessResponse({
     prompt,
-    provider: defaultProvider,
-    model: provider.defaultModel,
-    apiUrl: provider.apiUrl
+    context: {
+      turn: state.turn,
+      pressure: state.pressure,
+      omega: state.omega
+    }
   }, requestId));
 });
 
-// 结束游戏
+/**
+ * 删除游戏
+ * DELETE /api/games/:id
+ */
 router.delete('/:id', (req, res) => {
   const requestId = generateRequestId();
   const game = games.get(req.params.id);
