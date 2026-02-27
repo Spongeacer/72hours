@@ -5,7 +5,7 @@
     "lib": ["ES2020"],
     "outDir": "./dist",
     "rootDir": ".",
-    "strict": false,
+    "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -13,19 +13,18 @@
     "declaration": false,
     "sourceMap": true,
     "moduleResolution": "node",
-    "noImplicitAny": false,
-    "strictNullChecks": false
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
   "include": [
-    "src/server/**/*",
+    "src/**/*",
     "shared/**/*"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "client",
-    "src/game",
-    "src/narrative",
-    "src/utils"
+    "client"
   ]
 }
