@@ -9,7 +9,25 @@
     "dev": "ts-node src/server/index.ts",
     "lint": "eslint src/ --ext .ts",
     "lint:fix": "eslint src/ --ext .ts --fix",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "package": "pkg . --out-path=dist/bin/",
+    "package:all": "pkg . --targets=node18-linux-x64,node18-win-x64,node18-macos-x64 --out-path=dist/bin/"
+  },
+  "bin": "dist/src/server/index.js",
+  "pkg": {
+    "scripts": [
+      "dist/**/*.js"
+    ],
+    "assets": [
+      "public/**/*",
+      "docs/**/*"
+    ],
+    "targets": [
+      "node18-linux-x64",
+      "node18-win-x64",
+      "node18-macos-x64"
+    ],
+    "outputPath": "dist/bin"
   },
   "dependencies": {
     "axios": "^1.6.0",
@@ -30,6 +48,7 @@
     "@typescript-eslint/parser": "^8.56.1",
     "eslint": "^10.0.2",
     "nodemon": "^3.0.2",
+    "pkg": "^5.8.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.0",
     "vitest": "^4.0.18"
