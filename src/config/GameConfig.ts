@@ -201,7 +201,14 @@ export const GAME_CONFIG = {
     content: { name: '满足', description: '知足常乐' },
     unpredictable: { name: '难以预测', description: '行为不定' },
     pure: { name: '纯洁', description: '心灵纯净' },
-    mysterious: { name: '神秘', description: '充满谜团' }
+    mysterious: { name: '神秘', description: '充满谜团' },
+    // 府衙清军特质
+    cruel: { name: '残忍', description: '冷酷无情，嗜血成性' },
+    oppressive: { name: '压迫', description: '喜欢欺压弱小' },
+    corrupt: { name: '腐败', description: '贪婪成性，中饱私囊' },
+    violent: { name: '暴力', description: '崇尚武力，动辄动手' },
+    domineering: { name: '霸道', description: '横行霸道，不可一世' },
+    fearsome: { name: '可怖', description: '令人恐惧，望而生畏' }
   }
 };
 
@@ -294,6 +301,13 @@ export const NPC_CONFIG = {
       description: '大家都说他傻，但他似乎知道一些秘密',
       baseMass: 2,
       suitableTraits: ['mysterious', 'calm', 'honest', 'simple', 'innocent', 'perceptive', 'childlike', 'content', 'unpredictable', 'pure']
+    },
+    {
+      id: 'qing_soldier',
+      role: '府衙清军',
+      description: '奉官府之命搜刮粮草，凶狠蛮横，村民闻风丧胆',
+      baseMass: 7,
+      suitableTraits: ['brutal', 'callous', 'greedy', 'cruel', 'oppressive', 'corrupt', 'violent', 'domineering', 'ruthless', 'fearsome']
     }
   ],
 
