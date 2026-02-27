@@ -1,7 +1,7 @@
 /**
  * 游戏服务层
  * 处理游戏逻辑，与路由层分离
- * 
+ *
  * 设计理念：
  * 1. 玩家作为催化剂 - 在场即影响
  * 2. 涌现式叙事 - 故事自己长出来
@@ -12,14 +12,14 @@ import { GAME_CONFIG, NPC_CONFIG, PLAYER_CONFIG } from '../../config/GameConfig'
 import { OPENINGS } from '../constants/openings';
 import type { Game72Hours as Game, GameState, Player } from '../../game';
 import { NPC } from '../../game/NPC';
-import { 
-  selectSpotlightNPC, 
+import {
+  selectSpotlightNPC,
   updatePhysics,
-  calculatePlayerAura 
+  calculatePlayerAura
 } from './physicsService';
-import { 
-  generateResonanceNarrative, 
-  generateEmergentChoices 
+import {
+  generateResonanceNarrative,
+  generateEmergentChoices
 } from './narrativeService';
 
 /**
@@ -44,31 +44,40 @@ export function createPlayer(identityType: string): Player {
   const availableIdentities = Object.keys(PLAYER_CONFIG.IDENTITIES);
   const selectedIdentity = identityType || availableIdentities[Math.floor(Math.random() * availableIdentities.length)];
   const identityConfig = PLAYER_CONFIG.IDENTITIES[selectedIdentity as keyof typeof PLAYER_CONFIG.IDENTITIES];
-  
+
   // 随机执念 - 这是玩家的核心驱动力
   const randomObsession = PLAYER_CONFIG.OBSESSIONS[Math.floor(Math.random() * PLAYER_CONFIG.OBSESSIONS.length)];
-  
+
   // 随机特质 - 塑造玩家的"气场"
   const numTraits = PLAYER_CONFIG.MIN_TRAITS + Math.floor(
     Math.random() * (PLAYER_CONFIG.MAX_TRAITS - PLAYER_CONFIG.MIN_TRAITS + 1)
   );
   const shuffledTraits = [...PLAYER_CONFIG.TRAITS].sort(() => 0.5 - Math.random());
-  const selectedTraits = shuffledTraits.slice(0, numTraits);
-  
+  const selectedTraits = shuffledTraits.slice(0, numTraits).map(t => ({ id: t, type: 'personality' as const }));
+
+  // 构建完整的 Identity
+  const identity = {
+    id: selectedIdentity,
+    name: identityConfig.name,
+    baseMass: identityConfig.baseMass,
+    pressureModifier: identityConfig.pressureModifier,
+    initialStates: { ...identityConfig.initialStates },
+    suitableTraits: identityConfig.suitableTraits
+  };
+
   return {
     id: `player_${Date.now()}`,
     name: '你',
-    identityType: selectedIdentity,
-    identity: {
-      name: identityConfig.name,
-      baseMass: identityConfig.baseMass,
-      initialStates: { ...identityConfig.initialStates }
-    },
+    identityType: selectedIdentity as import('../../shared/types').IdentityType,
+    identity,
     traits: selectedTraits,
     obsession: randomObsession,
     states: { ...identityConfig.initialStates },
-    position: { x: 0, y: 0 }
-  };
+    position: { x: 0, y: 0 },
+    bondedNPCs: [],
+    inventory: [],
+    memories: []
+  } as unknown as Player;
 }
 
 /**
@@ -77,7 +86,7 @@ export function createPlayer(identityType: string): Player {
  */
 export function createNPCs(): NPC[] {
   const shuffledNPCNames = [...NPC_CONFIG.NPC_NAME_POOL].sort(() => 0.5 - Math.random());
-  
+
   return shuffledNPCNames.map((name, index) => NPC.create({
     id: `npc_${Date.now()}_${index + 1}`,
     name,
@@ -86,8 +95,7 @@ export function createNPCs(): NPC[] {
     states: { fear: 5, aggression: 5, hunger: 5, injury: 1 },
     position: { x: Math.random() * 10 - 5, y: Math.random() * 10 - 5 },
     isBonded: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT,
-    isUnlocked: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT,
-    unlockStage: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT ? 1 : index < 8 ? 2 : 3
+    isUnlocked: index < NPC_CONFIG.INITIAL_UNLOCKED_COUNT
   }));
 }
 
@@ -106,7 +114,11 @@ export function createGameState(player: Player, npcs: NPC[]): GameState {
     npcs,
     history: [],
     isGameOver: false,
-    storyEvent: 0
+    config: {
+      MAX_TURNS: GAME_CONFIG.MAX_TURNS,
+      GRID_SIZE: GAME_CONFIG.GRID_SIZE || 10,
+      START_DATE: GAME_CONFIG.START_DATE
+    }
   };
 }
 
@@ -133,22 +145,22 @@ export function executeTurn(game: Game): {
   playerAura: string;
 } {
   const { state } = game;
-  
+
   // 1. 更新物理场
   updatePhysics(state);
-  
+
   // 2. 选择聚光灯NPC（基于引力 + 随机扰动）
   const spotlightNPC = selectSpotlightNPC(state.player, state.npcs, state);
-  
+
   // 3. 计算玩家气场
   const playerAura = calculatePlayerAura(state.player);
-  
+
   // 4. 生成共振式叙事
   const narrative = generateResonanceNarrative(state, spotlightNPC, state.player);
-  
+
   // 5. 生成涌现式选择
   const choices = generateEmergentChoices(state.player, spotlightNPC, state);
-  
+
   return { narrative, choices, spotlightNPC, playerAura };
 }
 
@@ -158,7 +170,7 @@ export function executeTurn(game: Game): {
 export function formatGameResponse(game: Game) {
   const { state } = game;
   const unlockedNPCs = state.npcs.filter(npc => npc.isUnlocked);
-  
+
   return {
     gameId: game.id,
     player: {
