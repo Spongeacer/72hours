@@ -5,7 +5,7 @@
 import { Agent, AgentStates } from './Agent';
 import { GameState } from '../../shared/types';
 import { NPC as INPC } from '../../shared/types';
-import { GAME_CONFIG } from '../utils/Constants';
+import { GAME_CONFIG } from '../config/GameConfig';
 
 // 特质类型
 interface Trait {

@@ -1,91 +1,22 @@
 /**
  * 游戏常量配置
+ * 注意：GAME_CONFIG已移至 src/config/GameConfig.ts
+ * 此文件保留身份、特质、AI模型等配置
  */
 
 import { Identity, PersonalityTrait } from '../shared/types';
 
-export const GAME_CONFIG = {
-  // 网格与世界
-  GRID_SIZE: 5,
-  MAX_TURNS: 36,
-  START_DATE: '1851-01-08T00:00:00',
-  
-  // 物理参数
-  GRAVITY: {
-    G: 0.8,
-    PRESSURE_MULTIPLIER: 0.05
-  },
-  
-  // 压强系统 (1-20范围)
-  PRESSURE: {
-    INITIAL: 2,
-    BASE_GROWTH: 0.16,
-    VIOLENCE_BONUS: 1,
-    THRESHOLD_RAID: 10,
-    THRESHOLD_DIVINE: 12,
-    MAX: 20
-  },
-  
-  // 全局因子 Ω (1-20范围)
-  OMEGA: {
-    INITIAL: 2,
-    LINEAR_GROWTH: 0.4,
-    EXPONENTIAL_THRESHOLD: 12,
-    EXPONENTIAL_BASE: 1.02,
-    MAX: 20
-  },
-  
-  // 状态系统 (1-20范围)
-  STATES: {
-    MIN: 1,
-    MAX: 20,
-    DEFAULT_FEAR: 6,
-    DEFAULT_AGGRESSION: 4,
-    DEFAULT_HUNGER: 8,
-    DEFAULT_INJURY: 1
-  },
-  
-  // 质量系统
-  MASS: {
-    BASE: {
-      ELITE: 5,
-      NORMAL: 2,
-      PLAYER: 3
-    },
-    STORY_PER_EVENT: 0.1,
-    KNOT_PER_INTERACTION: 0.5,
-    OBJECT_KEY: 3,
-    OBJECT_NORMAL: 1
-  },
-  
-  // K值系统 (1-20范围)
-  KNOT: {
-    INITIAL: 2,
-    PER_INTERACTION: 2,
-    MAX: 20
-  },
-  
-  // 引力陷阱 (1-20范围)
-  TRAP: {
-    INITIAL: 1,
-    BONUS_PER_DEEP_EVENT: 4,
-    DECAY_RATE: 0.4,
-    MAX: 20
-  },
-  
-  // NPC移动 (1-20范围)
-  MOVEMENT: {
-    FEAR_ESCAPE_THRESHOLD: 14,
-    FEAR_BIAS_FACTOR: 0.5,
-    RANDOM_WALK_RANGE: 2
-  },
-  
-  // 特质数量配置
-  TRAIT_CONFIG: {
-    MIN_TRAITS: 2,
-    MAX_TRAITS: 3
-  }
-};
+// 注意：以下配置已移至 src/config/GameConfig.ts
+// - GAME_CONFIG (游戏核心配置)
+// - GRAVITY_CONFIG (引力引擎配置)
+// - NPC_CONFIG (NPC配置)
+// - PLAYER_CONFIG (玩家配置)
+// 
+// 此文件保留：
+// - IDENTITIES (身份详细定义)
+// - PERSONALITY_TRAITS (性格特质库)
+// - AI_MODELS (AI模型配置)
+// - WEATHER (天气配置)
 
 // 玩家身份配置
 export const IDENTITIES: Record<string, Identity> = {

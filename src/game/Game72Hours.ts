@@ -6,7 +6,7 @@ import { Player } from './Player';
 import { NPC } from './NPC';
 import { TurnManager } from './TurnManager';
 import { EmergentNarrativeEngine } from '../narrative/EmergentNarrativeEngine';
-import { GAME_CONFIG } from '../utils/Constants';
+import { GAME_CONFIG } from '../config/GameConfig';
 import { 
   GameState, 
   GameInitResult, 

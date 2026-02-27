@@ -4,7 +4,7 @@
  */
 
 import { Position } from '../../shared/types';
-import { GAME_CONFIG } from '../utils/Constants';
+import { GRAVITY_CONFIG } from '../config/GameConfig';
 
 export interface GravityConfig {
   G: number;                    // 引力常数
@@ -41,8 +41,8 @@ export class GravityEngine {
   omega: number;
 
   constructor(
-    pressure: number = GAME_CONFIG.PRESSURE.INITIAL,
-    omega: number = GAME_CONFIG.OMEGA.INITIAL,
+    pressure: number = GRAVITY_CONFIG.PRESSURE_MULTIPLIER,
+    omega: number = 1,
     config: Partial<GravityConfig> = {}
   ) {
     this.pressure = pressure;

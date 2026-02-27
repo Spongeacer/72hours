@@ -9,7 +9,7 @@ import {
   Identity,
   Player as IPlayer 
 } from '../../shared/types';
-import { GAME_CONFIG } from '../utils/Constants';
+import { GAME_CONFIG } from '../config/GameConfig';
 
 export interface ObsessionData {
   type: 'dynamic';
