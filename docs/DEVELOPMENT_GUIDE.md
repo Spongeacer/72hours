@@ -10,12 +10,12 @@
 
 本文档是 **最新的权威开发文档**，包含当前代码实现的详细规范。
 
-其他文档参考：
-- [DESIGN.md](./DESIGN.md) - 原始设计理念（v1.1）
-- [ARCHITECTURE.md](./ARCHITECTURE.md) - 早期技术架构参考
+**所有文档已同步更新**，你可以放心参考任何一份：
+- [DESIGN.md](./DESIGN.md) - 设计理念（与本文档同步）
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - 技术架构（与本文档同步）
 - [TYPING_GUIDE.md](./TYPING_GUIDE.md) - 类型系统规范
 
-**注意**: 如本文档与其他文档有冲突，以本文档为准。
+**注意**: 所有文档的数值和结构都已统一，以本文档的实现细节为准。
 
 ---
 

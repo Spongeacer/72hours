@@ -32,12 +32,14 @@
 
 ## 📚 文档索引
 
+所有文档已同步更新，内容一致：
+
 | 文档 | 内容 |
 |------|------|
-| **[DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md)** | **📖 完整开发文档（推荐）** |
+| [DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md) | 📖 **完整开发文档**（实现细节） |
+| [DESIGN.md](docs/DESIGN.md) | 设计理念与核心机制 |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 技术架构说明 |
 | [TYPING_GUIDE.md](docs/TYPING_GUIDE.md) | 类型系统规范 |
-| [DESIGN.md](docs/DESIGN.md) | 核心设计理念 |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 详细技术架构 |
 
 ## 🚀 快速开始
 
