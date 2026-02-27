@@ -2,20 +2,12 @@
  * TurnManager - 回合管理器（集成物理引擎）
  */
 
-import { GameState, TurnResult, Choice, NPC, Player } from '../../shared/types';
+import { GameState, TurnResult, Choice, NPC, Player, TurnContext } from '../../shared/types';
 import { NPC as NPCClass } from '../game/NPC';
 import { Player as PlayerClass } from '../game/Player';
 import { EmergentNarrativeEngine } from '../narrative/EmergentNarrativeEngine';
 import { GravityEngine } from '../core/GravityEngine';
 import type { MassObject } from '../core/GravityEngine';
-
-export interface TurnContext {
-  turn: number;
-  narrative: string;
-  choices: Choice[];
-  npcs: NPC[];
-  player: Player;
-}
 
 export class TurnManager {
   gameState: GameState;
@@ -64,11 +56,15 @@ export class TurnManager {
 
     // 保存上下文
     this.currentContext = {
-      turn: gameState.turn,
-      narrative,
-      choices,
-      npcs: gameState.npcs,
-      player: gameState.player
+      scene: {
+        location: '金田村',
+        description: narrative,
+        atmosphere: gameState.weather
+      },
+      spotlight: gameState.npcs[0] || null,
+      player: gameState.player,
+      event: null,
+      memories: []
     };
 
     return {
@@ -97,9 +93,6 @@ export class TurnManager {
     if (result.stateChanges) {
       Object.assign(gameState, result.stateChanges);
     }
-
-    // 检查游戏结束
-    const gameOver = this.checkGameOver();
 
     // 记录历史
     gameState.history.push({
@@ -301,10 +294,10 @@ export class TurnManager {
     context: TurnContext,
     gameState: GameState
   ): Promise<{ narrative?: string; result?: string; stateChanges?: any }> {
-    const { player } = gameState;
+    const { player, npcs } = gameState;
 
     // 获取聚光灯NPC
-    const spotlightNPC = context.npcs.find(n =>
+    const spotlightNPC = npcs.find(n =>
       choice.id === `talk_${n.id}`
     );
 
@@ -317,7 +310,7 @@ export class TurnManager {
         return this.emergeRestResult(player, gameState);
 
       case 'observe':
-        return this.emergeObserveResult(player, gameState, context.npcs);
+        return this.emergeObserveResult(player, gameState, npcs);
 
       case 'flee':
         return this.emergeFleeResult(player, gameState);
@@ -487,7 +480,7 @@ export class TurnManager {
   /**
    * 交谈的涌现结果
    */
-  private emergeTalkResult(player: Player, npc: NPC, _gameState: GameState) {
+  private emergeTalkResult(player: Player, npc: NPC, gameState: GameState) {
     const playerClass = player as unknown as PlayerClass;
     const npcClass = npc as unknown as NPCClass;
     const knot = playerClass.getKnotWith(npc.id);

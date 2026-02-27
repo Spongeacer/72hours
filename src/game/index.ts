@@ -21,7 +21,6 @@ export { Game72Hours } from './Game72Hours';
 export type { GameOptions } from './Game72Hours';
 
 export { TurnManager } from './TurnManager';
-export type { TurnContext } from './TurnManager';
 
 // 从 shared/types 重新导出核心类型
 export type {
