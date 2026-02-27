@@ -5,7 +5,7 @@
 
 import { GAME_CONFIG, NPC_CONFIG, PLAYER_CONFIG } from '../../config/GameConfig';
 import { OPENINGS } from '../constants/openings';
-import type { Game, GameState, Player, NPC } from '../types/game';
+import type { Game, GameState, Player, NPC } from '../types/game.types';
 
 /**
  * 生成唯一游戏ID

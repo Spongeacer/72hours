@@ -9,7 +9,7 @@ import { validateRequest } from '../middleware/validateRequest';
 import { createSuccessResponse, createErrorResponse } from '../utils/apiResponse';
 import { GAME_CONFIG, AI_CONFIG } from '../../config/GameConfig';
 import { generatePlayerReactionsWithAI } from '../../core/AIReactionGenerator';
-import type { Game, GameState, NPC } from '../types/game';
+import type { Game, GameState, NPC } from '../types/game.types';
 import {
   generateGameId,
   generateRequestId,
