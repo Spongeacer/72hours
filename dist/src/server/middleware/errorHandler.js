@@ -16,7 +16,7 @@ function notFoundHandler(req, res) {
         }
     });
 }
-function errorHandler(err, req, res, next) {
+function errorHandler(err, _req, res, _next) {
     console.error('[Error]', err);
     const statusCode = err.statusCode || err.status || 500;
     const errorCode = err.code || 'INTERNAL_ERROR';

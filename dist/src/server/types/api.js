@@ -44,4 +44,9 @@ var ErrorCode;
     ErrorCode["MISSING_API_KEY"] = "MISSING_API_KEY";
     ErrorCode["INVALID_MODEL"] = "INVALID_MODEL";
 })(ErrorCode || (exports.ErrorCode = ErrorCode = {}));
+// ==================== 游戏相关类型（简化版） ====================
+// 注意：这些类型仅用于 API 响应，不与共享类型冲突
+// Player 类型在 shared/types 中定义
+// NPC 类型在 shared/types 中定义
+// GameState 类型在 shared/types 中定义
 //# sourceMappingURL=api.js.map

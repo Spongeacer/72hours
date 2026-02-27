@@ -78,5 +78,62 @@ router.delete('/:saveId', (req, res) => {
         meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
     });
 });
+// 导出存档
+router.get('/:saveId/export', (req, res) => {
+    const { saveId } = req.params;
+    const save = saves.get(saveId);
+    if (!save) {
+        return res.status(404).json({
+            success: false,
+            data: null,
+            error: { code: 'SAVE_NOT_FOUND', message: '存档不存在' },
+            meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+        });
+    }
+    // 返回存档数据的Base64编码
+    const exportData = Buffer.from(JSON.stringify(save)).toString('base64');
+    res.json({
+        success: true,
+        data: exportData,
+        error: null,
+        meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+    });
+});
+// 导入存档
+const importSaveSchema = zod_1.z.object({
+    saveData: zod_1.z.string()
+});
+router.post('/import', (0, validateRequest_1.validateRequest)({ body: importSaveSchema }), (req, res) => {
+    const { gameId } = req.params;
+    const { saveData } = req.body;
+    try {
+        // 解码Base64
+        const decoded = Buffer.from(saveData, 'base64').toString('utf-8');
+        const save = JSON.parse(decoded);
+        // 生成新的存档ID
+        const newSaveId = `save_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const newSave = {
+            ...save,
+            id: newSaveId,
+            gameId,
+            timestamp: Date.now()
+        };
+        saves.set(newSaveId, newSave);
+        res.status(201).json({
+            success: true,
+            data: newSave,
+            error: null,
+            meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+        });
+    }
+    catch (error) {
+        res.status(400).json({
+            success: false,
+            data: null,
+            error: { code: 'INVALID_SAVE_DATA', message: '存档数据格式错误' },
+            meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+        });
+    }
+});
 exports.default = router;
 //# sourceMappingURL=saves.js.map

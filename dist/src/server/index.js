@@ -37,7 +37,7 @@ const limiter = (0, express_rate_limit_1.default)({
     max: 100,
     standardHeaders: true,
     legacyHeaders: false,
-    handler: (req, res) => {
+    handler: (_req, res) => {
         res.status(429).json({
             success: false,
             data: null,
@@ -59,7 +59,7 @@ app.use(express_1.default.static('public'));
 app.use(express_1.default.static('dist/client'));
 // ==================== 路由 ====================
 app.use('/api', index_1.default);
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
     res.json({
         success: true,
         data: {
@@ -74,7 +74,7 @@ app.get('/health', (req, res) => {
         }
     });
 });
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
     res.sendFile('dist/client/index.html', { root: '.' });
 });
 app.use(errorHandler_1.notFoundHandler);

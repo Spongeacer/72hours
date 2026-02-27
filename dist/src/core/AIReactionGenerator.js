@@ -12,15 +12,15 @@ const GameConfig_1 = require("../config/GameConfig");
 /**
  * 使用 AI API 生成玩家反应
  */
-async function generatePlayerReactionsWithAI(player, npcBehavior, context) {
+async function generatePlayerReactionsWithAI(player, _npcBehavior, context) {
     const provider = GameConfig_1.AI_CONFIG.DEFAULT_PROVIDER;
     const config = GameConfig_1.AI_CONFIG.PROVIDERS[provider];
-    const prompt = buildPrompt(player, npcBehavior, context);
+    const prompt = buildPrompt(player, _npcBehavior, context);
     try {
         const response = await fetch(config.apiUrl, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer sk-loulnfpbpzkhwtkfzjeysrgkoflcagblvinuncxyajtiypbn`,
+                'Authorization': `Bearer ${process.env.SILICONFLOW_API_KEY || ''}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -43,13 +43,14 @@ async function generatePlayerReactionsWithAI(player, npcBehavior, context) {
     catch (error) {
         console.error('AI generation failed:', error);
         // 降级到本地生成
-        return generateFallbackReactions(player, npcBehavior, context);
+        return generateFallbackReactions(player);
     }
 }
 /**
  * 构建 AI Prompt
  */
 function buildPrompt(player, npcBehavior, context) {
+    const traitIds = player.traits.map(t => t.id).join('、');
     return `
 【情境】
 第${context.turn}/36回合，${context.weather === 'night' ? '深夜' : context.weather === 'fog' ? '雾中' : '白天'}
@@ -58,7 +59,7 @@ function buildPrompt(player, npcBehavior, context) {
 【玩家】
 身份：${player.identity.name}
 执念：${player.obsession}
-特质：${player.traits.map((t) => t.id).join('、')}
+特质：${traitIds}
 当前状态：恐惧${player.states.fear}/攻击${player.states.aggression}/饥饿${player.states.hunger}
 
 【聚光灯NPC】
@@ -108,14 +109,17 @@ function parseAIResponse(content, player) {
             throw new Error('No JSON found in response');
         }
         const parsed = JSON.parse(jsonMatch[0]);
-        const reactions = parsed.reactions || parsed;
-        return reactions.map((r, idx) => ({
-            id: `ai_${player.identityType}_${idx}_${Date.now()}`,
-            text: r.text,
-            type: r.type || 'context',
-            drive: r.drive || 'AI生成',
-            effect: r.effect || {}
-        }));
+        const reactions = parsed.reactions || [];
+        return reactions.map((r, idx) => {
+            const reaction = r;
+            return {
+                id: `ai_${player.identityType || 'unknown'}_${idx}_${Date.now()}`,
+                text: reaction.text || '你做出了反应',
+                type: reaction.type || 'context',
+                drive: reaction.drive || 'AI生成',
+                effect: reaction.effect || {}
+            };
+        });
     }
     catch (error) {
         console.error('Parse error:', error);
@@ -129,16 +133,19 @@ function parseAIResponse(content, player) {
 function parseTextResponse(content, player) {
     const lines = content.split('\n').filter(l => l.trim());
     const reactions = [];
+    const types = ['obsession', 'trait', 'instinct'];
     for (let i = 0; i < lines.length && reactions.length < 3; i++) {
         const line = lines[i].trim();
         // 匹配 "1. " 或 "反应1：" 等格式
-        if (/^\d+[\.\、]/.test(line) || line.includes('：') || line.includes('反应')) {
-            const text = line.replace(/^\d+[\.\、]\s*/, '').replace(/^反应\d+[：:]\s*/, '');
+        // eslint-disable-next-line no-useless-escape
+        if (/^\d+[.．]/.test(line) || line.includes('：') || line.includes('反应')) {
+            // eslint-disable-next-line no-useless-escape
+            const text = line.replace(/^\d+[.．]\s*/, '').replace(/^反应\d+[：:]\s*/, '');
             if (text.length > 10) {
                 reactions.push({
-                    id: `text_${player.identityType}_${reactions.length}_${Date.now()}`,
+                    id: `text_${player.identityType || 'unknown'}_${reactions.length}_${Date.now()}`,
                     text: text,
-                    type: ['obsession', 'trait', 'instinct'][reactions.length],
+                    type: types[reactions.length] || 'instinct',
                     drive: 'AI生成（文本解析）',
                     effect: {}
                 });
@@ -150,8 +157,7 @@ function parseTextResponse(content, player) {
 /**
  * 本地降级生成（AI失败时使用）
  */
-function generateFallbackReactions(player, npcBehavior, context) {
-    // 简化的本地生成逻辑
+function generateFallbackReactions(player) {
     const reactions = [];
     // 基于执念
     reactions.push({
