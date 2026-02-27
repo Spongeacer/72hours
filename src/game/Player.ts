@@ -9,7 +9,7 @@ import {
   Identity,
   Player as IPlayer 
 } from '../../shared/types';
-import { GAME_CONFIG } from '../config/GameConfig';
+import { GAME_CONFIG, PLAYER_CONFIG } from '../config/GameConfig';
 
 export interface ObsessionData {
   type: 'dynamic';
@@ -36,7 +36,7 @@ export class Player extends Agent {
   captured: boolean = false;
 
   constructor(identityType: IdentityType = 'scholar') {
-    const identity = GAME_CONFIG.IDENTITIES[identityType.toUpperCase()];
+    const identity = PLAYER_CONFIG.IDENTITIES[identityType];
     
     super({
       name: '你',
