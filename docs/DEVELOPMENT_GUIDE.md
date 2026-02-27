@@ -123,9 +123,7 @@
 │   │   └── GameConfig.ts      # 游戏核心配置
 │   │
 │   ├── core/                  # 核心引擎
-│   │   ├── AIReactionGenerator.ts    # AI反应生成
 │   │   ├── GravityEngine.ts          # 引力引擎
-│   │   └── ReactionGenerator.ts      # 反应生成器
 │   │
 │   ├── game/                  # 游戏逻辑
 │   │   ├── index.ts           # 统一导出
