@@ -131,22 +131,30 @@ export const PLAYER_CONFIG = {
     scholar: {
       name: '村中的读书人',
       baseMass: 3,
-      initialStates: { fear: 6, aggression: 4, hunger: 8, injury: 1 }
+      pressureModifier: 0.8,
+      initialStates: { fear: 6, aggression: 4, hunger: 8, injury: 1 },
+      suitableTraits: ['calm', 'curious', 'honest', 'analytical', 'reserved', 'idealistic']
     },
     landlord: {
       name: '金田村的地主',
       baseMass: 6,
-      initialStates: { fear: 8, aggression: 6, hunger: 4, injury: 1 }
+      pressureModifier: 1.0,
+      initialStates: { fear: 8, aggression: 6, hunger: 4, injury: 1 },
+      suitableTraits: ['greedy', 'ambitious', 'calculating', 'worldly', 'proud', 'pragmatic']
     },
     soldier: {
       name: '官府的士兵',
       baseMass: 5,
-      initialStates: { fear: 4, aggression: 12, hunger: 10, injury: 1 }
+      pressureModifier: 1.2,
+      initialStates: { fear: 4, aggression: 12, hunger: 10, injury: 1 },
+      suitableTraits: ['brave', 'brutal', 'loyal', 'disciplined', 'callous', 'vigilant']
     },
     cultist: {
       name: '教会的受众',
       baseMass: 4,
-      initialStates: { fear: 10, aggression: 8, hunger: 6, injury: 1 }
+      pressureModifier: 1.0,
+      initialStates: { fear: 10, aggression: 8, hunger: 6, injury: 1 },
+      suitableTraits: ['zealous', 'pious', 'fanatical', 'hopeful', 'fearful', 'devoted']
     }
   },
   
