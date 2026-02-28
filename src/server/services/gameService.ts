@@ -8,7 +8,8 @@
  * 3. 物理驱动 - 引力、质量、压强、Ω
  */
 
-import { GAME_CONFIG, PLAYER_CONFIG } from '../../config/GameConfig';
+import { GAME_CONFIG } from '../../config/GameConfig';
+import { getCurrentIdentities, getCurrentScript } from '../../config/ScriptConfig';
 import { OPENINGS } from '../constants/openings';
 import type { Game72Hours as Game, GameState, Player } from '../../game';
 import type { IdentityType, Player as IPlayer } from '../../../shared/types/index';
@@ -43,43 +44,62 @@ export function generateRequestId(): string {
  * 玩家是催化剂，不是主角
  */
 export function createPlayer(identityType: string): Player {
-  const availableIdentities = Object.keys(PLAYER_CONFIG.IDENTITIES);
-  const selectedIdentity = identityType || availableIdentities[Math.floor(Math.random() * availableIdentities.length)];
-  const identityConfig = PLAYER_CONFIG.IDENTITIES[selectedIdentity as keyof typeof PLAYER_CONFIG.IDENTITIES];
+  const identities = getCurrentIdentities();
+  const availableIdentityIds = identities.map(i => i.id);
+  
+  // 如果未指定身份，随机选择一个
+  const selectedIdentityId = identityType || availableIdentityIds[Math.floor(Math.random() * availableIdentityIds.length)];
+  
+  // 从剧本配置获取身份定义
+  const identityConfig = identities.find(i => i.id === selectedIdentityId);
+  if (!identityConfig) {
+    throw new Error(`Invalid identity: ${selectedIdentityId}`);
+  }
+  
+  // 从剧本获取AI提示词生成执念
+  const script = getCurrentScript();
+  const obsession = generateObsessionFromScript(selectedIdentityId, identityConfig.traits, script);
 
-  // 随机执念 - 这是玩家的核心驱动力
-  const randomObsession = PLAYER_CONFIG.OBSESSIONS[Math.floor(Math.random() * PLAYER_CONFIG.OBSESSIONS.length)];
-
-  // 随机特质 - 塑造玩家的"气场"
-  const numTraits = PLAYER_CONFIG.MIN_TRAITS + Math.floor(
-    Math.random() * (PLAYER_CONFIG.MAX_TRAITS - PLAYER_CONFIG.MIN_TRAITS + 1)
-  );
-  const shuffledTraits = [...PLAYER_CONFIG.TRAITS].sort(() => 0.5 - Math.random());
-  const selectedTraits = shuffledTraits.slice(0, numTraits).map(t => ({ id: t, type: 'personality' as const }));
+  // 使用身份定义的特质
+  const selectedTraits = identityConfig.traits.map(t => ({ id: t, type: 'personality' as const }));
 
   // 构建完整的 Identity
   const identity = {
-    id: selectedIdentity,
+    id: selectedIdentityId,
     name: identityConfig.name,
     baseMass: identityConfig.baseMass,
-    pressureModifier: identityConfig.pressureModifier,
-    initialStates: { ...identityConfig.initialStates },
-    suitableTraits: identityConfig.suitableTraits
+    // 默认值，可从剧本覆盖
+    pressureModifier: 1.0,
+    initialStates: { fear: 5, aggression: 5, hunger: 5, injury: 0 },
+    suitableTraits: identityConfig.traits
   };
 
   return {
     id: `player_${Date.now()}`,
     name: '你',
-    identityType: selectedIdentity as IdentityType,
+    identityType: selectedIdentityId as IdentityType,
     identity,
     traits: selectedTraits,
-    obsession: randomObsession,
-    states: { ...identityConfig.initialStates },
+    obsession: obsession,
+    states: { fear: 5, aggression: 5, hunger: 5, injury: 0 },
     position: { x: 0, y: 0 },
     bondedNPCs: [],
     inventory: [],
     memories: []
   } as unknown as Player;
+}
+
+/**
+ * 从剧本生成执念
+ */
+function generateObsessionFromScript(identityId: string, traits: string[], script: any): string {
+  // 使用剧本的AI提示词模板生成执念
+  const prompt = script.aiPrompts?.playerObsession
+    ?.replace('{identity}', identityId)
+    ?.replace('{traits}', traits.join(', '));
+  
+  // 如果剧本有定义，返回模板化的执念，否则返回默认
+  return prompt || `在${script.name}的乱世中生存下去`;
 }
 
 /**
@@ -96,9 +116,11 @@ export function createNPCs(): NPC[] {
  * 初始化物理场
  */
 export function createGameState(player: Player, npcs: NPC[]): GameState {
+  const script = getCurrentScript();
+  
   return {
     turn: 0,
-    datetime: new Date(GAME_CONFIG.START_DATE).toISOString(),
+    datetime: new Date(script.startDate || GAME_CONFIG.START_DATE).toISOString(),
     pressure: GAME_CONFIG.INITIAL_PRESSURE,
     omega: GAME_CONFIG.INITIAL_OMEGA,
     weather: 'night',
@@ -109,7 +131,7 @@ export function createGameState(player: Player, npcs: NPC[]): GameState {
     config: {
       MAX_TURNS: GAME_CONFIG.MAX_TURNS,
       GRID_SIZE: GAME_CONFIG.GRID_SIZE || 10,
-      START_DATE: GAME_CONFIG.START_DATE
+      START_DATE: script.startDate || GAME_CONFIG.START_DATE
     }
   };
 }

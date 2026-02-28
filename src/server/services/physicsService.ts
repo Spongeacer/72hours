@@ -9,6 +9,7 @@
  */
 
 import { GAME_CONFIG } from '../../config/GameConfig';
+import { getCurrentScript } from '../../config/ScriptConfig';
 import type { Player, NPC, GameState } from '../../game';
 
 // 引力常数
@@ -20,6 +21,17 @@ interface MassComponents {
   S: number;  // Story - 叙事质量
   K: number;  // Knot - 关系质量
   O: number;  // Object - 道具质量
+}
+
+/**
+ * 获取游戏配置（支持剧本覆盖）
+ */
+function getGameConfig() {
+  const script = getCurrentScript();
+  return {
+    ...GAME_CONFIG,
+    ...script.overrides
+  };
 }
 
 /**
@@ -143,14 +155,16 @@ export function selectSpotlightNPC(
  * 压强和Ω随时间演化
  */
 export function updatePhysics(state: GameState): void {
+  const config = getGameConfig();
+  
   // 压强增长 - 历史不可逆
   state.pressure = Math.min(
-    GAME_CONFIG.MAX_PRESSURE,
-    state.pressure + GAME_CONFIG.PRESSURE_INCREASE
+    config.MAX_PRESSURE,
+    state.pressure + config.PRESSURE_INCREASE
   );
   
   // Ω增长 - 历史必然性
-  let omegaIncrease = GAME_CONFIG.OMEGA_BASE_INCREASE;
+  let omegaIncrease = config.OMEGA_BASE_INCREASE;
   
   // 蝴蝶效应 - 随机扰动
   const butterflyEffect = Math.random();
@@ -161,11 +175,11 @@ export function updatePhysics(state: GameState): void {
   }
   
   // 高压加速Ω增长
-  if (state.pressure >= GAME_CONFIG.HIGH_PRESSURE_THRESHOLD) {
-    omegaIncrease *= GAME_CONFIG.OMEGA_HIGH_PRESSURE_MULTIPLIER;
+  if (state.pressure >= config.HIGH_PRESSURE_THRESHOLD) {
+    omegaIncrease *= config.OMEGA_HIGH_PRESSURE_MULTIPLIER;
   }
   
-  state.omega = Math.min(GAME_CONFIG.MAX_OMEGA, state.omega + omegaIncrease);
+  state.omega = Math.min(config.MAX_OMEGA, state.omega + omegaIncrease);
 }
 
 /**

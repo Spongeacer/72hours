@@ -4,7 +4,8 @@
  */
 
 import { Router } from 'express';
-import { GAME_CONFIG, PLAYER_CONFIG, AI_CONFIG } from '../../config/GameConfig';
+import { GAME_CONFIG, AI_CONFIG } from '../../config/GameConfig';
+import { getCurrentScript, getCurrentIdentities } from '../../config/ScriptConfig';
 import { createSuccessResponse } from '../utils/apiResponse';
 
 const router = Router();
@@ -15,6 +16,8 @@ const router = Router();
  */
 router.get('/', (_req, res) => {
   const hasApiKey = !!process.env.SILICONFLOW_API_KEY;
+  const script = getCurrentScript();
+  const identities = getCurrentIdentities();
   
   res.json(createSuccessResponse({
     hasApiKey,
@@ -25,14 +28,25 @@ router.get('/', (_req, res) => {
       description: 'AI模型',
       recommended: true
     })),
-    availableIdentities: Object.entries(PLAYER_CONFIG.IDENTITIES).map(([id, identity]) => ({
-      id,
+    // 从剧本配置获取身份列表
+    availableIdentities: identities.map(identity => ({
+      id: identity.id,
       name: identity.name,
-      description: `基础质量: ${identity.baseMass}`
+      description: identity.description,
+      baseMass: identity.baseMass,
+      traits: identity.traits
     })),
+    // 剧本信息
+    script: {
+      id: script.id,
+      name: script.name,
+      description: script.description,
+      year: script.year,
+      location: script.location
+    },
     gameConfig: {
       maxTurns: GAME_CONFIG.MAX_TURNS,
-      startDate: GAME_CONFIG.START_DATE
+      startDate: script.startDate || GAME_CONFIG.START_DATE
     }
   }));
 });
