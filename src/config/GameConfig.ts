@@ -74,31 +74,8 @@ export const GAME_CONFIG = {
   HOURS_PER_TURN: 2,
 
   // 初始时间：1851年1月8日 18:00（金田起义前72小时）
+  // 注意：可被剧本的 startDate 覆盖
   START_DATE: '1851-01-08T18:00:00',
-
-  // 初始压强 (10/20)
-  INITIAL_PRESSURE: 10,
-
-  // 初始Ω值 (1-20范围)
-  INITIAL_OMEGA: 2,
-
-  // 压强每回合增长 (+1.5)
-  PRESSURE_INCREASE: 1.5,
-
-  // Ω基础增长
-  OMEGA_BASE_INCREASE: 0.4,
-
-  // 高压阈值（超过则Ω加速）
-  HIGH_PRESSURE_THRESHOLD: 12,
-
-  // 高压时Ω增长倍率
-  OMEGA_HIGH_PRESSURE_MULTIPLIER: 1.02,
-
-  // 压强上限
-  MAX_PRESSURE: 20,
-
-  // Ω上限
-  MAX_OMEGA: 20,
 
   // 压强配置
   PRESSURE: {
@@ -407,29 +384,6 @@ export const PLAYER_CONFIG = {
   MIN_STATE_VALUE: 1
 };
 
-// ==================== 蝴蝶效应配置 ====================
-export const BUTTERFLY_EFFECT_CONFIG = {
-  // 基础线性增长（保证事件稳定触发）
-  BASE_OMEGA_INCREASE: 0.4,  // 每回合固定增长
-
-  // 玩家选择的额外加速（随机加成）
-  // 无额外加速概率
-  NO_BOOST_CHANCE: 0.3,
-
-  // 轻微加速概率
-  MINOR_BOOST_CHANCE: 0.3,
-
-  // 显著加速概率（剩余部分）
-  SIGNIFICANT_BOOST_CHANCE: 0.4,
-
-  // 加速值
-  BOOST_VALUES: {
-    NO_BOOST: 0,
-    MINOR: 0.1,
-    SIGNIFICANT: 0.2
-  }
-};
-
 // ==================== 服务器配置 ====================
 // 版本号从 package.json 读取
 import { version as VERSION } from '../../package.json';
@@ -446,6 +400,5 @@ export default {
   GAME: GAME_CONFIG,
   NPC: NPC_CONFIG,
   PLAYER: PLAYER_CONFIG,
-  BUTTERFLY: BUTTERFLY_EFFECT_CONFIG,
   SERVER: SERVER_CONFIG
 };

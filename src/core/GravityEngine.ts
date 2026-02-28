@@ -4,7 +4,7 @@
  */
 
 import { Position } from '../../shared/types';
-import { GRAVITY_CONFIG, GAME_CONFIG } from '../config/GameConfig';
+import { GRAVITY_CONFIG } from '../config/GameConfig';
 
 export interface GravityConfig {
   G: number;                    // 引力常数
@@ -13,11 +13,12 @@ export interface GravityConfig {
   MAX_FORCE: number;            // 最大引力限制
 }
 
+// 使用 GameConfig 中的 GRAVITY_CONFIG 作为默认值
 export const DEFAULT_GRAVITY_CONFIG: GravityConfig = {
-  G: 0.8,
-  PRESSURE_MULTIPLIER: 0.05,
-  MIN_DISTANCE: 0.1,
-  MAX_FORCE: 10.0
+  G: GRAVITY_CONFIG.G,
+  PRESSURE_MULTIPLIER: GRAVITY_CONFIG.PRESSURE_MULTIPLIER,
+  MIN_DISTANCE: GRAVITY_CONFIG.MIN_DISTANCE,
+  MAX_FORCE: GRAVITY_CONFIG.MAX_FORCE
 };
 
 export interface MassObject {

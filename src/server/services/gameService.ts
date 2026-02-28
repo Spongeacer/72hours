@@ -121,8 +121,8 @@ export function createGameState(player: Player, npcs: NPC[]): GameState {
   return {
     turn: 0,
     datetime: new Date(script.startDate || GAME_CONFIG.START_DATE).toISOString(),
-    pressure: GAME_CONFIG.INITIAL_PRESSURE,
-    omega: GAME_CONFIG.INITIAL_OMEGA,
+    pressure: GAME_CONFIG.PRESSURE.INITIAL,
+    omega: GAME_CONFIG.OMEGA.INITIAL,
     weather: 'night',
     player: player as unknown as IPlayer,
     npcs,

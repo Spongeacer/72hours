@@ -159,12 +159,12 @@ export function updatePhysics(state: GameState): void {
   
   // 压强增长 - 历史不可逆
   state.pressure = Math.min(
-    config.MAX_PRESSURE,
-    state.pressure + config.PRESSURE_INCREASE
+    config.PRESSURE.MAX,
+    state.pressure + config.PRESSURE.BASE_GROWTH
   );
   
   // Ω增长 - 历史必然性
-  let omegaIncrease = config.OMEGA_BASE_INCREASE;
+  let omegaIncrease = config.OMEGA.LINEAR_GROWTH;
   
   // 蝴蝶效应 - 随机扰动
   const butterflyEffect = Math.random();
@@ -175,11 +175,11 @@ export function updatePhysics(state: GameState): void {
   }
   
   // 高压加速Ω增长
-  if (state.pressure >= config.HIGH_PRESSURE_THRESHOLD) {
-    omegaIncrease *= config.OMEGA_HIGH_PRESSURE_MULTIPLIER;
+  if (state.pressure >= config.PRESSURE.EXPONENTIAL_THRESHOLD) {
+    omegaIncrease *= config.OMEGA.EXPONENTIAL_BASE;
   }
   
-  state.omega = Math.min(config.MAX_OMEGA, state.omega + omegaIncrease);
+  state.omega = Math.min(config.OMEGA.MAX, state.omega + omegaIncrease);
 }
 
 /**
