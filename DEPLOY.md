@@ -1,87 +1,139 @@
-# 72Hours 部署指南
+# 72Hours 阿里云 ECS 部署指南
 
-## 推荐平台：Railway（免费额度足够）
+## 服务器信息
+- **IP**: 149.129.214.203
+- **用户**: root
+- **密码**: Abcd1234!
+- **端口**: 80
 
-### 1. 注册 Railway
-- 访问 https://railway.app
-- 使用 GitHub 账号登录
+## 手动部署步骤
 
-### 2. 部署步骤
-
+### 1. 本地构建
 ```bash
-# 1. 确保代码已推送到 GitHub
-git push origin main
-
-# 2. 在 Railway  dashboard 中：
-#    - 点击 "New Project"
-#    - 选择 "Deploy from GitHub repo"
-#    - 选择你的仓库
-
-# 3. 添加环境变量
-#    在 Railway 的 Variables 中添加：
-#    - PORT=3000
-#    - SILICONFLOW_API_KEY=你的API密钥
-
-# 4. 部署完成
-#    Railway 会自动检测 package.json 并部署
-```
-
-### 3. 前端部署（Vercel）
-
-```bash
-# 1. 进入前端目录
-cd client
-
-# 2. 构建前端
+cd /root/.openclaw/workspace/72hours
 npm run build
-
-# 3. 部署到 Vercel
-vercel --prod
-
-# 4. 设置环境变量
-#    在 Vercel 中添加：
-#    - VITE_API_URL=https://你的railway域名.up.railway.app/api
 ```
 
-### 4. 其他可选平台
-
-| 平台 | 优点 | 缺点 |
-|------|------|------|
-| **Railway** | 免费额度充足，部署简单 | 需要信用卡验证 |
-| **Render** | 完全免费，无需信用卡 | 冷启动慢（30秒） |
-| **Fly.io** | 性能好，有免费额度 | 配置稍复杂 |
-| **Heroku** | 老牌平台，文档丰富 | 免费版已取消 |
-
----
-
-## 当前项目结构
-
-```
-72hours/
-├── src/                 # 后端源码
-│   ├── server/         # Express 服务器
-│   ├── game/           # 游戏逻辑
-│   ├── narrative/      # 叙事引擎
-│   └── config/         # 配置文件
-├── shared/             # 前后端共享类型
-├── client/             # 前端 React 应用
-├── package.json        # 后端依赖
-└── railway.json        # Railway 配置
+### 2. 打包项目
+```bash
+tar -czf 72hours-deploy.tar.gz \
+  --exclude='node_modules' \
+  --exclude='.git' \
+  --exclude='dist' \
+  .
 ```
 
-## 环境变量
+### 3. 上传到阿里云 ECS
+```bash
+scp -P 22 72hours-deploy.tar.gz root@149.129.214.203:/opt/
+```
 
-| 变量名 | 说明 | 必需 |
-|--------|------|------|
-| PORT | 服务器端口 | 否（默认3000） |
-| SILICONFLOW_API_KEY | AI API 密钥 | 是 |
-| CORS_ORIGIN | 允许的前端域名 | 否 |
+### 4. 登录 ECS 并部署
+```bash
+ssh root@149.129.214.203
 
----
+# 解压
+cd /opt
+mkdir -p 72hours
+tar -xzf 72hours-deploy.tar.gz -C 72hours
+cd 72hours
 
-## 注意事项
+# 安装依赖
+npm install --production
 
-1. **免费额度**：Railway 免费版每月有 $5 额度，足够个人使用
-2. **冷启动**：长时间无访问会休眠，首次访问需要 5-10 秒唤醒
-3. **数据持久化**：当前使用内存存储，重启后数据丢失
-4. **数据库**：如需持久化，可添加 PostgreSQL（Railway 有免费额度）
+# 配置环境变量
+cat > .env << 'EOF'
+SILICONFLOW_API_KEY=sk-loulnfpbpzkhwtkfzjeysrgkoflcagblvinuncxyajtiypbn
+DEFAULT_MODEL=Pro/MiniMaxAI/MiniMax-M2.1
+PORT=80
+NODE_ENV=production
+EOF
+
+# 确保端口是 80
+sed -i 's/PORT=3000/PORT=80/' .env
+```
+
+### 5. 安装 PM2（推荐）
+```bash
+npm install -g pm2
+
+# 启动服务
+pm2 start dist/src/server/index.js --name 72hours
+
+# 保存配置
+pm2 save
+pm2 startup
+```
+
+### 6. 或使用 nohup 启动
+```bash
+nohup node dist/src/server/index.js > server.log 2>&1 &
+```
+
+### 7. 配置防火墙
+```bash
+# 开放 80 端口
+ufw allow 80/tcp
+ufw reload
+
+# 检查端口
+netstat -tlnp | grep :80
+```
+
+### 8. 验证部署
+```bash
+# 健康检查
+curl http://149.129.214.203/health
+
+# 创建游戏测试
+curl -X POST http://149.129.214.203/api/games \
+  -H "Content-Type: application/json" \
+  -d '{"identity": "scholar"}'
+```
+
+## 阿里云安全组配置
+
+确保阿里云控制台的安全组规则允许 80 端口入站：
+1. 登录阿里云控制台
+2. 进入 ECS 实例管理
+3. 点击"安全组"
+4. 添加规则：
+   - 协议类型: TCP
+   - 端口范围: 80/80
+   - 授权对象: 0.0.0.0/0
+
+## 访问地址
+- **游戏**: http://149.129.214.203/
+- **健康检查**: http://149.129.214.203/health
+- **API**: http://149.129.214.203/api
+
+## 故障排查
+
+### 端口被占用
+```bash
+# 查找占用 80 端口的进程
+lsof -i :80
+
+# 杀死进程
+kill -9 <PID>
+```
+
+### 权限不足（80 端口需要 root）
+```bash
+# 使用 sudo 运行
+sudo node dist/src/server/index.js
+```
+
+### 查看日志
+```bash
+# PM2 日志
+pm2 logs 72hours
+
+# nohup 日志
+tail -f server.log
+```
+
+## 版本信息
+- **当前版本**: v2.0.1
+- **构建时间": 2026-02-28
+- **Node.js**: >= 20.0.0
