@@ -1,8 +1,9 @@
 import React from 'react';
 import { useGameStore } from '../../stores/gameStore';
-import { StatusBar } from './StatusBar';
+import { ScriptPanel } from './ScriptPanel';
+import { TurnInfoPanel } from './TurnInfoPanel';
 import { NarrativePanel } from './NarrativePanel';
-import { ChoicePanel } from './ChoicePanel';
+import { LogPanel } from './LogPanel';
 import { SaveMenu } from './SaveMenu';
 
 export const GamePanel: React.FC = () => {
@@ -13,8 +14,7 @@ export const GamePanel: React.FC = () => {
     currentNarrative, 
     currentChoices,
     currentResult,
-    makeChoice,
-    reset
+    makeChoice
   } = useGameStore();
 
   const [showSaveMenu, setShowSaveMenu] = React.useState(false);
@@ -22,61 +22,30 @@ export const GamePanel: React.FC = () => {
   if (!gameState || !player) return null;
 
   return (
-    <div className="space-y-6">
-      {/* 状态栏 */}
-      <StatusBar 
-        gameState={gameState}
-        player={player}
-        npcs={npcs}
-      />
+    <div className="h-[calc(100vh-120px)] grid grid-cols-[70%_30%] grid-rows-[20%_80%] gap-4">
+      {/* 左上：剧本信息 */}
+      <ScriptPanel />
 
-      {/* 叙事面板 */}
+      {/* 左下：剧情和选择 */}
       <NarrativePanel 
         narrative={currentNarrative}
+        choices={currentChoices}
+        onSelect={makeChoice}
         result={currentResult}
       />
 
-      {/* 选择面板 */}
-      {currentChoices.length > 0 && (
-        <ChoicePanel 
-          choices={currentChoices}
-          onSelect={makeChoice}
-        />
-      )}
+      {/* 右上：回合信息 */}
+      <TurnInfoPanel 
+        gameState={gameState}
+        player={player}
+        _npcs={npcs}
+      />
 
-      {/* 游戏结束 */}
-      {gameState.isGameOver && (
-        <div className="game-panel text-center">
-          <h3 className="text-2xl font-serif text-game-accent mb-4">
-            游戏结束
-          </h3>
-          <button 
-            onClick={reset}
-            className="game-btn"
-          >
-            重新开始
-          </button>
-        </div>
-      )}
-
-      {/* 操作按钮 */}
-      {!gameState.isGameOver && (
-        <div className="flex gap-4">
-          <button
-            onClick={() => setShowSaveMenu(true)}
-            className="game-btn flex-1"
-          >
-            存档 / 读档
-          </button>
-          
-          <button
-            onClick={reset}
-            className="game-btn flex-1 bg-game-border"
-          >
-            退出游戏
-          </button>
-        </div>
-      )}
+      {/* 右下：叙事日志 */}
+      <LogPanel 
+        narrative={currentNarrative}
+        _choices={currentChoices}
+      />
 
       {/* 存档菜单 */}
       {showSaveMenu && (

@@ -14,7 +14,23 @@
 
 @layer components {
   .game-panel {
-    @apply bg-game-panel border border-game-border p-6 mb-6;
+    @apply bg-game-panel border border-game-border rounded-lg overflow-hidden;
+  }
+  
+  .module-title {
+    @apply text-game-accent font-bold text-sm px-4 py-3 border-b border-game-border bg-game-bg/50;
+  }
+  
+  .info-row {
+    @apply flex justify-between items-center py-2 border-b border-game-border/30 last:border-0;
+  }
+  
+  .info-label {
+    @apply text-game-dim text-xs;
+  }
+  
+  .info-value {
+    @apply text-game-accent font-bold text-sm;
   }
   
   .game-btn {
@@ -34,9 +50,9 @@
   }
   
   .choice-btn {
-    @apply w-full p-5 bg-transparent border border-game-border text-left 
-           font-serif transition-all duration-300 
-           hover:border-game-muted hover:bg-opacity-10 hover:bg-white
+    @apply w-full p-4 bg-transparent border-2 border-game-border text-left 
+           font-serif transition-all duration-300 rounded
+           hover:border-game-accent hover:bg-game-accent/10
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
   
@@ -50,25 +66,50 @@
   }
   
   .narrative-text {
-    @apply bg-game-panel border border-game-border p-8 whitespace-pre-line 
-           leading-loose min-h-[100px] text-lg;
+    @apply whitespace-pre-line leading-loose text-game-text;
+  }
+  
+  /* 日志样式 */
+  .log-content {
+    @apply space-y-2;
+  }
+  
+  .log-entry {
+    @apply p-3 bg-game-bg/50 rounded border-l-4 border-game-border text-sm;
+  }
+  
+  .log-entry.turn-start {
+    @apply border-l-game-accent;
+  }
+  
+  .log-entry.choice-made {
+    @apply border-l-green-500;
+  }
+  
+  .log-turn {
+    @apply text-game-accent text-xs mb-1;
+  }
+  
+  .log-text {
+    @apply text-game-muted;
   }
 }
 
 /* 滚动条样式 */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3a3a3a;
-  border-radius: 4px;
+  background: #d4af37;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4a4a4a;
+  background: #b8941f;
 }
