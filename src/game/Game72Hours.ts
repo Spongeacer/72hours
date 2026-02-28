@@ -9,6 +9,7 @@ import { TurnManager } from './TurnManager';
 import { EmergentNarrativeEngine } from '../narrative/EmergentNarrativeEngine';
 import { GAME_CONFIG, NPC_CONFIG } from '../config/GameConfig';
 import { getCurrentScript, getCurrentIdentities } from '../config/ScriptConfig';
+import { spawn } from 'child_process';
 import {
   GameState,
   GameInitResult,
@@ -255,7 +256,6 @@ export class Game72Hours {
    */
   private async callAIForText(prompt: string): Promise<string> {
     try {
-      const { spawn } = require('child_process');
       const apiKey = this.apiKey || process.env.SILICONFLOW_API_KEY || '';
       
       const requestBody = JSON.stringify({
