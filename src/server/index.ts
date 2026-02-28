@@ -89,7 +89,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.get('/', (_req, res) => {
-  res.sendFile('dist/client/index.html', { root: '.' });
+  res.sendFile('public/index.html', { root: '.' });
 });
 
 app.use(notFoundHandler);

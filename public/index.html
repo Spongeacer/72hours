@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>72Hours - 太平天国生存游戏</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 10px;
+            overflow: hidden;
+        }
+        .main-container {
+            display: grid;
+            grid-template-columns: 70% 30%;
+            grid-template-rows: 20% 80%;
+            gap: 10px;
+            height: calc(100vh - 20px);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .module {
+            background: rgba(20, 20, 35, 0.85);
+            border-radius: 12px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 15px;
+            overflow: hidden;
+        }
+        .module-title {
+            color: #d4af37;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* 身份选择页面 */
+        .identity-select {
+            grid-column: 1 / -1;
+            grid-row: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .identity-select h1 {
+            color: #d4af37;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .identity-select .subtitle {
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+        .identity-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 900px;
+            width: 100%;
+        }
+        .identity-card {
+            background: rgba(0,0,0,0.3);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        .identity-card:hover {
+            border-color: #d4af37;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2);
+        }
+        .identity-card.selected {
+            border-color: #d4af37;
+            background: rgba(212, 175, 55, 0.1);
+        }
+        .identity-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .identity-name {
+            color: #d4af37;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .identity-desc {
+            color: #aaa;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        .identity-traits {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .trait-tag {
+            background: rgba(212, 175, 55, 0.2);
+            color: #d4af37;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+        }
+        .start-game-btn {
+            margin-top: 40px;
+            padding: 15px 50px;
+            background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);
+            border: none;
+            color: #1a1a2e;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .start-game-btn.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .start-game-btn.active:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+        }
+        
+        /* 左上：剧本信息 */
+        .script-info { grid-column: 1; grid-row: 1; }
+        .script-content { font-size: 0.85em; line-height: 1.6; color: #aaa; }
+        .script-content h4 { color: #d4af37; margin: 10px 0 5px 0; }
+        .character-list { list-style: none; }
+        .character-list li { padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .character-list li:before { content: "• "; color: #d4af37; }
+        
+        /* 左下：剧情和选择 */
+        .story-module { grid-column: 1; grid-row: 2; }
+        .story-content { height: calc(100% - 40px); display: flex; flex-direction: column; }
+        .narrative {
+            flex: 1;
+            font-size: 1.05em;
+            line-height: 1.8;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border-left: 4px solid #d4af37;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        .choices { display: flex; flex-direction: column; gap: 10px; max-height: 40%; }
+        .choice-btn {
+            padding: 12px 15px;
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            border: 2px solid #d4af37;
+            color: #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        .choice-btn:hover {
+            background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);
+            color: #1a1a2e;
+            transform: translateX(5px);
+        }
+        
+        /* 右上：回合信息 */
+        .turn-info { grid-column: 2; grid-row: 1; }
+        .turn-info-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .info-label { color: #888; font-size: 0.8em; }
+        .info-value { color: #d4af37; font-size: 1em; font-weight: bold; }
+        .ai-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; animation: pulse 2s infinite; }
+        .status-connected { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
+        .status-connecting { background: #fbbf24; box-shadow: 0 0 8px #fbbf24; }
+        .status-disconnected { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        /* 右下：叙事日志 */
+        .log-module { grid-column: 2; grid-row: 2; }
+        .log-content { height: calc(100% - 40px); overflow-y: auto; padding-right: 5px; }
+        .log-content::-webkit-scrollbar { width: 6px; }
+        .log-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 3px; }
+        .log-content::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 3px; }
+        .log-entry { padding: 10px; margin-bottom: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 6px; border-left: 3px solid #4a5568; }
+        .log-entry.turn-start { border-left-color: #d4af37; }
+        .log-entry.choice-made { border-left-color: #4ade80; }
+        .log-turn { color: #d4af37; font-size: 0.8em; margin-bottom: 5px; }
+        .log-text { font-size: 0.9em; line-height: 1.5; }
+        
+        .loading { text-align: center; color: #d4af37; padding: 20px; }
+        .error { color: #ef4444; text-align: center; padding: 20px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="main-container" id="main-container">
+        <!-- 身份选择页面 -->
+        <div class="module identity-select" id="identity-select">
+            <h1>72Hours</h1>
+            <p class="subtitle">选择你的身份，在太平天国乱世中生存72小时</p>
+            
+            <div class="identity-grid">
+                <div class="identity-card" data-identity="scholar" onclick="selectIdentity('scholar')">
+                    <div class="identity-icon">📚</div>
+                    <div class="identity-name">穷酸书生</div>
+                    <div class="identity-desc">读过几本圣贤书，手无缚鸡之力，但知晓天下大势。在乱世中，知识或许比武力更有用。</div>
+                    <div class="identity-traits">
+                        <span class="trait-tag">聪慧</span>
+                        <span class="trait-tag">体弱</span>
+                        <span class="trait-tag">见识广</span>
+                    </div>
+                </div>
+                
+                <div class="identity-card" data-identity="farmer" onclick="selectIdentity('farmer')">
+                    <div class="identity-icon">🌾</div>
+                    <div class="identity-name">憨厚农民</div>
+                    <div class="identity-desc">一辈子面朝黄土背朝天，身强力壮，熟悉山野。乱世之中，能吃苦的人才能活下去。</div>
+                    <div class="identity-traits">
+                        <span class="trait-tag">强壮</span>
+                        <span class="trait-tag">朴实</span>
+                        <span class="trait-tag">野外生存</span>
+                    </div>
+                </div>
+                
+                <div class="identity-card" data-identity="merchant" onclick="selectIdentity('merchant')">
+                    <div class="identity-icon">💰</div>
+                    <div class="identity-name">精明商人</div>
+                    <div class="identity-desc">走南闯北，见人说人话见鬼说鬼话。虽然没什么武力，但有钱能使鬼推磨。</div>
+                    <div class="identity-traits">
+                        <span class="trait-tag">口才</span>
+                        <span class="trait-tag">机敏</span>
+                        <span class="trait-tag">人脉广</span>
+                    </div>
+                </div>
+                
+                <div class="identity-card" data-identity="soldier" onclick="selectIdentity('soldier')">
+                    <div class="identity-icon">⚔️</div>
+                    <div class="identity-name">退伍老兵</div>
+                    <div class="identity-desc">曾在绿营当过差，见过血，会使刀弄枪。这乱世，或许正是你大展拳脚的时候。</div>
+                    <div class="identity-traits">
+                        <span class="trait-tag">武艺</span>
+                        <span class="trait-tag">果敢</span>
+                        <span class="trait-tag">战术</span>
+                    </div>
+                </div>
+                
+                <div class="identity-card" data-identity="doctor" onclick="selectIdentity('doctor')">
+                    <div class="identity-icon">🌿</div>
+                    <div class="identity-name">江湖郎中</div>
+                    <div class="identity-desc">懂些草药医理，能治病救人。乱世之中，医生的价值比黄金还珍贵。</div>
+                    <div class="identity-traits">
+                        <span class="trait-tag">医术</span>
+                        <span class="trait-tag">仁心</span>
+                        <span class="trait-tag">辨识草药</span>
+                    </div>
+                </div>
+                
+                <div class="identity-card" data-identity="bandit" onclick="selectIdentity('bandit')">
+                    <div class="identity-icon">🗡️</div>
+                    <div class="identity-name">绿林好汉</div>
+                    <div class="identity-desc">落草为寇，劫富济贫。熟悉山林地形，与各路豪杰有来往。官府通缉，百姓敬畏。</div>
+                    <div class="identity-traits">
+                        <span class="trait-tag">武艺</span>
+                        <span class="trait-tag">江湖人脉</span>
+                        <span class="trait-tag">野外生存</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="start-game-btn" id="start-btn" onclick="startGame()">开始游戏</button>
+        </div>
+
+        <!-- 游戏主界面（初始隐藏） -->
+        <!-- 左上：剧本信息 -->
+        <div class="module script-info hidden" id="script-module">
+            <div class="module-title">🎭 剧本信息</div>
+            <div class="script-content">
+                <p><strong style="color:#d4af37;">太平天国：金田起义</strong></p>
+                <p style="margin-top:8px;">1851年，洪秀全在广西金田村发动起义，建立太平天国。你身处乱世，必须在72小时内生存下去。</p>
+                
+                <h4>已出场人物</h4>
+                <ul class="character-list" id="character-list">
+                    <li>教书先生 - 村中读书人，知晓天下事</li>
+                    <li>洪秀全 - 拜上帝会教主</li>
+                    <li>杨秀清 - 东王，军事统帅</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 左下：剧情和选择 -->
+        <div class="module story-module hidden" id="story-module">
+            <div class="module-title">📖 当前剧情</div>
+            <div class="story-content" id="story-container">
+                <div class="loading">正在加载...</div>
+            </div>
+        </div>
+
+        <!-- 右上：回合信息 -->
+        <div class="module turn-info hidden" id="turn-info-module">
+            <div class="module-title">📊 回合信息</div>
+            <div class="turn-info-content">
+                <div class="info-row">
+                    <span class="info-label">回合</span>
+                    <span class="info-value" id="turn-number">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">日期</span>
+                    <span class="info-value" id="game-date">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">环境压强</span>
+                    <span class="info-value" id="pressure">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">AI模型</span>
+                    <div class="ai-status">
+                        <div class="status-dot status-connecting" id="ai-status-dot"></div>
+                        <span class="info-value" id="ai-model">连接中...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右下：叙事日志 -->
+        <div class="module log-module hidden" id="log-module">
+            <div class="module-title">📜 叙事日志</div>
+            <div class="log-content" id="log-container">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gameId = null;
+        let currentTurn = 0;
+        let selectedIdentity = null;
+        let identityNames = {
+            scholar: '穷酸书生',
+            farmer: '憨厚农民',
+            merchant: '精明商人',
+            soldier: '退伍老兵',
+            doctor: '江湖郎中',
+            bandit: '绿林好汉'
+        };
+        
+        async function checkAIStatus() {
+            const statusDot = document.getElementById('ai-status-dot');
+            const aiModel = document.getElementById('ai-model');
+            if (!statusDot || !aiModel) return;
+            
+            try {
+                const response = await fetch('/health');
+                if (response.ok) {
+                    statusDot.className = 'status-dot status-connected';
+                    aiModel.textContent = 'MiniMax-M2.1';
+                } else {
+                    throw new Error('Health check failed');
+                }
+            } catch (error) {
+                statusDot.className = 'status-dot status-disconnected';
+                aiModel.textContent = '未连接';
+            }
+        }
+        
+        checkAIStatus();
+        setInterval(checkAIStatus, 30000);
+        
+        function selectIdentity(identity) {
+            selectedIdentity = identity;
+            document.querySelectorAll('.identity-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-identity="${identity}"]`).classList.add('selected');
+            document.getElementById('start-btn').classList.add('active');
+        }
+
+        async function startGame() {
+            if (!selectedIdentity) return;
+            
+            document.getElementById('identity-select').classList.add('hidden');
+            document.getElementById('script-module').classList.remove('hidden');
+            document.getElementById('story-module').classList.remove('hidden');
+            document.getElementById('turn-info-module').classList.remove('hidden');
+            document.getElementById('log-module').classList.remove('hidden');
+            
+            document.getElementById('story-container').innerHTML = '<div class="loading">正在初始化游戏...请稍候</div>';
+            
+            try {
+                const response = await fetch('/api/games', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identity: selectedIdentity })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    gameId = data.data.gameId;
+                    addLog('游戏开始', `你选择了身份：${identityNames[selectedIdentity]}`, 'turn-start');
+                    await loadTurn();
+                } else {
+                    document.getElementById('story-container').innerHTML = '<div class="error">游戏初始化失败</div>';
+                }
+            } catch (error) {
+                document.getElementById('story-container').innerHTML = '<div class="error">网络错误，请刷新重试</div>';
+            }
+        }
+
+        async function loadTurn() {
+            const container = document.getElementById('story-container');
+            const statusDot = document.getElementById('ai-status-dot');
+            const aiModel = document.getElementById('ai-model');
+            
+            container.innerHTML = '<div class="loading">AI 正在生成叙事...请稍候（约5-10秒）</div>';
+            statusDot.className = 'status-dot status-connecting';
+            aiModel.textContent = '生成中...';
+            
+            try {
+                const response = await fetch(`/api/games/${gameId}/turns`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentTurn = data.data.turn;
+                    
+                    document.getElementById('turn-number').textContent = `第 ${currentTurn} 回合`;
+                    document.getElementById('game-date').textContent = new Date().toLocaleDateString('zh-CN');
+                    document.getElementById('pressure').textContent = '2.5 Ω';
+                    
+                    statusDot.className = 'status-dot status-connected';
+                    aiModel.textContent = 'MiniMax-M2.1';
+                    
+                    addLog(`第 ${currentTurn} 回合`, data.data.narrative, 'turn-start');
+                    
+                    renderTurn(data.data);
+                } else {
+                    container.innerHTML = '<div class="error">加载回合失败</div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="error">网络错误，请刷新重试</div>';
+                statusDot.className = 'status-dot status-disconnected';
+                aiModel.textContent = '未连接';
+            }
+        }
+
+        function renderTurn(data) {
+            const container = document.getElementById('story-container');
+            
+            let choicesHtml = '';
+            if (data.choices && data.choices.length > 0) {
+                choicesHtml = '<div class="choices">';
+                data.choices.forEach((choice, index) => {
+                    choicesHtml += `<button class="choice-btn" onclick="makeChoice(${index}, '${choice.text.replace(/'/g, "\\'")}')">${choice.text}</button>`;
+                });
+                choicesHtml += '</div>';
+            }
+            
+            container.innerHTML = `
+                <div class="narrative">${data.narrative}</div>
+                ${choicesHtml}
+            `;
+        }
+
+        async function makeChoice(choiceIndex, choiceText) {
+            addLog('', `你选择了：${choiceText}`, 'choice-made');
+            await loadTurn();
+        }
+        
+        function addLog(turn, text, type) {
+            const logContainer = document.getElementById('log-container');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            
+            let html = '';
+            if (turn) {
+                html += `<div class="log-turn">${turn}</div>`;
+            }
+            html += `<div class="log-text">${text}</div>`;
+            
+            entry.innerHTML = html;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>
