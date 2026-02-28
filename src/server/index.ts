@@ -25,17 +25,7 @@ app.set('trust proxy', 1);
 // ==================== 中间件 ====================
 
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrcAttr: ["'unsafe-inline'"],  // 允许内联事件处理器
-      imgSrc: ["'self'", "data:", "https:"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      connectSrc: ["'self'", "https://api.siliconflow.cn"],
-    },
-  },
+  contentSecurityPolicy: false,  // 临时禁用 CSP 测试
 }));
 
 app.use(cors({

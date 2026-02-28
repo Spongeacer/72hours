@@ -232,7 +232,7 @@
             <p class="subtitle">选择你的身份，在太平天国乱世中生存72小时</p>
             
             <div class="identity-grid">
-                <div class="identity-card" data-identity="scholar" onclick="selectIdentity('scholar')">
+                <div class="identity-card" data-identity="scholar">
                     <div class="identity-icon">📚</div>
                     <div class="identity-name">穷酸书生</div>
                     <div class="identity-desc">读过几本圣贤书，手无缚鸡之力，但知晓天下大势。在乱世中，知识或许比武力更有用。</div>
@@ -243,7 +243,7 @@
                     </div>
                 </div>
                 
-                <div class="identity-card" data-identity="farmer" onclick="selectIdentity('farmer')">
+                <div class="identity-card" data-identity="farmer">
                     <div class="identity-icon">🌾</div>
                     <div class="identity-name">憨厚农民</div>
                     <div class="identity-desc">一辈子面朝黄土背朝天，身强力壮，熟悉山野。乱世之中，能吃苦的人才能活下去。</div>
@@ -254,7 +254,7 @@
                     </div>
                 </div>
                 
-                <div class="identity-card" data-identity="merchant" onclick="selectIdentity('merchant')">
+                <div class="identity-card" data-identity="merchant">
                     <div class="identity-icon">💰</div>
                     <div class="identity-name">精明商人</div>
                     <div class="identity-desc">走南闯北，见人说人话见鬼说鬼话。虽然没什么武力，但有钱能使鬼推磨。</div>
@@ -265,7 +265,7 @@
                     </div>
                 </div>
                 
-                <div class="identity-card" data-identity="soldier" onclick="selectIdentity('soldier')">
+                <div class="identity-card" data-identity="soldier">
                     <div class="identity-icon">⚔️</div>
                     <div class="identity-name">退伍老兵</div>
                     <div class="identity-desc">曾在绿营当过差，见过血，会使刀弄枪。这乱世，或许正是你大展拳脚的时候。</div>
@@ -276,7 +276,7 @@
                     </div>
                 </div>
                 
-                <div class="identity-card" data-identity="doctor" onclick="selectIdentity('doctor')">
+                <div class="identity-card" data-identity="doctor">
                     <div class="identity-icon">🌿</div>
                     <div class="identity-name">江湖郎中</div>
                     <div class="identity-desc">懂些草药医理，能治病救人。乱世之中，医生的价值比黄金还珍贵。</div>
@@ -287,7 +287,7 @@
                     </div>
                 </div>
                 
-                <div class="identity-card" data-identity="bandit" onclick="selectIdentity('bandit')">
+                <div class="identity-card" data-identity="bandit">
                     <div class="identity-icon">🗡️</div>
                     <div class="identity-name">绿林好汉</div>
                     <div class="identity-desc">落草为寇，劫富济贫。熟悉山林地形，与各路豪杰有来往。官府通缉，百姓敬畏。</div>
@@ -299,7 +299,7 @@
                 </div>
             </div>
             
-            <button class="start-game-btn" id="start-btn" onclick="startGame()">开始游戏</button>
+            <button class="start-game-btn" id="start-btn">开始游戏</button>
         </div>
 
         <!-- 游戏主界面（初始隐藏） -->
@@ -424,6 +424,29 @@
         
         // 调试：确认函数已定义
         console.log('selectIdentity 函数已定义:', typeof selectIdentity);
+        
+        // 添加事件监听器到身份卡片
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM 已加载，添加事件监听器');
+            document.querySelectorAll('.identity-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const identity = this.getAttribute('data-identity');
+                    console.log('点击身份卡片:', identity);
+                    selectIdentity(identity);
+                });
+            });
+            
+            // 添加开始按钮事件监听器
+            const startBtn = document.getElementById('start-btn');
+            if (startBtn) {
+                startBtn.addEventListener('click', function() {
+                    console.log('点击开始按钮');
+                    startGame();
+                });
+            }
+            
+            console.log('事件监听器添加完成');
+        });
 
         async function startGame() {
             if (!selectedIdentity) return;
