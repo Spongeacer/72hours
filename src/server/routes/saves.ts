@@ -148,7 +148,7 @@ router.post('/import', validateRequest({ body: importSaveSchema }), (req, res) =
       error: null,
       meta: { timestamp: new Date().toISOString(), requestId: randomUUID() }
     });
-  } catch (error) {
+  } catch {
     res.status(400).json({
       success: false,
       data: null,
