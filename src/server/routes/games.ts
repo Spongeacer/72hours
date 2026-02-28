@@ -176,10 +176,7 @@ function processChoice(
     result: '你的选择已被记录，故事继续流淌...'
   });
   
-  // 返回结果
-
-  // 增加回合数并生成新回合
-  state.turn += 1;
+  // 返回结果并生成新回合（不重复递增回合数）
   return generateNewTurn(game, requestId, res);
 }
 
@@ -281,15 +278,14 @@ router.get('/:id/ai-prompt', (req, res) => {
     ));
   }
 
-  // 构建AI提示词
+  // 构建AI提示词（不包含敏感信息）
   const { player, turn, pressure, omega } = game.state;
   const prompt = `当前回合: ${turn}\n玩家身份: ${player.identity.name}\n玩家特质: ${player.traits.map((t: any) => t.id).join(', ')}\n玩家状态: 恐惧${player.states.fear}, 攻击性${player.states.aggression}, 饥饿${player.states.hunger}, 伤势${player.states.injury}\n环境: 压强${pressure}, Ω值${omega}\n\n请基于以上情境生成一段叙事。`;
 
   res.json(createSuccessResponse({
     prompt,
-    model: game.model || 'Pro/MiniMaxAI/MiniMax-M2.5',
-    apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
-    provider: 'siliconflow'
+    model: game.model || 'Pro/MiniMaxAI/MiniMax-M2.5'
+    // 注意：不返回 apiUrl 和 provider，避免泄露配置信息
   }, requestId));
 });
 
