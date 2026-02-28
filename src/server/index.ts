@@ -96,7 +96,7 @@ app.use(errorHandler);
 
 // ==================== 启动 ====================
 
-app.listen(PORT, () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`72Hours Server v2.0.0 running on port ${PORT}`);
   console.log(`API Endpoint: http://localhost:${PORT}/api`);
   console.log(`Health Check: http://localhost:${PORT}/health`);
