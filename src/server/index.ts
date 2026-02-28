@@ -14,7 +14,10 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 dotenv.config();
 
 const app: Application = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
+
+// 信任代理（解决 rate-limit 的 X-Forwarded-For 警告）
+app.set('trust proxy', 1);
 
 // ==================== 中间件 ====================
 
