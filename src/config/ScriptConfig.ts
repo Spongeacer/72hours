@@ -8,6 +8,14 @@
  */
 
 // ==================== 剧本类型定义 ====================
+export interface Identity {
+  id: string;
+  name: string;
+  description: string;
+  baseMass: number;
+  traits: string[];
+}
+
 export interface Script {
   id: string;
   name: string;
@@ -30,6 +38,9 @@ export interface Script {
   // 关键历史人物/势力
   historicalFigures: string[];
   factions?: string[];  // 可选：势力阵营
+  
+  // 玩家身份选项
+  identities: Identity[];
   
   // AI提示词模板
   aiPrompts: {
@@ -66,6 +77,52 @@ export const SCRIPTS: Record<string, Script> = {
     historicalFigures: ['洪秀全', '杨秀清', '萧朝贵', '劳崇光', '周凤歧', '李殿元'],
     factions: ['拜上帝会', '清军', '村民', '流民'],
     
+    // 剧本特有的身份选项
+    identities: [
+      {
+        id: 'scholar',
+        name: '落第书生',
+        description: '科举失利，心怀天下',
+        baseMass: 3,
+        traits: ['calm', 'curious', 'anxious']
+      },
+      {
+        id: 'farmer',
+        name: '失地农民',
+        description: '土地被夺，流离失所',
+        baseMass: 2,
+        traits: ['hardworking', 'fearful', 'resilient']
+      },
+      {
+        id: 'merchant',
+        name: '行商',
+        description: '走南闯北，消息灵通',
+        baseMass: 2,
+        traits: ['cunning', 'greedy', 'observant']
+      },
+      {
+        id: 'soldier',
+        name: '逃兵',
+        description: '不堪军饷，逃离军营',
+        baseMass: 3,
+        traits: ['brave', 'violent', 'loyal']
+      },
+      {
+        id: 'doctor',
+        name: '游方郎中',
+        description: '悬壶济世，见多识广',
+        baseMass: 2,
+        traits: ['compassionate', 'calm', 'knowledgeable']
+      },
+      {
+        id: 'bandit',
+        name: '山匪',
+        description: '占山为王，劫富济贫',
+        baseMass: 3,
+        traits: ['aggressive', 'cunning', 'fearless']
+      }
+    ],
+    
     aiPrompts: {
       npcName: '生成一个1851年中国农村NPC的名字，要求：1）符合当时的历史背景；2）体现人物身份特征；3）简洁有力；4）只返回名字，不要解释',
       npcObsession: '生成一个NPC的执念，要求：1）体现人物性格和处境；2）与1851年金田起义的历史背景相关；3）简洁有力（15字以内）；4）只返回执念文本，不要解释',
@@ -86,9 +143,33 @@ export const CURRENT_SCRIPT = 'taiping';
 // ==================== 便捷访问 ====================
 export const getCurrentScript = (): Script => SCRIPTS[CURRENT_SCRIPT];
 
+/**
+ * 获取当前剧本的身份列表
+ */
+export const getCurrentIdentities = (): Identity[] => {
+  return getCurrentScript().identities;
+};
+
+/**
+ * 获取身份ID列表（用于验证）
+ */
+export const getCurrentIdentityIds = (): string[] => {
+  return getCurrentScript().identities.map(i => i.id);
+};
+
+/**
+ * 验证身份是否有效
+ */
+export const isValidIdentity = (identityId: string): boolean => {
+  return getCurrentIdentityIds().includes(identityId);
+};
+
 // 导出默认
 export default {
   CURRENT_SCRIPT,
   SCRIPTS,
-  getCurrentScript
+  getCurrentScript,
+  getCurrentIdentities,
+  getCurrentIdentityIds,
+  isValidIdentity
 };

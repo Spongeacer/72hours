@@ -3,6 +3,7 @@
  */
 
 import { randomUUID } from 'crypto';
+import { getCurrentIdentityIds } from '../../config/ScriptConfig';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -92,9 +93,10 @@ export function validateChoice(choice: any): { valid: boolean; error?: string } 
 
 /**
  * 验证身份类型
+ * 从当前剧本配置中动态获取有效身份列表
  */
 export function validateIdentity(identity: string): boolean {
-  return ['scholar', 'farmer', 'merchant', 'soldier', 'doctor', 'bandit'].includes(identity);
+  return getCurrentIdentityIds().includes(identity);
 }
 
 /**

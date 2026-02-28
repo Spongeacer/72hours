@@ -14,6 +14,7 @@ import { validateRequest } from '../middleware/validateRequest';
 import { createSuccessResponse, createErrorResponse } from '../utils/apiResponse';
 import { Game72Hours } from '../../game/Game72Hours';
 import type { Game72Hours as Game } from '../../game';
+import { getCurrentIdentityIds } from '../../config/ScriptConfig';
 import {
   generateGameId,
   generateRequestId,
@@ -24,12 +25,15 @@ import {
 const router = Router();
 const games = new Map<string, Game>();
 
-// 请求验证Schema
-const createGameSchema = z.object({
-  identity: z.enum(['scholar', 'farmer', 'merchant', 'soldier', 'doctor', 'bandit']).optional(),
-  model: z.string().optional(),
-  apiKey: z.string().optional()
-});
+// 动态获取身份验证schema
+const getCreateGameSchema = () => {
+  const identityIds = getCurrentIdentityIds();
+  return z.object({
+    identity: z.enum(identityIds as [string, ...string[]]).optional(),
+    model: z.string().optional(),
+    apiKey: z.string().optional()
+  });
+};
 
 const executeTurnSchema = z.object({
   choice: z.object({
@@ -44,7 +48,7 @@ const executeTurnSchema = z.object({
  * 
  * 玩家作为催化剂进入金田村
  */
-router.post('/', validateRequest({ body: createGameSchema }), async (req, res) => {
+router.post('/', validateRequest({ body: getCreateGameSchema() }), async (req, res) => {
   const requestId = generateRequestId();
   
   try {
