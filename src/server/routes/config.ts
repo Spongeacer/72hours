@@ -4,7 +4,7 @@
  */
 
 import { Router } from 'express';
-import { GAME_CONFIG, AI_CONFIG } from '../../config/GameConfig';
+import { GAME_CONFIG, AI_CONFIG, SERVER_CONFIG } from '../../config/GameConfig';
 import { getCurrentScript, getCurrentIdentities } from '../../config/ScriptConfig';
 import { createSuccessResponse } from '../utils/apiResponse';
 
@@ -47,7 +47,21 @@ router.get('/', (_req, res) => {
     gameConfig: {
       maxTurns: GAME_CONFIG.MAX_TURNS,
       startDate: script.startDate || GAME_CONFIG.START_DATE
-    }
+    },
+    // 版本信息
+    version: SERVER_CONFIG.VERSION
+  }));
+});
+
+/**
+ * 获取版本信息
+ * GET /api/config/version
+ */
+router.get('/version', (_req, res) => {
+  res.json(createSuccessResponse({
+    version: SERVER_CONFIG.VERSION,
+    server: '72hours-server',
+    timestamp: new Date().toISOString()
   }));
 });
 
