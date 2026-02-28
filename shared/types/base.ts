@@ -2,8 +2,8 @@
  * 基础类型定义
  */
 
-// 身份类型
-export type IdentityType = 'scholar' | 'landlord' | 'soldier' | 'cultist';
+// 身份类型（6个新身份）
+export type IdentityType = 'scholar' | 'farmer' | 'merchant' | 'soldier' | 'doctor' | 'bandit';
 
 // 天气类型
 export type WeatherType = 'clear' | 'rain' | 'fog' | 'night';

@@ -5,6 +5,7 @@
 import { Agent, AgentStates } from './Agent';
 import { GameState, Trait, Item } from '../../shared/types';
 import { GAME_CONFIG } from '../config/GameConfig';
+import { getCurrentScript } from '../config/ScriptConfig';
 
 export interface NPCData {
   id?: string;
@@ -104,13 +105,15 @@ export class NPC extends Agent {
       })
       .join('、');
 
+    const script = getCurrentScript();
+    
     return {
       type: 'npc',
       identity: this.name,
       identityName: this.name,
       traits: personalityTraits,
       traitsDesc: traitsDesc,
-      prompt: `生成一个NPC「${this.name}」的执念，该角色具有以下特质：${traitsDesc}。身份是${this.isBonded ? '玩家的关联NPC' : '普通村民'}，时代背景是1851年金田村。执念应该简洁有力（15字以内），体现角色特点。`
+      prompt: script.aiPrompts.npcObsession
     };
   }
 

@@ -10,6 +10,7 @@ import {
   Player as IPlayer 
 } from '../../shared/types';
 import { GAME_CONFIG, PLAYER_CONFIG } from '../config/GameConfig';
+import { getCurrentScript } from '../config/ScriptConfig';
 
 export interface ObsessionData {
   type: 'dynamic';
@@ -81,13 +82,17 @@ export class Player extends Agent {
       })
       .join('、');
     
+    const script = getCurrentScript();
+    
     this.obsession = {
       type: 'dynamic',
       identity: this.identityType,
       identityName: this.identity.name,
       traits: personalityTraits,
       traitsDesc: traitsDesc,
-      prompt: `生成一个${this.identity.name}的执念，该角色具有以下特质：${traitsDesc}。执念应该体现这些特质，与1851年金田起义的历史背景相关，简洁有力（15字以内）。`
+      prompt: script.aiPrompts.playerObsession
+        .replace('{identity}', this.identity.name)
+        .replace('{traits}', traitsDesc)
     };
     
     return this.obsession as ObsessionData;

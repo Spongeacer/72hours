@@ -26,7 +26,7 @@ const games = new Map<string, Game>();
 
 // 请求验证Schema
 const createGameSchema = z.object({
-  identity: z.enum(['scholar', 'landlord', 'soldier', 'cultist']).optional(),
+  identity: z.enum(['scholar', 'farmer', 'merchant', 'soldier', 'doctor', 'bandit']).optional(),
   model: z.string().optional(),
   apiKey: z.string().optional()
 });
@@ -177,18 +177,10 @@ function processChoice(
   });
   
   // 返回结果
-  res.json(createSuccessResponse({
-    turn: state.turn,
-    result: '你的选择已被记录，故事继续流淌...',
-    state: {
-      turn: state.turn,
-      datetime: state.datetime,
-      pressure: state.pressure,
-      omega: state.omega,
-      weather: state.weather,
-      isGameOver: state.isGameOver
-    }
-  }, requestId));
+
+  // 增加回合数并生成新回合
+  state.turn += 1;
+  return generateNewTurn(game, requestId, res);
 }
 
 /**

@@ -8,6 +8,7 @@ import { NPC } from './NPC';
 import { TurnManager } from './TurnManager';
 import { EmergentNarrativeEngine } from '../narrative/EmergentNarrativeEngine';
 import { GAME_CONFIG, PLAYER_CONFIG, NPC_CONFIG } from '../config/GameConfig';
+import { getCurrentScript } from '../config/ScriptConfig';
 import {
   GameState,
   GameInitResult,
@@ -226,14 +227,15 @@ export class Game72Hours {
     for (const npc of unlockedNPCs) {
       try {
         // 生成名字
-        const namePrompt = `${NPC_CONFIG.NAME_GENERATION_PROMPT}\n角色: ${(npc as any).template?.role || '村民'}\n描述: ${(npc as any).template?.description || '普通村民'}`;
+        const script = getCurrentScript();
+        const namePrompt = `${script.aiPrompts.npcName}\n角色: ${(npc as any).template?.role || '村民'}\n描述: ${(npc as any).template?.description || '普通村民'}`;
         const generatedName = await this.callAIForText(namePrompt);
         if (generatedName) {
           npc.name = generatedName.trim();
         }
 
         // 生成执念
-        const obsessionPrompt = `${NPC_CONFIG.OBSESSION_GENERATION_PROMPT}\n角色: ${npc.name}\n描述: ${(npc as any).template?.description || '普通村民'}\n特质: ${npc.traits.map(t => t.id).join(', ')}`;
+        const obsessionPrompt = `${script.aiPrompts.npcObsession}\n角色: ${npc.name}\n描述: ${(npc as any).template?.description || '普通村民'}\n特质: ${npc.traits.map(t => t.id).join(', ')}`;
         const generatedObsession = await this.callAIForText(obsessionPrompt);
         if (generatedObsession) {
           (npc as any).obsession = generatedObsession.trim();
@@ -350,26 +352,29 @@ export class Game72Hours {
    * 创建精英NPC
    */
   private createEliteNPCs(): void {
+    const script = getCurrentScript();
+    const historicalFigures = script.historicalFigures;
+    
     const eliteNPCs = [
       {
-        id: 'hong_xiuquan',
-        name: '洪秀全',
+        id: 'historical_figure_1',
+        name: historicalFigures[0] || '历史人物1',
         baseMass: 10,
         traits: [{ id: 'zealous', type: 'personality' as const }, { id: 'ambitious', type: 'personality' as const }],
         isElite: true,
         isUnlocked: false
       },
       {
-        id: 'yang_xiuqing',
-        name: '杨秀清',
+        id: 'historical_figure_2',
+        name: historicalFigures[1] || '历史人物2',
         baseMass: 9,
         traits: [{ id: 'deceitful', type: 'personality' as const }, { id: 'ambitious', type: 'personality' as const }],
         isElite: true,
         isUnlocked: false
       },
       {
-        id: 'feng_yunshan',
-        name: '冯云山',
+        id: 'historical_figure_3',
+        name: historicalFigures[2] || '历史人物3',
         baseMass: 7,
         traits: [{ id: 'pious', type: 'personality' as const }, { id: 'diligent', type: 'personality' as const }],
         isElite: true,
@@ -426,28 +431,46 @@ export class Game72Hours {
       .filter(t => t.type === 'personality')
       .map(t => t.id);
     const traitsDesc = personalityTraits.slice(0, 2).join(' · ') || '普通人';
+    
+    const script = getCurrentScript();
+    const openingContext = script.opening;
 
     const openings: Record<IdentityType, string> = {
       scholar: `> 你被一阵奇怪的声音惊醒。
 > 不是鸡鸣，是人在低语，很多声音叠在一起，像潮水。
 > 你走到窗边，看到远处有火光，不是灯笼的颜色。
-> 这是金田村，1851年1月8日，凌晨。
+> ${openingContext}
 > 你是一个读书人（${traitsDesc}），不知道历史已经开始了。`,
 
-      landlord: `> 玉扳指在指节上转了三圈，这是你紧张时的习惯。
+      farmer: `> 你被一阵奇怪的声音惊醒。
+> 不是鸡鸣，是人在低语，很多声音叠在一起，像潮水。
+> 你走到窗边，看到远处有火光，不是灯笼的颜色。
+> ${openingContext}
+> 你是一个农民（${traitsDesc}），不知道历史已经开始了。`,
+
+      merchant: `> 玉扳指在指节上转了三圈，这是你紧张时的习惯。
 > 窗外有火光，不是灯笼，是火把。
-> 你想起韦昌辉--那个被你排挤过的小地主，现在据说在会众里很有地位。
-> 你是金田村的地主（${traitsDesc}），这一夜注定无眠。`,
+> 你想起最近的传闻——据说有人在暗中集结。
+> ${openingContext}
+> 你是一个商人（${traitsDesc}），这一夜注定无眠。`,
 
       soldier: `> 刀鞘上的血还没擦干净，是上一个村子的。
-> 上峰说金田有会匪，格杀勿论。
+> 上峰说这里有会匪，格杀勿论。
 > 你舔了舔嘴唇，有点干。
-> 你是官府的士兵（${traitsDesc}），不知道这一战能否活着回去。`,
+> ${openingContext}
+> 你是一个退伍老兵（${traitsDesc}），不知道这一战能否活着回去。`,
 
-      cultist: `> 十字架贴在胸口，已经温热了。
-> 密信上的字你背得出来："十一日，万寿起义。"
-> 还有三天。上帝会保护他的子民，但你也握紧了刀。
-> 你是教会的受众（${traitsDesc}），等待天国的降临。`
+      doctor: `> 药香混合着血腥气，从窗外飘进来。
+> 你放下手中的草药，望向远处的火光。
+> 又有人受伤了，而你知道这意味着什么。
+> ${openingContext}
+> 你是一个江湖郎中（${traitsDesc}），等待天国的降临。`,
+
+      bandit: `> 你摸了摸腰间的刀，确认它还在。
+> 山下的村子有火光，不是普通的灯火。
+> 你知道那些人的来历，也知道自己该做何选择。
+> ${openingContext}
+> 你是一个绿林好汉（${traitsDesc}），等待天国的降临。`
     };
 
     return openings[player.identityType] || openings.scholar;

@@ -11,6 +11,7 @@
 import { spawn } from 'child_process';
 import { GameState, Memory } from '../../shared/types';
 import { GravityEngine } from '../core/GravityEngine';
+import { getCurrentScript } from '../config/ScriptConfig';
 
 export interface ResonanceContext {
   turn: number;
@@ -34,6 +35,7 @@ export interface ResonanceContext {
   spotlightNPC: SpotlightNPC | null;
   environmentalSignals: EnvironmentalSignal[];
   collectiveMood: string;
+  history?: Array<{ narrative: string; choice?: string }>; // 历史记录
 }
 
 export interface SpotlightNPC {
@@ -371,6 +373,12 @@ export class EmergentNarrativeEngine {
   ): ResonanceContext {
     const { player, turn, datetime, weather, pressure, omega } = gameState;
     
+    // 从历史记录中提取叙事和选择
+    const history = gameState.history.slice(-3).map(h => ({
+      narrative: h.narrative || '',
+      choice: h.choice?.text
+    }));
+    
     return {
       turn,
       datetime,
@@ -387,7 +395,8 @@ export class EmergentNarrativeEngine {
       },
       spotlightNPC: spotlight,
       environmentalSignals: signals,
-      collectiveMood
+      collectiveMood,
+      history
     };
   }
 
@@ -542,19 +551,49 @@ export class EmergentNarrativeEngine {
   private buildResonancePrompt(context: ResonanceContext): string {
     const { spotlightNPC, player } = context;
     
-    const prompt = `
-【时间】第${context.turn}/36回合，${new Date(context.datetime).toLocaleString('zh-CN')}
+    // 格式化游戏时间
+    const gameDate = new Date(context.datetime);
+    const formattedDate = `${gameDate.getFullYear()}年${gameDate.getMonth() + 1}月${gameDate.getDate()}日 ${gameDate.getHours().toString().padStart(2, '0')}:${gameDate.getMinutes().toString().padStart(2, '0')}`;
+    
+    // 计算环境压强 (16/20 格式)
+    const pressureStr = `${Math.round(context.pressure)}/20`;
+    
+    // 构建历史记录文本
+    let historyText = "";
+    if (context.history && context.history.length > 0) {
+        historyText = "【前情回顾】\\n";
+        context.history.slice(-3).forEach((h, i) => {
+            historyText += `${i+1}. ${h.narrative.substring(0, 80)}...\\n`;
+            if (h.choice) {
+                historyText += `   你选择：${h.choice}\\n`;
+            }
+        });
+    }
+    
+    // 构建 NPC 信息
+    let npcText = "";
+    if (spotlightNPC) {
+        npcText = `【当前遭遇】\\n- ${spotlightNPC.name}\\n- 执念：${spotlightNPC.obsession}\\n- 特质：${spotlightNPC.traits.join("、")}`;
+    }
 
-【场】
-压强：${Math.round(context.pressure)}/20
-历史必然感：${Math.round(context.omega)}/20
+    const script = getCurrentScript();
+    
+    const prompt = `你是一个叙事游戏引擎，创作${script.name}时期的沉浸式故事。
 
-【你】
-恐惧：${player.states.fear}/20
-攻击性：${player.states.aggression}/20
-饥饿：${player.states.hunger}/20
-伤势：${player.states.injury}/20
-执念：${player.obsession}
+【历史背景】
+${script.historicalContext}
+
+【当前情境】
+- 游戏时间：${formattedDate}（第${context.turn}回合，每回合+2小时）
+- 天气：${context.weather === 'night' ? '正常' : context.weather}
+- 环境压强：${pressureStr}（数值越高局势越紧张）
+- 玩家身份：${player.identity}
+- 玩家执念：${player.obsession}
+- 玩家状态：恐惧${player.states.fear}/20, 攻击性${player.states.aggression}/20, 饥饿${player.states.hunger}/20, 伤势${player.states.injury}/20
+
+${npcText}
+
+${historyText}
 
 【在场者】${spotlightNPC ? spotlightNPC.name : '无'}
 ${spotlightNPC ? `恐惧：${spotlightNPC.states.fear}/20
@@ -562,11 +601,21 @@ ${spotlightNPC ? `恐惧：${spotlightNPC.states.fear}/20
 与你的关系：${spotlightNPC.knotWithPlayer}/20
 执念：${spotlightNPC.obsession}` : ''}
 
-【约束】
-- 从视觉、听觉、嗅觉写环境，不解释"压强高"是什么意思
-- 让${spotlightNPC ? spotlightNPC.name : '环境'}的执念自然流露，不直接说"他想..."
-- 200字，第二人称，暗示而非说明
-`;
+【创作要求】
+1. 叙事：200字左右，有画面感，像小说一样
+2. 要体现当前时间和环境压强的紧张感
+3. 三个选择：具体行动，推动情节，符合玩家身份特点
+4. 如果存在NPC，要让NPC自然融入剧情
+
+输出JSON：
+{
+  "narrative": "...",
+  "choices": [
+    {"id": "c1", "text": "...", "type": "aggressive"},
+    {"id": "c2", "text": "...", "type": "cautious"},
+    {"id": "c3", "text": "...", "type": "adaptive"}
+  ]
+}`;
 
     return prompt;
   }

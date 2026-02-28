@@ -4,6 +4,7 @@
  */
 
 import { AI_CONFIG } from '../config/GameConfig';
+import { getCurrentScript } from '../config/ScriptConfig';
 
 // 玩家类型定义
 interface Player {
@@ -147,7 +148,7 @@ ${context.narrative}
 - 每个反应要独特，反映不同的内在驱动
 - 效果值范围-3到+3
 - 用中文，第二人称（你...）
-- 描述要有氛围感，符合1851年金田村的情境
+- 描述要有氛围感，符合${getCurrentScript().location}的情境
 `;
 }
 

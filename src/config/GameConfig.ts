@@ -1,6 +1,8 @@
 /**
  * 游戏核心配置
  * 所有可调参数集中管理
+ * 
+ * 注意：历史背景、剧本特定内容在 ScriptConfig.ts 中定义
  */
 
 // ==================== 引力引擎配置 ====================
@@ -71,17 +73,17 @@ export const GAME_CONFIG = {
   // 每回合小时数
   HOURS_PER_TURN: 2,
 
-  // 初始时间
-  START_DATE: '1851-01-08T00:00:00',
+  // 初始时间：1851年1月8日 18:00（金田起义前72小时）
+  START_DATE: '1851-01-08T18:00:00',
 
-  // 初始压强 (1-20范围)
-  INITIAL_PRESSURE: 2,
+  // 初始压强 (10/20)
+  INITIAL_PRESSURE: 10,
 
   // 初始Ω值 (1-20范围)
   INITIAL_OMEGA: 2,
 
-  // 压强每回合增长
-  PRESSURE_INCREASE: 0.16,
+  // 压强每回合增长 (+1.5)
+  PRESSURE_INCREASE: 1.5,
 
   // Ω基础增长
   OMEGA_BASE_INCREASE: 0.4,
@@ -100,10 +102,10 @@ export const GAME_CONFIG = {
 
   // 压强配置
   PRESSURE: {
-    INITIAL: 2,
-    BASE_GROWTH: 0.16,
+    INITIAL: 10,        // 起始 10/20
+    BASE_GROWTH: 1.5,   // 每回合 +1.5
     VIOLENCE_BONUS: 0.5,
-    MAX: 20,
+    MAX: 20,            // 上限 20/20
     EXPONENTIAL_THRESHOLD: 12
   },
 
@@ -227,8 +229,8 @@ export const NPC_CONFIG = {
     EVENT_4: 15   // 最终阶段
   },
 
-  // 关键历史人物
-  HISTORICAL_FIGURES: ['洪秀全', '杨秀清', '萧朝贵'],
+  // 关键历史人物（从剧本配置读取）
+  // HISTORICAL_FIGURES: ['洪秀全', '杨秀清', '萧朝贵'],
 
   // NPC预设模板（身份预设，特质随机）
   NPC_TEMPLATES: [
@@ -311,44 +313,64 @@ export const NPC_CONFIG = {
     }
   ],
 
-  // NPC名字池（用于API生成名字）
-  NAME_GENERATION_PROMPT: '生成一个1851年中国农村NPC的名字，要求：1）符合当时的历史背景；2）体现人物身份特征；3）简洁有力；4）只返回名字，不要解释',
+  // NPC名字池（从剧本配置读取）
+  // NAME_GENERATION_PROMPT: '...',
 
-  // NPC执念生成提示
-  OBSESSION_GENERATION_PROMPT: '生成一个NPC的执念，要求：1）体现人物性格和处境；2）与1851年金田起义的历史背景相关；3）简洁有力（15字以内）；4）只返回执念文本，不要解释'
+  // NPC执念生成提示（从剧本配置读取）
+  // OBSESSION_GENERATION_PROMPT: '...',
 };
 
 // ==================== 玩家配置 ====================
 export const PLAYER_CONFIG = {
-  // 可用身份
+  // 可用身份（6个新身份）
   IDENTITIES: {
+    // 穷酸书生
     scholar: {
-      name: '村中的读书人',
+      name: '穷酸书生',
       baseMass: 3,
       pressureModifier: 0.8,
       initialStates: { fear: 6, aggression: 4, hunger: 8, injury: 1 },
       suitableTraits: ['calm', 'curious', 'honest', 'analytical', 'reserved', 'idealistic']
     },
-    landlord: {
-      name: '金田村的地主',
-      baseMass: 6,
-      pressureModifier: 1.0,
-      initialStates: { fear: 8, aggression: 6, hunger: 4, injury: 1 },
-      suitableTraits: ['greedy', 'ambitious', 'calculating', 'worldly', 'proud', 'pragmatic']
-    },
-    soldier: {
-      name: '官府的士兵',
+    // 憨厚农民
+    farmer: {
+      name: '憨厚农民',
       baseMass: 5,
-      pressureModifier: 1.2,
-      initialStates: { fear: 4, aggression: 12, hunger: 10, injury: 1 },
-      suitableTraits: ['brave', 'brutal', 'loyal', 'disciplined', 'callous', 'vigilant']
+      pressureModifier: 0.9,
+      initialStates: { fear: 7, aggression: 5, hunger: 6, injury: 2 },
+      suitableTraits: ['honest', 'hardworking', 'strong', 'patient', 'pragmatic', 'resilient']
     },
-    cultist: {
-      name: '教会的受众',
+    // 精明商人
+    merchant: {
+      name: '精明商人',
       baseMass: 4,
+      pressureModifier: 0.9,
+      initialStates: { fear: 8, aggression: 5, hunger: 5, injury: 1 },
+      suitableTraits: ['greedy', 'calculating', 'worldly', 'shrewd', 'adaptable', 'eloquent']
+    },
+    // 退伍老兵
+    soldier: {
+      name: '退伍老兵',
+      baseMass: 6,
+      pressureModifier: 1.1,
+      initialStates: { fear: 4, aggression: 10, hunger: 7, injury: 3 },
+      suitableTraits: ['brave', 'disciplined', 'vigilant', 'experienced', 'loyal', 'callous']
+    },
+    // 江湖郎中
+    doctor: {
+      name: '江湖郎中',
+      baseMass: 3,
+      pressureModifier: 0.8,
+      initialStates: { fear: 6, aggression: 3, hunger: 6, injury: 1 },
+      suitableTraits: ['compassionate', 'observant', 'calm', 'intuitive', 'wise', 'detached']
+    },
+    // 绿林好汉
+    bandit: {
+      name: '绿林好汉',
+      baseMass: 5,
       pressureModifier: 1.0,
-      initialStates: { fear: 10, aggression: 8, hunger: 6, injury: 1 },
-      suitableTraits: ['zealous', 'pious', 'fanatical', 'hopeful', 'fearful', 'devoted']
+      initialStates: { fear: 5, aggression: 12, hunger: 8, injury: 2 },
+      suitableTraits: ['brave', 'brutal', 'cunning', 'resourceful', 'independent', 'ruthless']
     }
   },
 
