@@ -94,7 +94,7 @@ export function validateChoice(choice: any): { valid: boolean; error?: string } 
  * 验证身份类型
  */
 export function validateIdentity(identity: string): boolean {
-  return ['scholar', 'landlord', 'soldier', 'cultist'].includes(identity);
+  return ['scholar', 'farmer', 'merchant', 'soldier', 'doctor', 'bandit'].includes(identity);
 }
 
 /**
