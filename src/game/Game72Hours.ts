@@ -9,7 +9,6 @@ import { TurnManager } from './TurnManager';
 import { EmergentNarrativeEngine } from '../narrative/EmergentNarrativeEngine';
 import { GAME_CONFIG, NPC_CONFIG } from '../config/GameConfig';
 import { getCurrentScript, getCurrentIdentities } from '../config/ScriptConfig';
-import { getCurrentScript } from '../config/ScriptConfig';
 import {
   GameState,
   GameInitResult,

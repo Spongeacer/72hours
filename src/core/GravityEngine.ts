@@ -4,7 +4,7 @@
  */
 
 import { Position } from '../../shared/types';
-import { GRAVITY_CONFIG } from '../config/GameConfig';
+import { GRAVITY_CONFIG, GAME_CONFIG } from '../config/GameConfig';
 
 export interface GravityConfig {
   G: number;                    // 引力常数
