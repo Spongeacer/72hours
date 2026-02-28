@@ -45,9 +45,10 @@ export class Game72Hours {
   constructor(options: GameOptions = {}) {
     this.id = options.id || `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     this.config = { ...GAME_CONFIG, ...options.config };
-    this.aiInterface = options.aiInterface || null;
+    // 如果有 API Key，启用 AI 接口
+    this.apiKey = options.apiKey || process.env.SILICONFLOW_API_KEY;
+    this.aiInterface = options.aiInterface || (this.apiKey ? { enabled: true } : null);
     this.model = options.model || 'Pro/MiniMaxAI/MiniMax-M2.5';
-    this.apiKey = options.apiKey;
 
     // 初始化游戏状态
     const gameConfig: IGameConfig = {

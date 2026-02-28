@@ -106,7 +106,9 @@ export class EmergentNarrativeEngine {
     const context = this.buildResonanceContext(gameState, spotlight, signals, collectiveMood);
     
     // 5. 生成叙事（AI或离线）
-    if (this.ai) {
+    // 检查是否有 API Key，有则使用 AI 生成
+    const apiKey = process.env.SILICONFLOW_API_KEY || '';
+    if (apiKey && apiKey.length > 10) {
       return await this.generateAIResonance(context);
     } else {
       return this.generateOfflineResonance(context);
