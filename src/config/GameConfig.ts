@@ -431,9 +431,12 @@ export const BUTTERFLY_EFFECT_CONFIG = {
 };
 
 // ==================== 服务器配置 ====================
+// 版本号从 package.json 读取
+import { version as VERSION } from '../../package.json';
+
 export const SERVER_CONFIG = {
   PORT: 3000,
-  VERSION: '2.0.0'
+  VERSION
 };
 
 // 导出所有配置

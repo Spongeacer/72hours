@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { randomUUID } from 'crypto';
 
 export function notFoundHandler(req: Request, res: Response) {
   res.status(404).json({
@@ -10,7 +11,7 @@ export function notFoundHandler(req: Request, res: Response) {
     },
     meta: {
       timestamp: new Date().toISOString(),
-      requestId: Math.random().toString(36).substring(2, 15)
+      requestId: randomUUID()
     }
   });
 }
@@ -35,7 +36,7 @@ export function errorHandler(
     },
     meta: {
       timestamp: new Date().toISOString(),
-      requestId: Math.random().toString(36).substring(2, 15)
+      requestId: randomUUID()
     }
   });
 }
