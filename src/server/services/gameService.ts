@@ -28,7 +28,7 @@ import {
  * 生成唯一游戏ID
  */
 export function generateGameId(): string {
-  return `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  return `game_${Date.now()}_${randomUUID().replace(/-/g, '').substring(0, 9)}`;
 }
 
 /**
