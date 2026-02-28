@@ -57,4 +57,4 @@ export interface IdentityInfo {
 }
 
 // 前端专属：扩展的回合结果（现在与共享类型一致）
-export type FrontendTurnResult = TurnResult;
+export type FrontendTurnResult = import('../../../shared/types').TurnResult;

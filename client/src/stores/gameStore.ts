@@ -101,12 +101,12 @@ export const useGameStore = create<GameStore>()(
             gameState: result.state,
             currentNarrative: result.narrative,
             currentChoices: result.choices,
-            currentResult: result.result || null,
+            currentResult: null,
             isLoading: false
           });
 
           // 如果游戏结束，显示结局
-          if (result.gameOver) {
+          if (result.state?.isGameOver) {
             // 可以在这里处理游戏结束逻辑
           }
           
