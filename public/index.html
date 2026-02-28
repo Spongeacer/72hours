@@ -362,6 +362,9 @@
     </div>
 
     <script>
+        // 调试：确认脚本加载
+        console.log('JavaScript 已加载');
+        
         let gameId = null;
         let currentTurn = 0;
         let selectedIdentity = null;
@@ -373,6 +376,9 @@
             doctor: '江湖郎中',
             bandit: '绿林好汉'
         };
+        
+        // 调试：确认变量已定义
+        console.log('identityNames:', identityNames);
         
         async function checkAIStatus() {
             const statusDot = document.getElementById('ai-status-dot');
@@ -415,6 +421,9 @@
                 console.log('开始按钮已激活');
             }
         }
+        
+        // 调试：确认函数已定义
+        console.log('selectIdentity 函数已定义:', typeof selectIdentity);
 
         async function startGame() {
             if (!selectedIdentity) return;
