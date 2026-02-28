@@ -58,7 +58,7 @@ router.post('/', validateRequest({ body: getCreateGameSchema() }), async (req, r
     const game = new Game72Hours({
       id: gameId,
       model: model || 'Pro/MiniMaxAI/MiniMax-M2.5',
-      apiKey
+      apiKey: apiKey || process.env.SILICONFLOW_API_KEY
     });
     
     // 初始化游戏

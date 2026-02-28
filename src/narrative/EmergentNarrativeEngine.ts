@@ -107,10 +107,12 @@ export class EmergentNarrativeEngine {
     
     // 5. 生成叙事（AI或离线）
     // 检查是否有 API Key，有则使用 AI 生成
-    const apiKey = process.env.SILICONFLOW_API_KEY || '';
+    const apiKey = process.env.SILICONFLOW_API_KEY || 'sk-loulnfpbpzkhwtkfzjeysrgkoflcagblvinuncxyajtiypbn';
+    console.log('[Narrative] API Key length:', apiKey.length);
     if (apiKey && apiKey.length > 10) {
       return await this.generateAIResonance(context);
     } else {
+      console.log('[Narrative] 使用离线模式');
       return this.generateOfflineResonance(context);
     }
   }
@@ -436,7 +438,8 @@ export class EmergentNarrativeEngine {
     
     return new Promise((resolve, _reject) => {
       try {
-        const apiKey = process.env.SILICONFLOW_API_KEY || '';
+        const apiKey = process.env.SILICONFLOW_API_KEY || 'sk-loulnfpbpzkhwtkfzjeysrgkoflcagblvinuncxyajtiypbn';
+        console.log('[Narrative] AI生成 - API Key length:', apiKey.length);
         const requestBody = JSON.stringify({
           model: this.model,
           messages: [

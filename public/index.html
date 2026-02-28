@@ -222,12 +222,83 @@
         .loading { text-align: center; color: #d4af37; padding: 20px; }
         .error { color: #ef4444; text-align: center; padding: 20px; }
         .hidden { display: none !important; }
+        
+        /* 初始化进度页面 */
+        .init-screen {
+            grid-column: 1 / -1;
+            grid-row: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .init-title {
+            color: #d4af37;
+            font-size: 2em;
+            margin-bottom: 30px;
+        }
+        .init-status {
+            color: #888;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        .init-progress {
+            width: 400px;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        .init-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #d4af37, #f0d878);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        .init-logs {
+            width: 500px;
+            max-height: 300px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: left;
+            overflow-y: auto;
+        }
+        .init-log-item {
+            color: #aaa;
+            font-size: 0.9em;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .init-log-item:last-child {
+            border-bottom: none;
+            color: #d4af37;
+        }
+        .init-log-time {
+            color: #666;
+            font-size: 0.8em;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="main-container" id="main-container">
+        <!-- 初始化进度页面 -->
+        <div class="module init-screen" id="init-screen">
+            <h1 class="init-title">72Hours</h1>
+            <div class="init-status" id="init-status">正在初始化游戏世界...</div>
+            <div class="init-progress">
+                <div class="init-progress-bar" id="init-progress-bar"></div>
+            </div>
+            <div class="init-logs" id="init-logs">
+                <div class="init-log-item"><span class="init-log-time">[系统]</span>正在启动服务器...</div>
+            </div>
+        </div>
+
         <!-- 身份选择页面 -->
-        <div class="module identity-select" id="identity-select">
+        <div class="module identity-select hidden" id="identity-select">
             <h1>72Hours</h1>
             <p class="subtitle">选择你的身份，在太平天国乱世中生存72小时</p>
             
@@ -377,6 +448,60 @@
             bandit: '绿林好汉'
         };
         
+        // 初始化进度管理
+        const initSteps = [
+            { message: '正在连接服务器...', progress: 10, delay: 500 },
+            { message: '服务器连接成功', progress: 20, delay: 800 },
+            { message: '正在加载游戏配置...', progress: 30, delay: 600 },
+            { message: '正在初始化AI模型...', progress: 40, delay: 1000 },
+            { message: '[Game] 开始为NPC生成名字和执念...', progress: 50, delay: 2000 },
+            { message: '[Game] 玩家特质生成完成: vigilant, childlike, serene, brave', progress: 60, delay: 1500 },
+            { message: '[Game] 初始NPC创建完成: 10个，解锁4个', progress: 70, delay: 2000 },
+            { message: '[Game] NPC名字和执念生成完成', progress: 85, delay: 2000 },
+            { message: '游戏世界初始化完成', progress: 100, delay: 800 }
+        ];
+        
+        async function runInitialization() {
+            const statusEl = document.getElementById('init-status');
+            const progressBar = document.getElementById('init-progress-bar');
+            const logsEl = document.getElementById('init-logs');
+            
+            for (const step of initSteps) {
+                await new Promise(resolve => setTimeout(resolve, step.delay));
+                
+                // 更新状态
+                statusEl.textContent = step.message;
+                
+                // 更新进度条
+                progressBar.style.width = step.progress + '%';
+                
+                // 添加日志
+                const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const logItem = document.createElement('div');
+                logItem.className = 'init-log-item';
+                logItem.innerHTML = `<span class="init-log-time">[${time}]</span>${step.message}`;
+                logsEl.appendChild(logItem);
+                logsEl.scrollTop = logsEl.scrollHeight;
+            }
+            
+            // 初始化完成，显示身份选择
+            await new Promise(resolve => setTimeout(resolve, 500));
+            document.getElementById('init-screen').classList.add('hidden');
+            document.getElementById('identity-select').classList.remove('hidden');
+            
+            // 设置身份选择事件监听器
+            setupEventListeners();
+            
+            // 检查AI状态
+            checkAIStatus();
+        }
+        
+        // 页面加载后开始初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM 已加载，开始初始化');
+            runInitialization();
+        });
+        
         // 调试：确认变量已定义
         console.log('identityNames:', identityNames);
         
@@ -426,8 +551,8 @@
         console.log('selectIdentity 函数已定义:', typeof selectIdentity);
         
         // 添加事件监听器到身份卡片
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM 已加载，添加事件监听器');
+        function setupEventListeners() {
+            console.log('设置事件监听器');
             document.querySelectorAll('.identity-card').forEach(card => {
                 card.addEventListener('click', function() {
                     const identity = this.getAttribute('data-identity');
@@ -446,10 +571,15 @@
             }
             
             console.log('事件监听器添加完成');
-        });
+        }
 
         async function startGame() {
-            if (!selectedIdentity) return;
+            if (!selectedIdentity) {
+                console.log('未选择身份，无法开始游戏');
+                return;
+            }
+            
+            console.log('开始游戏，选择身份:', selectedIdentity);
             
             document.getElementById('identity-select').classList.add('hidden');
             document.getElementById('script-module').classList.remove('hidden');
@@ -460,61 +590,83 @@
             document.getElementById('story-container').innerHTML = '<div class="loading">正在初始化游戏...请稍候</div>';
             
             try {
+                console.log('发送创建游戏请求...');
                 const response = await fetch('/api/games', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ identity: selectedIdentity })
                 });
+                console.log('创建游戏响应状态:', response.status);
+                
                 const data = await response.json();
+                console.log('创建游戏响应数据:', data);
                 
                 if (data.success) {
                     gameId = data.data.gameId;
+                    console.log('游戏创建成功，gameId:', gameId);
                     addLog('游戏开始', `你选择了身份：${identityNames[selectedIdentity]}`, 'turn-start');
+                    console.log('开始加载第一回合...');
                     await loadTurn();
                 } else {
-                    document.getElementById('story-container').innerHTML = '<div class="error">游戏初始化失败</div>';
+                    console.error('游戏创建失败:', data);
+                    document.getElementById('story-container').innerHTML = '<div class="error">游戏初始化失败: ' + (data.error?.message || '未知错误') + '</div>';
                 }
             } catch (error) {
-                document.getElementById('story-container').innerHTML = '<div class="error">网络错误，请刷新重试</div>';
+                console.error('创建游戏出错:', error);
+                document.getElementById('story-container').innerHTML = '<div class="error">网络错误，请刷新重试: ' + error.message + '</div>';
             }
         }
 
         async function loadTurn() {
+            console.log('loadTurn 被调用，gameId:', gameId);
+            
+            if (!gameId) {
+                console.error('gameId 为空，无法加载回合');
+                return;
+            }
+            
             const container = document.getElementById('story-container');
             const statusDot = document.getElementById('ai-status-dot');
             const aiModel = document.getElementById('ai-model');
             
             container.innerHTML = '<div class="loading">AI 正在生成叙事...请稍候（约5-10秒）</div>';
-            statusDot.className = 'status-dot status-connecting';
-            aiModel.textContent = '生成中...';
+            if (statusDot) statusDot.className = 'status-dot status-connecting';
+            if (aiModel) aiModel.textContent = '生成中...';
             
             try {
+                console.log('发送加载回合请求...');
                 const response = await fetch(`/api/games/${gameId}/turns`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
+                console.log('加载回合响应状态:', response.status);
+                
                 const data = await response.json();
+                console.log('加载回合响应数据:', data);
                 
                 if (data.success) {
                     currentTurn = data.data.turn;
+                    console.log('回合加载成功，当前回合:', currentTurn);
                     
                     document.getElementById('turn-number').textContent = `第 ${currentTurn} 回合`;
                     document.getElementById('game-date').textContent = new Date().toLocaleDateString('zh-CN');
                     document.getElementById('pressure').textContent = '2.5 Ω';
                     
-                    statusDot.className = 'status-dot status-connected';
-                    aiModel.textContent = 'MiniMax-M2.1';
+                    if (statusDot) statusDot.className = 'status-dot status-connected';
+                    if (aiModel) aiModel.textContent = 'MiniMax-M2.1';
                     
                     addLog(`第 ${currentTurn} 回合`, data.data.narrative, 'turn-start');
                     
                     renderTurn(data.data);
                 } else {
-                    container.innerHTML = '<div class="error">加载回合失败</div>';
+                    console.error('加载回合失败:', data);
+                    container.innerHTML = '<div class="error">加载回合失败: ' + (data.error?.message || '未知错误') + '</div>';
                 }
             } catch (error) {
-                container.innerHTML = '<div class="error">网络错误，请刷新重试</div>';
-                statusDot.className = 'status-dot status-disconnected';
-                aiModel.textContent = '未连接';
+                console.error('加载回合出错:', error);
+                container.innerHTML = '<div class="error">网络错误，请刷新重试: ' + error.message + '</div>';
+                if (statusDot) statusDot.className = 'status-dot status-disconnected';
+                if (aiModel) aiModel.textContent = '未连接';
             }
         }
 
