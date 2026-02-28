@@ -58,7 +58,7 @@ const limiter = rateLimit({
       },
       meta: {
         timestamp: new Date().toISOString(),
-        requestId: Math.random().toString(36).substring(2, 15)
+        requestId: randomUUID()
       }
     });
   }

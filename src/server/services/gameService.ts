@@ -13,6 +13,7 @@ import { OPENINGS } from '../constants/openings';
 import type { Game72Hours as Game, GameState, Player } from '../../game';
 import type { IdentityType, Player as IPlayer } from '../../../shared/types/index';
 import { NPC } from '../../game/NPC';
+import { randomUUID } from 'crypto';
 import {
   selectSpotlightNPC,
   updatePhysics,
@@ -34,7 +35,7 @@ export function generateGameId(): string {
  * 生成请求ID
  */
 export function generateRequestId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  return randomUUID();
 }
 
 /**

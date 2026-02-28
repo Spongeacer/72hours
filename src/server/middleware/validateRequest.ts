@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodSchema, ZodError } from 'zod';
+import { randomUUID } from 'crypto';
 
 interface ValidateSchema {
   body?: ZodSchema;
@@ -37,7 +38,7 @@ export function validateRequest(schemas: ValidateSchema) {
           },
           meta: {
             timestamp: new Date().toISOString(),
-            requestId: Math.random().toString(36).substring(2, 15)
+            requestId: randomUUID()
           }
         });
         return;
@@ -52,7 +53,7 @@ export function validateRequest(schemas: ValidateSchema) {
         },
         meta: {
           timestamp: new Date().toISOString(),
-          requestId: Math.random().toString(36).substring(2, 15)
+          requestId: randomUUID()
         }
       });
     }

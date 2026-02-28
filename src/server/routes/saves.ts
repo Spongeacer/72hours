@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { randomUUID } from 'crypto';
 import { validateRequest } from '../middleware/validateRequest';
 
 const router = Router({ mergeParams: true });
@@ -15,7 +16,7 @@ router.get('/', (req: any, res) => {
     success: true,
     data: gameSaves,
     error: null,
-    meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+    meta: { timestamp: new Date().toISOString(), requestId: randomUUID() }
   });
 });
 
@@ -27,7 +28,7 @@ router.post('/', validateRequest({ body: createSaveSchema }), (req, res) => {
   const { gameId } = req.params;
   const { name } = req.body;
 
-  const saveId = `save_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const saveId = `save_${Date.now()}_${randomUUID().replace(/-/g, '').substring(0, 9)}`;
 
   const saveData = {
     id: saveId,
@@ -46,7 +47,7 @@ router.post('/', validateRequest({ body: createSaveSchema }), (req, res) => {
     success: true,
     data: saveData,
     error: null,
-    meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+    meta: { timestamp: new Date().toISOString(), requestId: randomUUID() }
   });
 });
 
@@ -59,7 +60,7 @@ router.post('/:saveId/load', (req, res) => {
       success: false,
       data: null,
       error: { code: 'SAVE_NOT_FOUND', message: '存档不存在' },
-      meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+      meta: { timestamp: new Date().toISOString(), requestId: randomUUID() }
     });
   }
 
@@ -67,7 +68,7 @@ router.post('/:saveId/load', (req, res) => {
     success: true,
     data: { turn: save.turn, datetime: save.datetime, pressure: save.pressure, omega: save.omega },
     error: null,
-    meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+    meta: { timestamp: new Date().toISOString(), requestId: randomUUID() }
   });
 });
 
@@ -79,7 +80,7 @@ router.delete('/:saveId', (req, res) => {
       success: false,
       data: null,
       error: { code: 'SAVE_NOT_FOUND', message: '存档不存在' },
-      meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+      meta: { timestamp: new Date().toISOString(), requestId: randomUUID() }
     });
   }
 
@@ -88,7 +89,7 @@ router.delete('/:saveId', (req, res) => {
     success: true,
     data: null,
     error: null,
-    meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+    meta: { timestamp: new Date().toISOString(), requestId: randomUUID() }
   });
 });
 
@@ -102,7 +103,7 @@ router.get('/:saveId/export', (req, res) => {
       success: false,
       data: null,
       error: { code: 'SAVE_NOT_FOUND', message: '存档不存在' },
-      meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+      meta: { timestamp: new Date().toISOString(), requestId: randomUUID() }
     });
   }
 
@@ -112,7 +113,7 @@ router.get('/:saveId/export', (req, res) => {
     success: true,
     data: exportData,
     error: null,
-    meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+    meta: { timestamp: new Date().toISOString(), requestId: randomUUID() }
   });
 });
 
@@ -131,7 +132,7 @@ router.post('/import', validateRequest({ body: importSaveSchema }), (req, res) =
     const save = JSON.parse(decoded);
 
     // 生成新的存档ID
-    const newSaveId = `save_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const newSaveId = `save_${Date.now()}_${randomUUID().replace(/-/g, '').substring(0, 9)}`;
     const newSave = {
       ...save,
       id: newSaveId,
@@ -145,14 +146,14 @@ router.post('/import', validateRequest({ body: importSaveSchema }), (req, res) =
       success: true,
       data: newSave,
       error: null,
-      meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+      meta: { timestamp: new Date().toISOString(), requestId: randomUUID() }
     });
   } catch (error) {
     res.status(400).json({
       success: false,
       data: null,
       error: { code: 'INVALID_SAVE_DATA', message: '存档数据格式错误' },
-      meta: { timestamp: new Date().toISOString(), requestId: Math.random().toString(36).substring(2, 15) }
+      meta: { timestamp: new Date().toISOString(), requestId: randomUUID() }
     });
   }
 });

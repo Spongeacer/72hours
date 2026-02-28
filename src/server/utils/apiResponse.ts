@@ -2,6 +2,8 @@
  * API 响应统一格式
  */
 
+import { randomUUID } from 'crypto';
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T | null;
@@ -59,7 +61,7 @@ export function createErrorResponse(
  * 生成请求ID
  */
 function generateRequestId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  return randomUUID();
 }
 
 /**
