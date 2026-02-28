@@ -397,12 +397,23 @@
         setInterval(checkAIStatus, 30000);
         
         function selectIdentity(identity) {
+            console.log('选择身份:', identity);
             selectedIdentity = identity;
             document.querySelectorAll('.identity-card').forEach(card => {
                 card.classList.remove('selected');
             });
-            document.querySelector(`[data-identity="${identity}"]`).classList.add('selected');
-            document.getElementById('start-btn').classList.add('active');
+            const selectedCard = document.querySelector(`[data-identity="${identity}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+                console.log('已添加选中样式:', identity);
+            } else {
+                console.error('未找到身份卡片:', identity);
+            }
+            const startBtn = document.getElementById('start-btn');
+            if (startBtn) {
+                startBtn.classList.add('active');
+                console.log('开始按钮已激活');
+            }
         }
 
         async function startGame() {
