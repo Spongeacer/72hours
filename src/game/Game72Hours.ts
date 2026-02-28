@@ -7,7 +7,8 @@ import { Player } from './Player';
 import { NPC } from './NPC';
 import { TurnManager } from './TurnManager';
 import { EmergentNarrativeEngine } from '../narrative/EmergentNarrativeEngine';
-import { GAME_CONFIG, PLAYER_CONFIG, NPC_CONFIG } from '../config/GameConfig';
+import { GAME_CONFIG, NPC_CONFIG } from '../config/GameConfig';
+import { getCurrentScript, getCurrentIdentities } from '../config/ScriptConfig';
 import { getCurrentScript } from '../config/ScriptConfig';
 import {
   GameState,
@@ -129,8 +130,9 @@ export class Game72Hours {
    * 生成默认执念
    */
   private generateDefaultObsession(player: typeof this.gameState.player): string {
-    const identity = PLAYER_CONFIG.IDENTITIES[player.identityType];
-    const suitableTraits = identity.suitableTraits || [];
+    const identities = getCurrentIdentities();
+    const identity = identities.find(i => i.id === player.identityType);
+    const suitableTraits = identity?.traits || [];
     const traitDesc = suitableTraits.slice(0, 2).join('、') || '求生';
     return `在${traitDesc}的驱使下活下去`;
   }
@@ -140,11 +142,12 @@ export class Game72Hours {
    */
   private generatePlayerTraits(): void {
     const { player } = this.gameState;
-    const identityConfig = PLAYER_CONFIG.IDENTITIES[player.identityType];
+    const identities = getCurrentIdentities();
+    const identityConfig = identities.find(i => i.id === player.identityType);
 
     // 添加身份特质
-    if (identityConfig.suitableTraits) {
-      identityConfig.suitableTraits.slice(0, 2).forEach(traitId => {
+    if (identityConfig?.traits) {
+      identityConfig.traits.slice(0, 2).forEach(traitId => {
         player.traits.push({ id: traitId, type: 'identity' });
       });
     }

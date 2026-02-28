@@ -9,8 +9,8 @@ import {
   Identity,
   Player as IPlayer 
 } from '../../shared/types';
-import { GAME_CONFIG, PLAYER_CONFIG } from '../config/GameConfig';
-import { getCurrentScript } from '../config/ScriptConfig';
+import { GAME_CONFIG } from '../config/GameConfig';
+import { getCurrentScript, getCurrentIdentities } from '../config/ScriptConfig';
 
 export interface ObsessionData {
   type: 'dynamic';
@@ -40,16 +40,23 @@ export class Player extends Agent {
   captured: boolean = false;
 
   constructor(identityType: IdentityType = 'scholar') {
-    const identityConfig = PLAYER_CONFIG.IDENTITIES[identityType];
+    // 从剧本配置获取身份定义
+    const identities = getCurrentIdentities();
+    const identityConfig = identities.find(i => i.id === identityType);
+    
+    if (!identityConfig) {
+      throw new Error(`Invalid identity: ${identityType}`);
+    }
     
     // 构建完整的 Identity 对象
     const identity: Identity = {
       id: identityType,
       name: identityConfig.name,
       baseMass: identityConfig.baseMass,
-      pressureModifier: identityConfig.pressureModifier,
-      initialStates: identityConfig.initialStates,
-      suitableTraits: identityConfig.suitableTraits
+      // 默认值，可被剧本覆盖
+      pressureModifier: 1.0,
+      initialStates: { fear: 5, aggression: 5, hunger: 5, injury: 0 },
+      suitableTraits: identityConfig.traits
     };
     
     super({
